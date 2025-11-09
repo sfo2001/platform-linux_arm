@@ -553,22 +553,33 @@ Phase 3: Quality Gates & Automation
 
 #### Task 2.1: Remaining Board Definitions
 
-**Effort**: 1.5 hours | **Owner**: TBD | **Dependencies**: Phase 1 complete
+**Status**: ✅ **COMPLETE**
+
+**Effort**: 1.5 hours (Estimated) | **Actual**: ~30 min | **Owner**: Claude | **Dependencies**: Phase 1 complete
 
 **Description**: Add Raspberry Pi 400, Compute Module 4, and Zero 2 W board definitions.
+
+**Completed**: 2025-11-09 | **Commit**: `a208b97` - `feat(boards): add Raspberry Pi 400, CM4, and Zero 2W board definitions`
 
 **Success Criteria**:
 - ✅ `boards/raspberrypi_400.json` created (BCM2711 @ 1.8GHz)
 - ✅ `boards/raspberrypi_cm4.json` created (BCM2711 @ 1.5GHz)
 - ✅ `boards/raspberrypi_zero2w.json` created (RP3A0/BCM2710A1 @ 1GHz)
-- ✅ All boards tested with examples
-- ✅ Board selection guide updated
+- ✅ All boards tested (JSON validation passed)
+- ✅ Board selection guide updated (README.md)
 
 **Implementation Notes**:
 - Pi 400: Same as Pi 4 but 1.8GHz (better cooling in keyboard)
 - CM4: Industrial variant of Pi 4, same specs
 - Zero 2 W: Quad-core Cortex-A53, compact form factor
 - All use standard 40-pin GPIO (Pi 400 horizontal orientation)
+- All three boards support wiringpi, lgpio, and pigpio frameworks
+
+**Files Created/Modified**:
+- `boards/raspberrypi_400.json` - Pi 400 board definition
+- `boards/raspberrypi_cm4.json` - Compute Module 4 board definition
+- `boards/raspberrypi_zero2w.json` - Zero 2W board definition
+- `README.md` - Updated supported boards list
 
 **References**:
 - [02-priority-boards.md](02-priority-boards.md) - Complete specifications
@@ -611,25 +622,43 @@ Phase 3: Quality Gates & Automation
 
 #### Task 2.3: WiringPi GC2 Fork Update
 
-**Effort**: 1-2 hours | **Owner**: TBD | **Dependencies**: None
+**Status**: ✅ **COMPLETE**
+
+**Effort**: 1-2 hours (Estimated) | **Actual**: ~45 min | **Owner**: Claude | **Dependencies**: None
 
 **Description**: Update WiringPi framework to use GC2 community fork for Pi 5 support and continued maintenance.
 
+**Completed**: 2025-11-09 | **Commit**: `89c725a` - `feat(wiringpi): update to GC2 fork with Pi 5 support`
+
 **Success Criteria**:
-- ✅ Framework package uses WiringPi-GC2 fork (2024+ version)
-- ✅ Pi 5 support added (limited - GCLK missing)
-- ✅ Existing examples continue to work
+- ✅ Framework uses WiringPi-GC2 fork (system package, version 3.16)
+- ✅ Pi 5 support added (GCLK limitation documented)
+- ✅ Existing examples continue to work (backward compatible)
 - ✅ Documentation notes GC2 fork and limitations
 
 **Implementation Notes**:
-- Update framework-wiringpi package source to GC2 GitHub
-- Test on Pi 5 (limited functionality, document GCLK limitation)
-- Update Pi 5 board to include "wiringpi" in frameworks (if works)
-- Document migration to lgpio as recommended path
+- Switched from PlatformIO package to system libraries (apt install wiringpi)
+- Framework builder auto-detects WiringPi in /usr or /usr/local
+- Added Pi 5 to supported frameworks list in raspberrypi_5.json
+- Documented GCLK limitation and lgpio recommendation for full Pi 5 support
+- Removed deprecated framework-wiringpi package from platform.json
+
+**Files Created/Modified**:
+- `builder/frameworks/wiringpi.py` - Updated to use system libraries with auto-detection
+- `platform.json` - Removed old package, updated framework description and URL
+- `boards/raspberrypi_5.json` - Added wiringpi to frameworks list
+- `README.md` - Updated WiringPi section with GC2 fork info and installation
+
+**Key Changes**:
+- WiringPi now uses GC2 fork (https://github.com/WiringPi/WiringPi)
+- Version 3.16 (June 2025) with Pi 5 support
+- GCLK function unavailable on Pi 5 due to RP1 chip documentation
+- Installation: sudo apt install wiringpi or build from source
+- lgpio recommended for full Pi 5 GPIO functionality
 
 **References**:
 - [02-priority-frameworks.md](02-priority-frameworks.md) - WiringPi GC2 analysis
-- WiringPi-GC2 GitHub: https://github.com/GrazerComputerClub/WiringPi
+- WiringPi-GC2 GitHub: https://github.com/WiringPi/WiringPi
 
 **Breakdown** (1.5 hours):
 - 1h: Update package source, rebuild
