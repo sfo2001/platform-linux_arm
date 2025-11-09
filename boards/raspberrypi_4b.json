@@ -6,7 +6,8 @@
   },
   "frameworks": [
     "wiringpi",
-    "lgpio"
+    "lgpio",
+    "pigpio"
   ],
   "name": "Raspberry Pi 4 Model B",
   "upload": {
