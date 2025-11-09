@@ -7,7 +7,7 @@ Linux ARM is a Unix-like and mostly POSIX-compliant computer operating system (O
 **Key Features:**
 - Cross-compilation support from Linux x86_64, macOS (Intel/ARM), and Windows
 - Native compilation on ARM Linux systems
-- Support for Raspberry Pi 1, 2, 3, 4, and 5
+- Support for Raspberry Pi 1-5, Pi 400, Compute Module 4, and Zero/Zero 2W
 - Modern GPIO frameworks: lgpio (Pi 5 compatible) and pigpio
 - Legacy WiringPi framework for compatibility
 - Bare-metal C/C++ application support
@@ -51,8 +51,11 @@ When running PlatformIO directly on a Raspberry Pi or other ARM Linux system, th
 - `raspberrypi_2b` - Raspberry Pi 2 Model B
 - `raspberrypi_3b` - Raspberry Pi 3 Model B
 - `raspberrypi_4b` - Raspberry Pi 4 Model B
-- `raspberrypi_5` - Raspberry Pi 5 (NEW - lgpio framework only)
+- `raspberrypi_400` - Raspberry Pi 400 (keyboard computer, 1.8GHz)
+- `raspberrypi_5` - Raspberry Pi 5 (lgpio framework only)
+- `raspberrypi_cm4` - Raspberry Pi Compute Module 4
 - `raspberrypi_zero` - Raspberry Pi Zero
+- `raspberrypi_zero2w` - Raspberry Pi Zero 2 W
 
 # Usage
 
