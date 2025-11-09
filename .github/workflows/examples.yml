@@ -99,16 +99,28 @@ jobs:
           echo "Extracting toolchain..."
           unzip -q gcc-arm.zip
 
-          # Find the extracted directory (case-insensitive)
-          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" | head -1)
+          # Find the extracted directory (case-insensitive) and get absolute path
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit | sed 's|^\./||')
           echo "Found toolchain directory: $TOOLCHAIN_DIR"
 
+          # Get absolute path
+          TOOLCHAIN_BIN="$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin"
+          echo "Adding to PATH: $TOOLCHAIN_BIN"
+
           # Add to PATH for subsequent steps
-          echo "$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin" >> $GITHUB_PATH
+          echo "$TOOLCHAIN_BIN" >> $GITHUB_PATH
 
           # Verify installation
+          echo "Verifying toolchain binaries..."
           ls -la "$TOOLCHAIN_DIR/bin/" | head -10
-          echo "Toolchain installation complete"
+
+          # Test if arm-linux-gnueabihf-gcc exists
+          if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
+            echo "✅ arm-linux-gnueabihf-gcc.exe found"
+          else
+            echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
+            ls -la "$TOOLCHAIN_DIR/bin/" | grep -i gcc || true
+          fi
 
       # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (32-bit)
