@@ -5,7 +5,8 @@
     "mcu": "bcm2835"
   },
   "frameworks": [
-    "wiringpi"
+    "wiringpi",
+    "lgpio"
   ],
   "name": "Raspberry Pi 1 Model B",
   "upload": {
