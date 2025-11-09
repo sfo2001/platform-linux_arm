@@ -140,13 +140,17 @@ board_build.arch = aarch64
 
 ### Cross-Compilation Support
 
-| Host OS | 32-bit Target | 64-bit Target | Toolchain |
-|---------|---------------|---------------|-----------|
-| **Linux x86_64** | ✅ Tested | ✅ Tested | `gcc-arm-linux-gnueabihf` / `gcc-aarch64-linux-gnu` |
-| **macOS Intel** | ✅ Tested | ✅ Tested | Homebrew ARM toolchains |
-| **macOS ARM (M1/M2)** | ✅ Tested | ✅ Tested | Homebrew ARM toolchains |
-| **Windows** | ⚠️ Supported | ⚠️ Supported | ARM GNU Toolchain (manual install) |
-| **ARM Linux (Native)** | ✅ Tested | ✅ Tested | System GCC (no cross-compiler needed) |
+| Host OS | 32-bit Target | 64-bit Target | Toolchain | Test Status |
+|---------|---------------|---------------|-----------|-------------|
+| **Linux x86_64** | ✅ | ✅ | `gcc-arm-linux-gnueabihf` / `gcc-aarch64-linux-gnu` | CI tested |
+| **macOS Intel** | ⚠️ | ⚠️ | Homebrew ARM toolchains | Untested, expected to work |
+| **macOS ARM (M1/M2)** | ⚠️ | ⚠️ | Homebrew ARM toolchains | Untested, expected to work |
+| **Windows** | ⚠️ | ⚠️ | ARM GNU Toolchain (manual install) | Untested, expected to work |
+| **ARM Linux (Native)** | ✅ | ✅ | System GCC (no cross-compiler needed) | Manually tested |
+
+**Legend:**
+- ✅ = Tested and verified working
+- ⚠️ = Code exists, toolchains available, but not tested in practice
 
 ### Native Compilation (On Raspberry Pi)
 
@@ -175,10 +179,17 @@ When running PlatformIO directly on a Raspberry Pi, the platform automatically d
 | Cross-compile from Linux | Pi 400 | bare-metal | 32-bit | Cross | ✅ CI Passing |
 | Cross-compile from Linux | Pi CM4 | bare-metal | 32-bit | Cross | ✅ CI Passing |
 | Cross-compile from Linux | Pi Zero 2W | bare-metal | 32-bit | Cross | ✅ CI Passing |
-| Cross-compile from macOS | All boards | lgpio | 32-bit | Cross | ✅ Verified |
-| Cross-compile from macOS | Pi 3B+ | lgpio | 64-bit | Cross | ✅ Verified |
 | Native on Pi 4 | Pi 4B | lgpio | 32-bit | Native | ✅ Verified |
 | Native on Pi 5 | Pi 5 | lgpio | 64-bit | Native | ✅ Verified |
+
+### ⚠️ Expected to Work (Untested)
+
+| Configuration | Board | Framework | Architecture | Status |
+|---------------|-------|-----------|--------------|--------|
+| Cross-compile from macOS | All boards | lgpio | 32-bit | ⚠️ Code exists, toolchains available |
+| Cross-compile from macOS | Pi 3B+ | lgpio | 64-bit | ⚠️ Code exists, toolchains available |
+| Cross-compile from Windows | All boards | lgpio | 32-bit | ⚠️ Code exists, toolchains available |
+| Cross-compile from Windows | Pi 3B+ | lgpio | 64-bit | ⚠️ Code exists, toolchains available |
 
 ### ⚠️ Partially Verified (Manual Testing Only)
 
@@ -343,6 +354,7 @@ uname -m
 4. **Toolchain Validation**: Both ARM toolchains installed and working
 
 **Limitations**:
+- CI only runs on Ubuntu (Linux x86_64) - macOS and Windows untested
 - No runtime testing (no physical hardware in CI)
 - No pigpio/wiringpi testing (deprecated/native-only)
 - Build-time verification only
@@ -398,9 +410,10 @@ We welcome community testing reports! Please open an issue with:
 
 | Category | Status | Notes |
 |----------|--------|-------|
-| **CI/CD Pipeline** | ✅ Passing | All automated tests passing |
-| **Cross-Compilation** | ✅ Working | Linux, macOS tested |
-| **Native Compilation** | ✅ Working | Pi 4, Pi 5 tested |
+| **CI/CD Pipeline** | ✅ Passing | All automated tests passing (Ubuntu only) |
+| **Cross-Compilation (Linux)** | ✅ Working | Linux x86_64 fully tested in CI |
+| **Cross-Compilation (macOS/Windows)** | ⚠️ Untested | Code exists, expected to work |
+| **Native Compilation** | ✅ Working | Pi 4, Pi 5 manually tested |
 | **32-bit Builds** | ✅ Stable | All boards |
 | **64-bit Builds** | ✅ Stable | ARMv8 boards |
 | **lgpio Framework** | ✅ Recommended | All boards, fully tested |
