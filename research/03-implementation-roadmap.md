@@ -43,11 +43,12 @@ This roadmap provides a **phased, dependency-ordered implementation plan** to mo
 |-------|------|----------|--------|--------|--------|------------------|
 | **Phase 0** | Foundation & Quick Wins | 1-2 weeks | 6-8 hours | **~2h** | ✅ **COMPLETE** | Cross-compilation (all OS), Pi 4, bare-metal |
 | **Phase 1** | Core Modernization | 2-3 weeks | 10-14→9.5 hours* | **~2.5h** | ✅ **COMPLETE** | lgpio framework (all Pi 1-5), Pi 5 board, CI/CD, documentation |
-| **Phase 2** | Complete Coverage | 1-2 weeks | 8-12 hours | TBD | ⏳ **PENDING** | All boards, dual-arch, full CI matrix |
+| **Phase 2** | Complete Coverage | 1-2 weeks | 14-21 hours (8-12h + 6-9h PWM†) | TBD | ⏳ **PENDING** | All boards, dual-arch, full CI matrix, PWM HAL (opt) |
 | **Phase 3** | Quality & Polish | 1 week | 5-7 hours | TBD | ⏳ **PENDING** | Quality gates, automation, contributor guides |
-| **Total** | **5-8 weeks** | **29-41→33 hours** | **~4.5h** | 🔄 **~14% COMPLETE** | **Production-ready platform** |
+| **Total** | **5-8 weeks** | **35-50→40.5 hours** | **~4.5h** | 🔄 **~11% COMPLETE** | **Production-ready platform** |
 
 *Reduced effort: pigpio deprecated (lgpio works on all Pi models)
+†PWM HAL (Task 2.5) is optional enhancement - Phase 2 core is 8-12h, PWM adds 6-9h if included
 
 ### Critical Path & Timeline
 
@@ -542,10 +543,10 @@ Phase 3: Quality Gates & Automation
 
 ## Phase 2: Complete Coverage
 
-**Goal**: Add all remaining boards, dual-architecture support, full CI matrix, update WiringPi
+**Goal**: Add all remaining boards, dual-architecture support, full CI matrix, update WiringPi, add PWM HAL
 
 **Duration**: 1-2 weeks
-**Total Effort**: 8-12 hours
+**Total Effort**: 14-21 hours (8-12h core tasks + 6-9h PWM HAL optional)
 **Priority**: 🟡 **MEDIUM** - Completeness and production-readiness
 
 ### Tasks
@@ -669,6 +670,227 @@ Phase 3: Quality Gates & Automation
 
 ---
 
+#### Task 2.5: Linux PWM HAL (sysfs /sys/class/pwm Interface)
+
+**Effort**: 6-9 hours | **Owner**: TBD | **Dependencies**: Task 1.1 (lgpio framework) ✅
+
+**Description**: Extend the lgpio framework with a Hardware PWM abstraction layer using the standard Linux `/sys/class/pwm` interface (sysfs). Provides a lightweight, kernel-based PWM API without daemon dependencies, offering the most future-proof and "Linux-native" way to expose hardware PWM for ARM Linux platforms.
+
+**Priority**: 🟢 **OPTIONAL** - Enhancement, not critical path
+
+**Success Criteria**:
+- ✅ PWM HAL extends lgpio framework (integrated into builder/frameworks/lgpio.py)
+- ✅ Core library wraps /sys/class/pwm file operations transparently
+- ✅ Board-specific GPIO pin-to-PWM-channel mapping tables
+- ✅ Auto-detects PWM chip number based on Pi model (different for Pi 5)
+- ✅ API accepts GPIO pin numbers (user-friendly), internally maps to chip/channel
+- ✅ Full API implemented: init, write, deinit, set_frequency, set_polarity, get_status, is_enabled
+- ✅ Example project demonstrating PWM LED fade
+- ✅ Comprehensive documentation covers kernel module setup, device tree overlays, permissions
+- ✅ Setup automation: systemd service script for permissions (not relying on udev alone)
+- ✅ Tested on Pi 4 and Pi 5 (different PWM chips - pwmchip0 vs pwmchip2/3)
+
+**Implementation Strategy**:
+
+**1. Integration Approach**: Extend lgpio Framework (Option C)
+- **Rationale**: lgpio is the PRIMARY modern framework for all Pi models (1-5)
+- **Benefits**: Coherent API (GPIO + PWM in one framework), reduced user friction, clean integration
+- **Implementation**: Add PWM functions to lgpio framework library, available when `framework = lgpio`
+- **Location**: Enhance `builder/frameworks/lgpio.py` and lgpio core library
+
+**2. Kernel Driver & Device Tree Requirements**:
+- **Driver**: Requires `pwm-bcm2835` (Pi 1-4) or RP1 PWM (Pi 5) kernel module
+- **Device Tree Overlay**: Users MUST enable in `/boot/config.txt`:
+  ```bash
+  dtoverlay=pwm-2chan  # or dtoverlay=pwm for single channel
+  ```
+- **Auto-Detection Strategy**:
+  - Detect Pi model via `/proc/device-tree/model` or `/proc/cpuinfo`
+  - Map model to expected pwmchip number:
+    - Pi 1-4: `pwmchip0` (BCM2835/2711)
+    - Pi 5: `pwmchip2` or `pwmchip3` (RP1 I/O controller)
+  - Search `/sys/class/pwm/` directory to confirm chip availability
+  - Provide configuration override for custom setups
+
+**3. Pin Mapping Strategy**: GPIO Pin Numbers (User-Friendly)
+- **API Input**: GPIO pin numbers (e.g., 12, 13, 18, 19)
+- **Internal Translation**: HAL maps GPIO → (pwmchip, channel) based on Pi model
+- **Example Mapping Tables**:
+
+| Pi Model | GPIO Pin | PWM Chip | PWM Channel |
+|----------|----------|----------|-------------|
+| Pi 1-4   | 12       | pwmchip0 | 0           |
+| Pi 1-4   | 13       | pwmchip0 | 1           |
+| Pi 1-4   | 18       | pwmchip0 | 0 (alt)     |
+| Pi 1-4   | 19       | pwmchip0 | 1 (alt)     |
+| Pi 5     | 12       | pwmchip2 | 0 (TBD)     |
+| Pi 5     | 13       | pwmchip2 | 1 (TBD)     |
+
+- **Implementation**: Board-specific lookup tables in HAL code
+- **Error Handling**: Clear error if pin not PWM-capable or DTO not loaded
+
+**4. Permissions Strategy**: Document + Systemd Service (Hybrid Approach)
+- **Problem**: udev rules unreliable for dynamically exported `/sys/class/pwm/pwmchipX/pwmY` directories
+- **Solution**: Provide setup script run by systemd service at boot
+
+**Setup Script** (`scripts/setup-pwm-perms.sh`):
+```bash
+#!/bin/sh
+# Export PWM channels (assuming pwmchip0, channels 0 and 1)
+PWM_CHIP="/sys/class/pwm/pwmchip0"  # Auto-detect in actual implementation
+echo 0 > ${PWM_CHIP}/export 2>/dev/null || true
+echo 1 > ${PWM_CHIP}/export 2>/dev/null || true
+
+# Set group ownership and permissions
+chown -R root:gpio ${PWM_CHIP}/*
+chmod -R g+rwX ${PWM_CHIP}/*
+```
+
+**Systemd Unit File** (`scripts/platformio-pwm.service`):
+```ini
+[Unit]
+Description=PlatformIO PWM Permissions Setup
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/setup-pwm-perms.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**User Setup Steps** (documented):
+1. Enable device tree overlay: `dtoverlay=pwm-2chan` in `/boot/config.txt`
+2. Install systemd service:
+   ```bash
+   sudo cp scripts/setup-pwm-perms.sh /usr/local/bin/
+   sudo chmod +x /usr/local/bin/setup-pwm-perms.sh
+   sudo cp scripts/platformio-pwm.service /etc/systemd/system/
+   sudo systemctl enable platformio-pwm.service
+   sudo systemctl start platformio-pwm.service
+   ```
+3. Add user to gpio group: `sudo usermod -a -G gpio $USER`
+4. Reboot for changes to take effect
+
+**5. API Design**: Complete C/C++ API
+
+```c
+// Constants for Polarity
+#define PWM_NORMAL    0
+#define PWM_INVERSED  1
+
+// Core Functions
+int pwm_init(int pin, int freq_hz);
+int pwm_write(int pin, float duty_cycle_percent);  // 0.0 to 100.0
+int pwm_deinit(int pin);
+
+// Extended Functions
+int pwm_set_frequency(int pin, int freq_hz);
+int pwm_set_polarity(int pin, int polarity);  // PWM_NORMAL or PWM_INVERSED
+int pwm_get_status(int pin, int *freq_hz_out, float *duty_cycle_out);
+int pwm_is_enabled(int pin);
+```
+
+**API Implementation Details**:
+- **pwm_init**: Export channel, set period (calculated from freq_hz), enable PWM
+- **pwm_write**: Write duty_cycle in nanoseconds to `duty_cycle` file
+- **pwm_deinit**: Disable PWM, unexport channel
+- **pwm_set_frequency**: Disable (if enabled), update `period` file, re-enable
+- **pwm_set_polarity**: Write "normal" or "inversed" to `polarity` file
+- **pwm_get_status**: Read `period` and `duty_cycle` files, calculate freq/duty%
+- **pwm_is_enabled**: Read `enable` file (returns 0 or 1)
+
+**6. File Operations Mapping** (/sys/class/pwm):
+- Export channel: `echo 0 > /sys/class/pwm/pwmchip0/export`
+- Set period (ns): `echo 1000000 > /sys/class/pwm/pwmchip0/pwm0/period`
+- Set duty cycle (ns): `echo 500000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle`
+- Set polarity: `echo "normal" > /sys/class/pwm/pwmchip0/pwm0/polarity`
+- Enable PWM: `echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable`
+- Unexport channel: `echo 0 > /sys/class/pwm/pwmchip0/unexport`
+
+**Implementation Notes**:
+
+**Core Library** (`framework-lgpio/pwm-hal.c` and `pwm-hal.h`):
+- Implement file I/O wrappers for /sys/class/pwm operations
+- Board-specific GPIO pin mapping tables (loaded at runtime based on Pi model detection)
+- Auto-detect PWM chip number (search /sys/class/pwm/, validate against Pi model)
+- Error handling: permissions, missing DTO, busy channels, invalid pins
+- Thread-safety: use mutex for file operations if needed
+
+**Framework Integration** (`builder/frameworks/lgpio.py`):
+- Add PWM HAL library to lgpio framework build
+- Include PWM header in framework includes
+- Link PWM HAL library automatically when lgpio framework selected
+- No framework changes needed - HAL is part of lgpio package
+
+**Example Project** (`examples/lgpio-pwm-fade/`):
+- Demonstrates PWM LED fade (0-100% duty cycle)
+- Tests all API functions (init, write, set_frequency, get_status, deinit)
+- Includes README with hardware setup (LED circuit, PWM pin selection)
+- Optional: servo motor control example
+
+**Documentation** (create `docs/PWM_SETUP.md`):
+- Overview: Why /sys/class/pwm (kernel-based, no daemon, future-proof)
+- Hardware support: PWM-capable GPIO pins per Pi model
+- Setup guide: device tree overlays, systemd service, permissions
+- API reference: all functions with examples
+- Troubleshooting: common errors (missing DTO, permission denied, busy channel)
+- Advanced topics: polarity inversion, frequency limits, multi-channel usage
+
+**Testing Requirements**:
+- **Pi 4**: Test on pwmchip0 (BCM2711)
+- **Pi 5**: Test on pwmchip2/3 (RP1 chip) - CRITICAL (different hardware)
+- **Multi-channel**: Test both PWM0 and PWM1 simultaneously
+- **Edge cases**: Invalid pins, missing DTO, permission errors, frequency limits
+- **Cross-compilation**: Verify HAL builds correctly for ARM target
+
+**Why This Approach?**
+
+| Aspect | Traditional (MMIO/pigpio) | This HAL (/sys/class/pwm) |
+|--------|---------------------------|---------------------------|
+| **Privilege** | Requires root or daemon | User-level (with setup) |
+| **Kernel Updates** | Breaks with kernel changes | Stable kernel interface |
+| **Pi 5 Support** | ❌ Incompatible (RP1 chip) | ✅ Works (kernel abstracts) |
+| **Architecture** | Hardware-specific registers | Architecture-agnostic |
+| **Maintenance** | High (track register changes) | Low (kernel maintains) |
+| **Portability** | Pi-specific | Works on all Linux ARM |
+
+**References**:
+- Linux PWM Subsystem: https://www.kernel.org/doc/Documentation/pwm.txt
+- RPi PWM Overlay: https://github.com/raspberrypi/linux/blob/rpi-6.1.y/arch/arm/boot/dts/overlays/pwm-overlay.dts
+- sysfs PWM Guide: https://jumpnowtek.com/rpi/Using-the-Raspberry-Pi-Hardware-PWM-timers.html
+- Raspberry Pi GPIO White Paper (recommends kernel interfaces)
+- lgpio documentation: http://abyz.me.uk/lg/lgpio.html
+
+**Breakdown** (6-9 hours):
+- 3-4h: Implement HAL library (file I/O wrappers, pin mapping tables, error handling)
+  - 1h: Core file operations (export, period, duty_cycle, enable)
+  - 1h: API functions (init, write, deinit, set_frequency, set_polarity, get_status)
+  - 1h: Pi model detection, pwmchip auto-detection, GPIO pin mapping
+  - 1h: Error handling (permissions, missing DTO, invalid pins, busy channels)
+- 2-3h: Testing and validation
+  - 1h: Test on Pi 4 (pwmchip0)
+  - 1h: Test on Pi 5 (pwmchip2/3) - different hardware
+  - 1h: Edge cases (permissions, busy channels, invalid pins, multi-channel)
+- 1-2h: Documentation, examples, setup automation
+  - 30 min: PWM LED fade example project
+  - 30 min: Setup script (setup-pwm-perms.sh, systemd service)
+  - 30 min: docs/PWM_SETUP.md (setup guide, API reference, troubleshooting)
+  - 30 min: Optional: servo control example, advanced usage docs
+
+**Risks**:
+
+| Risk | Mitigation |
+|------|------------|
+| **Pi 5 PWM chip mapping unknown** | Research RP1 datasheet, test on hardware, document findings |
+| **Device tree overlay conflicts** | Document overlay requirements clearly, test with different DT configs |
+| **Permissions setup too complex** | Provide automated script, clear step-by-step guide |
+| **Frequency/duty cycle limits vary by Pi model** | Document hardware limits per model, add runtime validation |
+| **No Pi 5 hardware for testing** | Seek community testers, validate logic via code review |
+
+---
+
 ### Phase 2 Dependencies
 
 **Requires**: Phase 1 complete (frameworks, basic CI)
@@ -686,6 +908,7 @@ Phase 3: Quality Gates & Automation
 - ✅ **CI tests on 3 OS** (Ubuntu, Windows, macOS)
 - ✅ **15+ CI test combinations** passing
 - ✅ **Complete documentation** (boards, arch, frameworks)
+- 🟢 **PWM HAL available** (optional enhancement, extends lgpio framework)
 
 ### Risks for Phase 2
 
@@ -884,12 +1107,13 @@ Stream D (Documentation):
 |-------|-------|-----------|-----------|-----------|-------|--------|
 | Phase 0 | 4 | 4.5 | 1.5 | 1 | 7 | **~2h** ✅ |
 | Phase 1 | 5→4* | 7.5→5** | 2.5 | 2 | 12→9.5** | **~2.5h** (partial) |
-| Phase 2 | 4 | 7 | 2 | 2 | 11 | Pending |
+| Phase 2 | 5 | 11.5 (4.5 + 7†) | 4 (2 + 2†) | 3 (2 + 1†) | 18.5 (11 + 7.5†) | Pending |
 | Phase 3 | 4 | 4 | 0.5 | 1 | 5.5 | Pending |
-| **Total** | **17→16** | **23→20.5** | **6.5** | **6** | **35.5→33** | **~4.5h** so far |
+| **Total** | **17→17** | **27.5→24** | **9** | **8** | **44.5→40.5** | **~4.5h** so far |
 
 *Task 1.2 (pigpio) deprecated, not implementing
 **Reduced effort: lgpio-only strategy simplifies implementation
+†Task 2.5 (PWM HAL) is optional - Phase 2 core is 11h (Tasks 2.1-2.4), PWM adds 7.5h if included
 
 **Efficiency Note**: Actual time significantly under estimates due to:
 - lgpio-only decision (no pigpio complexity)
@@ -900,10 +1124,12 @@ Stream D (Documentation):
 
 | Work Type | Hours | Percentage |
 |-----------|-------|------------|
-| Development (builder, frameworks, boards) | 23 | 65% |
-| Testing (validation, CI/CD) | 6.5 | 18% |
-| Documentation (guides, examples) | 6 | 17% |
-| **Total** | **35.5** | **100%** |
+| Development (builder, frameworks, boards, PWM HAL) | 27.5 (24* without PWM) | 62% |
+| Testing (validation, CI/CD) | 9 (6.5* without PWM) | 20% |
+| Documentation (guides, examples) | 8 (6* without PWM) | 18% |
+| **Total** | **44.5 (40.5* including PWM)** | **100%** |
+
+*Core tasks only (without optional Task 2.5 PWM HAL)
 
 ---
 
