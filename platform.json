@@ -19,11 +19,10 @@
   "version": "1.6.0",
   "frameworks": {
     "wiringpi": {
-      "package": "framework-wiringpi",
       "script": "builder/frameworks/wiringpi.py",
-      "description": "WiringPi is a GPIO access library written in C for the BCM2835 used in the Raspberry Pi. It's designed to be familiar to people who have used the Arduino 'wiring' system",
-      "url": "http://wiringpi.com",
-      "title": "WiringPi"
+      "description": "WiringPi is a GPIO access library written in C for the BCM2835+ used in the Raspberry Pi. Now maintained by GC2 (Grazer Computer Club) with Raspberry Pi 5 support (GCLK function not supported on Pi 5)",
+      "url": "https://github.com/WiringPi/WiringPi",
+      "title": "WiringPi (GC2 Fork)"
     },
     "lgpio": {
       "script": "builder/frameworks/lgpio.py",
@@ -43,12 +42,6 @@
       "type": "toolchain",
       "owner": "platformio",
       "version": "~1.40802.0"
-    },
-    "framework-wiringpi": {
-      "type": "framework",
-      "optional": true,
-      "owner": "platformio",
-      "version": "~1.242.0"
     }
   }
 }
