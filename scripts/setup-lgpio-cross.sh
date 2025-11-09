@@ -54,6 +54,8 @@ if [ -d "lg/.git" ]; then
     echo "Updating existing lg repository..."
     cd lg
     git pull
+    echo "Cleaning previous build artifacts..."
+    make clean
 else
     echo "Cloning lg repository..."
     git clone https://github.com/joan2937/lg.git
@@ -90,7 +92,10 @@ echo "Headers installed to: $INSTALL_DIR/include/"
 echo "Libraries installed to: $INSTALL_DIR/lib/"
 echo ""
 echo "You can now build lgpio examples with PlatformIO:"
-echo "  cd $(dirname $(dirname $(readlink -f $0)))"
+# Get the repository root directory safely
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+echo "  cd $REPO_ROOT"
 echo "  source venv/bin/activate"
 echo "  pio run -d examples/lgpio-blink"
 echo ""
