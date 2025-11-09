@@ -17,7 +17,8 @@ jobs:
         example:
           - examples/baremetal-hello
           - examples/lgpio-blink
-          - examples/pigpio-blink
+          # Note: pigpio-blink not tested (deprecated framework, no CI setup)
+          # Note: wiringpi examples not tested (require native Pi hardware)
 
     steps:
       - uses: actions/checkout@v4
@@ -28,10 +29,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install ARM toolchain and GPIO libraries
+      - name: Install ARM cross-compilation toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf liblgpio-dev libpigpio-dev
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+      - name: Build lgpio for ARM cross-compilation
+        run: |
+          echo "Building lgpio library for ARM..."
+          ./scripts/setup-lgpio-cross.sh
 
       - name: Install PlatformIO Core
         run: pip install -U https://github.com/platformio/platformio-core/archive/develop.zip
