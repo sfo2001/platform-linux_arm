@@ -1,0 +1,918 @@
+2025-11-09T19:22:49.3506112Z Current runner version: '2.329.0'
+2025-11-09T19:22:49.3530614Z ##[group]Runner Image Provisioner
+2025-11-09T19:22:49.3531740Z Hosted Compute Agent
+2025-11-09T19:22:49.3532383Z Version: 20251016.436
+2025-11-09T19:22:49.3533007Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-09T19:22:49.3533680Z Build Date: 2025-10-15T20:44:12Z
+2025-11-09T19:22:49.3534332Z ##[endgroup]
+2025-11-09T19:22:49.3534865Z ##[group]Operating System
+2025-11-09T19:22:49.3535433Z Ubuntu
+2025-11-09T19:22:49.3535920Z 24.04.3
+2025-11-09T19:22:49.3536430Z LTS
+2025-11-09T19:22:49.3536864Z ##[endgroup]
+2025-11-09T19:22:49.3537415Z ##[group]Runner Image
+2025-11-09T19:22:49.3538019Z Image: ubuntu-24.04
+2025-11-09T19:22:49.3538527Z Version: 20251102.99.1
+2025-11-09T19:22:49.3539597Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251102.99/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-09T19:22:49.3541255Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251102.99
+2025-11-09T19:22:49.3542343Z ##[endgroup]
+2025-11-09T19:22:49.3544736Z ##[group]GITHUB_TOKEN Permissions
+2025-11-09T19:22:49.3547148Z Actions: write
+2025-11-09T19:22:49.3547703Z Attestations: write
+2025-11-09T19:22:49.3548224Z Checks: write
+2025-11-09T19:22:49.3548705Z Contents: write
+2025-11-09T19:22:49.3549312Z Deployments: write
+2025-11-09T19:22:49.3549800Z Discussions: write
+2025-11-09T19:22:49.3550327Z Issues: write
+2025-11-09T19:22:49.3550849Z Metadata: read
+2025-11-09T19:22:49.3551581Z Models: read
+2025-11-09T19:22:49.3552044Z Packages: write
+2025-11-09T19:22:49.3552628Z Pages: write
+2025-11-09T19:22:49.3553137Z PullRequests: write
+2025-11-09T19:22:49.3553676Z RepositoryProjects: write
+2025-11-09T19:22:49.3554301Z SecurityEvents: write
+2025-11-09T19:22:49.3554912Z Statuses: write
+2025-11-09T19:22:49.3555425Z ##[endgroup]
+2025-11-09T19:22:49.3557514Z Secret source: Actions
+2025-11-09T19:22:49.3558248Z Prepare workflow directory
+2025-11-09T19:22:49.3878136Z Prepare all required actions
+2025-11-09T19:22:49.3922392Z Getting action download info
+2025-11-09T19:22:49.8336969Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-11-09T19:22:49.9233360Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2025-11-09T19:22:50.0898869Z Complete job name: build (examples/lgpio-blink)
+2025-11-09T19:22:50.1590795Z ##[group]Run actions/checkout@v4
+2025-11-09T19:22:50.1591985Z with:
+2025-11-09T19:22:50.1592388Z   submodules: recursive
+2025-11-09T19:22:50.1592863Z   repository: sfo2001/platform-linux_arm
+2025-11-09T19:22:50.1593555Z   token: ***
+2025-11-09T19:22:50.1593952Z   ssh-strict: true
+2025-11-09T19:22:50.1594361Z   ssh-user: git
+2025-11-09T19:22:50.1594773Z   persist-credentials: true
+2025-11-09T19:22:50.1595232Z   clean: true
+2025-11-09T19:22:50.1595642Z   sparse-checkout-cone-mode: true
+2025-11-09T19:22:50.1596133Z   fetch-depth: 1
+2025-11-09T19:22:50.1596528Z   fetch-tags: false
+2025-11-09T19:22:50.1596939Z   show-progress: true
+2025-11-09T19:22:50.1597365Z   lfs: false
+2025-11-09T19:22:50.1597758Z   set-safe-directory: true
+2025-11-09T19:22:50.1598411Z ##[endgroup]
+2025-11-09T19:22:50.2680492Z Syncing repository: sfo2001/platform-linux_arm
+2025-11-09T19:22:50.2682762Z ##[group]Getting Git version info
+2025-11-09T19:22:50.2683780Z Working directory is '/home/runner/work/platform-linux_arm/platform-linux_arm'
+2025-11-09T19:22:50.2684855Z [command]/usr/bin/git version
+2025-11-09T19:22:50.2770548Z git version 2.51.2
+2025-11-09T19:22:50.2796512Z ##[endgroup]
+2025-11-09T19:22:50.2810709Z Temporarily overriding HOME='/home/runner/work/_temp/0e7bbb09-762f-4934-8da1-63f887aa96cd' before making global git config changes
+2025-11-09T19:22:50.2812335Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-09T19:22:50.2823085Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/platform-linux_arm/platform-linux_arm
+2025-11-09T19:22:50.2859575Z Deleting the contents of '/home/runner/work/platform-linux_arm/platform-linux_arm'
+2025-11-09T19:22:50.2863309Z ##[group]Initializing the repository
+2025-11-09T19:22:50.2867197Z [command]/usr/bin/git init /home/runner/work/platform-linux_arm/platform-linux_arm
+2025-11-09T19:22:50.2976930Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-09T19:22:50.2978089Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-09T19:22:50.2979330Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-09T19:22:50.2980509Z hint:
+2025-11-09T19:22:50.2981495Z hint: 	git config --global init.defaultBranch <name>
+2025-11-09T19:22:50.2982523Z hint:
+2025-11-09T19:22:50.2983463Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-09T19:22:50.2984766Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-09T19:22:50.2985479Z hint:
+2025-11-09T19:22:50.2985868Z hint: 	git branch -m <name>
+2025-11-09T19:22:50.2986312Z hint:
+2025-11-09T19:22:50.2986915Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-09T19:22:50.2987994Z Initialized empty Git repository in /home/runner/work/platform-linux_arm/platform-linux_arm/.git/
+2025-11-09T19:22:50.2994215Z [command]/usr/bin/git remote add origin https://github.com/sfo2001/platform-linux_arm
+2025-11-09T19:22:50.3026910Z ##[endgroup]
+2025-11-09T19:22:50.3027647Z ##[group]Disabling automatic garbage collection
+2025-11-09T19:22:50.3030763Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-09T19:22:50.3058539Z ##[endgroup]
+2025-11-09T19:22:50.3059222Z ##[group]Setting up auth
+2025-11-09T19:22:50.3065220Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-09T19:22:50.3095916Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-09T19:22:50.3469931Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-09T19:22:50.3502490Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-09T19:22:50.3749337Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-09T19:22:50.3794583Z ##[endgroup]
+2025-11-09T19:22:50.3795855Z ##[group]Fetching the repository
+2025-11-09T19:22:50.3805033Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a02eeb51778313de058af2a25af1eed04cb80cd0:refs/remotes/origin/develop
+2025-11-09T19:22:50.8337707Z From https://github.com/sfo2001/platform-linux_arm
+2025-11-09T19:22:50.8338651Z  * [new ref]         a02eeb51778313de058af2a25af1eed04cb80cd0 -> origin/develop
+2025-11-09T19:22:50.8369229Z ##[endgroup]
+2025-11-09T19:22:50.8370304Z ##[group]Determining the checkout info
+2025-11-09T19:22:50.8371764Z ##[endgroup]
+2025-11-09T19:22:50.8376644Z [command]/usr/bin/git sparse-checkout disable
+2025-11-09T19:22:50.8420054Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-09T19:22:50.8447450Z ##[group]Checking out the ref
+2025-11-09T19:22:50.8450734Z [command]/usr/bin/git checkout --progress --force -B develop refs/remotes/origin/develop
+2025-11-09T19:22:50.8573191Z Switched to a new branch 'develop'
+2025-11-09T19:22:50.8576065Z branch 'develop' set up to track 'origin/develop'.
+2025-11-09T19:22:50.8582300Z ##[endgroup]
+2025-11-09T19:22:50.8583380Z ##[group]Setting up auth for fetching submodules
+2025-11-09T19:22:50.8586797Z [command]/usr/bin/git config --global http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-09T19:22:50.8621358Z [command]/usr/bin/git config --global --unset-all url.https://github.com/.insteadOf
+2025-11-09T19:22:50.8648334Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf git@github.com:
+2025-11-09T19:22:50.8676718Z [command]/usr/bin/git config --global --add url.https://github.com/.insteadOf org-103369858@github.com:
+2025-11-09T19:22:50.8701221Z ##[endgroup]
+2025-11-09T19:22:50.8701912Z ##[group]Fetching submodules
+2025-11-09T19:22:50.8704479Z [command]/usr/bin/git submodule sync --recursive
+2025-11-09T19:22:50.8922907Z [command]/usr/bin/git -c protocol.version=2 submodule update --init --force --depth=1 --recursive
+2025-11-09T19:22:50.9141917Z [command]/usr/bin/git submodule foreach --recursive git config --local gc.auto 0
+2025-11-09T19:22:50.9353380Z ##[endgroup]
+2025-11-09T19:22:50.9354125Z ##[group]Persisting credentials for submodules
+2025-11-09T19:22:50.9359107Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'url\.https\:\/\/github\.com\/\.insteadOf' && git config --local --unset-all 'url.https://github.com/.insteadOf' || :"
+2025-11-09T19:22:50.9573860Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local 'http.https://github.com/.extraheader' 'AUTHORIZATION: basic ***' && git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2025-11-09T19:22:50.9788130Z [command]/usr/bin/git submodule foreach --recursive git config --local --add 'url.https://github.com/.insteadOf' 'git@github.com:'
+2025-11-09T19:22:51.0007715Z [command]/usr/bin/git submodule foreach --recursive git config --local --add 'url.https://github.com/.insteadOf' 'org-103369858@github.com:'
+2025-11-09T19:22:51.0225758Z ##[endgroup]
+2025-11-09T19:22:51.0262786Z [command]/usr/bin/git log -1 --format=%H
+2025-11-09T19:22:51.0285280Z a02eeb51778313de058af2a25af1eed04cb80cd0
+2025-11-09T19:22:51.0508386Z ##[group]Run actions/setup-python@v5
+2025-11-09T19:22:51.0508922Z with:
+2025-11-09T19:22:51.0509294Z   python-version: 3.11
+2025-11-09T19:22:51.0509715Z   check-latest: false
+2025-11-09T19:22:51.0510259Z   token: ***
+2025-11-09T19:22:51.0510643Z   update-environment: true
+2025-11-09T19:22:51.0511265Z   allow-prereleases: false
+2025-11-09T19:22:51.0511713Z   freethreaded: false
+2025-11-09T19:22:51.0512125Z ##[endgroup]
+2025-11-09T19:22:51.2174402Z ##[group]Installed versions
+2025-11-09T19:22:51.2278844Z Successfully set up CPython (3.11.14)
+2025-11-09T19:22:51.2280499Z ##[endgroup]
+2025-11-09T19:22:51.2400492Z ##[group]Run sudo apt-get update
+2025-11-09T19:22:51.2401328Z [36;1msudo apt-get update[0m
+2025-11-09T19:22:51.2401839Z [36;1msudo apt-get install -y \[0m
+2025-11-09T19:22:51.2402461Z [36;1m  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \[0m
+2025-11-09T19:22:51.2403136Z [36;1m  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu[0m
+2025-11-09T19:22:51.2449964Z shell: /usr/bin/bash -e {0}
+2025-11-09T19:22:51.2450458Z env:
+2025-11-09T19:22:51.2451174Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:22:51.2451984Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-09T19:22:51.2452736Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:22:51.2453440Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:22:51.2454128Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:22:51.2454822Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-09T19:22:51.2455443Z ##[endgroup]
+2025-11-09T19:22:51.3824518Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2025-11-09T19:22:51.3940103Z Get:6 https://packages.microsoft.com/repos/azure-cli noble InRelease [3564 B]
+2025-11-09T19:22:51.4091871Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2025-11-09T19:22:51.4094280Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2025-11-09T19:22:51.4110010Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2025-11-09T19:22:51.4138241Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2025-11-09T19:22:51.4157755Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2025-11-09T19:22:51.5056397Z Get:8 https://packages.microsoft.com/repos/azure-cli noble/main amd64 Packages [1700 B]
+2025-11-09T19:22:51.6127198Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [67.3 kB]
+2025-11-09T19:22:51.6161345Z Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [49.9 kB]
+2025-11-09T19:22:51.6183373Z Get:11 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [11.2 kB]
+2025-11-09T19:22:51.6641929Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1585 kB]
+2025-11-09T19:22:51.6767594Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [299 kB]
+2025-11-09T19:22:51.6770630Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [175 kB]
+2025-11-09T19:22:51.6775554Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 c-n-f Metadata [15.7 kB]
+2025-11-09T19:22:51.6788488Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1498 kB]
+2025-11-09T19:22:51.6869999Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [378 kB]
+2025-11-09T19:22:51.6895887Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 c-n-f Metadata [31.4 kB]
+2025-11-09T19:22:51.6904634Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2244 kB]
+2025-11-09T19:22:51.7033864Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [509 kB]
+2025-11-09T19:22:51.7054649Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Components [212 B]
+2025-11-09T19:22:51.7494059Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2025-11-09T19:22:51.7506165Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [7144 B]
+2025-11-09T19:22:51.7522001Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [11.0 kB]
+2025-11-09T19:22:51.7532566Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-backports/restricted amd64 Components [212 B]
+2025-11-09T19:22:51.7543252Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Components [212 B]
+2025-11-09T19:22:51.7777010Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1305 kB]
+2025-11-09T19:22:51.7859466Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [215 kB]
+2025-11-09T19:22:51.7884571Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [21.5 kB]
+2025-11-09T19:22:51.7895710Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 c-n-f Metadata [9336 B]
+2025-11-09T19:22:51.7906194Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [906 kB]
+2025-11-09T19:22:51.7963801Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [203 kB]
+2025-11-09T19:22:51.7983535Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [52.3 kB]
+2025-11-09T19:22:51.7996853Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 c-n-f Metadata [19.4 kB]
+2025-11-09T19:22:51.8006808Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2135 kB]
+2025-11-09T19:22:51.8534650Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [485 kB]
+2025-11-09T19:22:51.8568522Z Get:37 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Components [212 B]
+2025-11-09T19:22:51.8576365Z Get:38 http://azure.archive.ubuntu.com/ubuntu noble-security/multiverse amd64 Components [208 B]
+2025-11-09T19:23:00.9036876Z Fetched 12.6 MB in 2s (8088 kB/s)
+2025-11-09T19:23:01.6676888Z Reading package lists...
+2025-11-09T19:23:01.7009566Z Reading package lists...
+2025-11-09T19:23:01.8798619Z Building dependency tree...
+2025-11-09T19:23:01.8805631Z Reading state information...
+2025-11-09T19:23:02.0355425Z The following additional packages will be installed:
+2025-11-09T19:23:02.0356650Z   binutils-aarch64-linux-gnu binutils-arm-linux-gnueabihf
+2025-11-09T19:23:02.0357786Z   cpp-13-aarch64-linux-gnu cpp-13-arm-linux-gnueabihf cpp-aarch64-linux-gnu
+2025-11-09T19:23:02.0358565Z   cpp-arm-linux-gnueabihf g++-13-aarch64-linux-gnu g++-13-arm-linux-gnueabihf
+2025-11-09T19:23:02.0359467Z   gcc-13-aarch64-linux-gnu gcc-13-aarch64-linux-gnu-base
+2025-11-09T19:23:02.0360423Z   gcc-13-arm-linux-gnueabihf gcc-13-arm-linux-gnueabihf-base gcc-13-cross-base
+2025-11-09T19:23:02.0361800Z   gcc-14-cross-base libasan8-arm64-cross libasan8-armhf-cross
+2025-11-09T19:23:02.0362635Z   libatomic1-arm64-cross libatomic1-armhf-cross libc6-arm64-cross
+2025-11-09T19:23:02.0363324Z   libc6-armhf-cross libc6-dev-arm64-cross libc6-dev-armhf-cross
+2025-11-09T19:23:02.0364053Z   libgcc-13-dev-arm64-cross libgcc-13-dev-armhf-cross libgcc-s1-arm64-cross
+2025-11-09T19:23:02.0365031Z   libgcc-s1-armhf-cross libgomp1-arm64-cross libgomp1-armhf-cross
+2025-11-09T19:23:02.0366024Z   libhwasan0-arm64-cross libitm1-arm64-cross liblsan0-arm64-cross
+2025-11-09T19:23:02.0366729Z   libstdc++-13-dev-arm64-cross libstdc++-13-dev-armhf-cross
+2025-11-09T19:23:02.0367325Z   libstdc++6-arm64-cross libstdc++6-armhf-cross libtsan2-arm64-cross
+2025-11-09T19:23:02.0367988Z   libubsan1-arm64-cross libubsan1-armhf-cross linux-libc-dev-arm64-cross
+2025-11-09T19:23:02.0368493Z   linux-libc-dev-armhf-cross
+2025-11-09T19:23:02.0373109Z Suggested packages:
+2025-11-09T19:23:02.0373766Z   binutils-doc gcc-13-locales cpp-13-doc cpp-doc gcc-13-doc manpages-dev
+2025-11-09T19:23:02.0374335Z   gdb-aarch64-linux-gnu gcc-doc gdb-arm-linux-gnueabihf
+2025-11-09T19:23:02.1210669Z The following NEW packages will be installed:
+2025-11-09T19:23:02.1211647Z   binutils-aarch64-linux-gnu binutils-arm-linux-gnueabihf
+2025-11-09T19:23:02.1212432Z   cpp-13-aarch64-linux-gnu cpp-13-arm-linux-gnueabihf cpp-aarch64-linux-gnu
+2025-11-09T19:23:02.1216404Z   cpp-arm-linux-gnueabihf g++-13-aarch64-linux-gnu g++-13-arm-linux-gnueabihf
+2025-11-09T19:23:02.1217525Z   g++-aarch64-linux-gnu g++-arm-linux-gnueabihf gcc-13-aarch64-linux-gnu
+2025-11-09T19:23:02.1218553Z   gcc-13-aarch64-linux-gnu-base gcc-13-arm-linux-gnueabihf
+2025-11-09T19:23:02.1219896Z   gcc-13-arm-linux-gnueabihf-base gcc-13-cross-base gcc-14-cross-base
+2025-11-09T19:23:02.1221167Z   gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf libasan8-arm64-cross
+2025-11-09T19:23:02.1222124Z   libasan8-armhf-cross libatomic1-arm64-cross libatomic1-armhf-cross
+2025-11-09T19:23:02.1222954Z   libc6-arm64-cross libc6-armhf-cross libc6-dev-arm64-cross
+2025-11-09T19:23:02.1223783Z   libc6-dev-armhf-cross libgcc-13-dev-arm64-cross libgcc-13-dev-armhf-cross
+2025-11-09T19:23:02.1224726Z   libgcc-s1-arm64-cross libgcc-s1-armhf-cross libgomp1-arm64-cross
+2025-11-09T19:23:02.1225592Z   libgomp1-armhf-cross libhwasan0-arm64-cross libitm1-arm64-cross
+2025-11-09T19:23:02.1226546Z   liblsan0-arm64-cross libstdc++-13-dev-arm64-cross
+2025-11-09T19:23:02.1227473Z   libstdc++-13-dev-armhf-cross libstdc++6-arm64-cross libstdc++6-armhf-cross
+2025-11-09T19:23:02.1228543Z   libtsan2-arm64-cross libubsan1-arm64-cross libubsan1-armhf-cross
+2025-11-09T19:23:02.1229488Z   linux-libc-dev-arm64-cross linux-libc-dev-armhf-cross
+2025-11-09T19:23:02.1427052Z 0 upgraded, 44 newly installed, 0 to remove and 22 not upgraded.
+2025-11-09T19:23:02.1427715Z Need to get 117 MB of archives.
+2025-11-09T19:23:02.1428249Z After this operation, 426 MB of additional disk space will be used.
+2025-11-09T19:23:02.1428949Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2025-11-09T19:23:02.2262851Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-aarch64-linux-gnu-base amd64 13.3.0-6ubuntu2~24.04cross1 [51.7 kB]
+2025-11-09T19:23:02.2965682Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-aarch64-linux-gnu amd64 13.3.0-6ubuntu2~24.04cross1 [10.8 MB]
+2025-11-09T19:23:02.5956140Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-arm-linux-gnueabihf-base amd64 13.3.0-6ubuntu2~24.04cross1 [51.7 kB]
+2025-11-09T19:23:02.6650416Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 cpp-13-arm-linux-gnueabihf amd64 13.3.0-6ubuntu2~24.04cross1 [10.2 MB]
+2025-11-09T19:23:02.9531147Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 cpp-aarch64-linux-gnu amd64 4:13.2.0-7ubuntu1 [5332 B]
+2025-11-09T19:23:03.0222478Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 cpp-arm-linux-gnueabihf amd64 4:13.2.0-7ubuntu1 [5324 B]
+2025-11-09T19:23:03.0912629Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-aarch64-linux-gnu amd64 2.42-4ubuntu2.6 [3711 kB]
+2025-11-09T19:23:03.2373648Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-cross-base all 13.3.0-6ubuntu2~24.04cross1 [46.4 kB]
+2025-11-09T19:23:03.3069956Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-14-cross-base all 14.2.0-4ubuntu2~24.04cross1 [46.0 kB]
+2025-11-09T19:23:03.3769102Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libc6-arm64-cross all 2.39-0ubuntu8cross1 [1197 kB]
+2025-11-09T19:23:03.4732013Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-s1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [61.9 kB]
+2025-11-09T19:23:03.5494742Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [110 kB]
+2025-11-09T19:23:03.6134524Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libitm1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [31.5 kB]
+2025-11-09T19:23:03.6827771Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [11.4 kB]
+2025-11-09T19:23:03.7524435Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [524 kB]
+2025-11-09T19:23:03.8307175Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 liblsan0-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [238 kB]
+2025-11-09T19:23:03.9036952Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libtsan2-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [500 kB]
+2025-11-09T19:23:03.9822246Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++6-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [658 kB]
+2025-11-09T19:23:04.0656891Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [219 kB]
+2025-11-09T19:23:04.1373061Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libhwasan0-arm64-cross all 14.2.0-4ubuntu2~24.04cross1 [303 kB]
+2025-11-09T19:23:04.2123488Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev-arm64-cross all 13.3.0-6ubuntu2~24.04cross1 [2616 kB]
+2025-11-09T19:23:04.3350516Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-aarch64-linux-gnu amd64 13.3.0-6ubuntu2~24.04cross1 [21.1 MB]
+2025-11-09T19:23:04.8701675Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 linux-libc-dev-arm64-cross all 6.8.0-25.25cross1 [1375 kB]
+2025-11-09T19:23:04.9663615Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libc6-dev-arm64-cross all 2.39-0ubuntu8cross1 [1629 kB]
+2025-11-09T19:23:05.0689302Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev-arm64-cross all 13.3.0-6ubuntu2~24.04cross1 [2657 kB]
+2025-11-09T19:23:05.1933283Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-aarch64-linux-gnu amd64 13.3.0-6ubuntu2~24.04cross1 [12.2 MB]
+2025-11-09T19:23:05.5268973Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 binutils-arm-linux-gnueabihf amd64 2.42-4ubuntu2.6 [3552 kB]
+2025-11-09T19:23:05.6727681Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libc6-armhf-cross all 2.39-0ubuntu8cross1 [1320 kB]
+2025-11-09T19:23:05.7685190Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-s1-armhf-cross all 14.2.0-4ubuntu2~24.04cross1 [41.5 kB]
+2025-11-09T19:23:05.8380227Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgomp1-armhf-cross all 14.2.0-4ubuntu2~24.04cross1 [123 kB]
+2025-11-09T19:23:05.9078629Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libatomic1-armhf-cross all 14.2.0-4ubuntu2~24.04cross1 [7626 B]
+2025-11-09T19:23:05.9771148Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libasan8-armhf-cross all 14.2.0-4ubuntu2~24.04cross1 [2930 kB]
+2025-11-09T19:23:06.0972025Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++6-armhf-cross all 14.2.0-4ubuntu2~24.04cross1 [664 kB]
+2025-11-09T19:23:06.1749792Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libubsan1-armhf-cross all 14.2.0-4ubuntu2~24.04cross1 [1153 kB]
+2025-11-09T19:23:06.2592970Z Get:36 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgcc-13-dev-armhf-cross all 13.3.0-6ubuntu2~24.04cross1 [899 kB]
+2025-11-09T19:23:06.5992484Z Get:37 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gcc-13-arm-linux-gnueabihf amd64 13.3.0-6ubuntu2~24.04cross1 [19.6 MB]
+2025-11-09T19:23:07.1930721Z Get:38 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 linux-libc-dev-armhf-cross all 6.8.0-25.25cross1 [1359 kB]
+2025-11-09T19:23:07.2923660Z Get:39 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libc6-dev-armhf-cross all 2.39-0ubuntu8cross1 [1387 kB]
+2025-11-09T19:23:07.3893934Z Get:40 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libstdc++-13-dev-armhf-cross all 13.3.0-6ubuntu2~24.04cross1 [2460 kB]
+2025-11-09T19:23:07.5119729Z Get:41 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 g++-13-arm-linux-gnueabihf amd64 13.3.0-6ubuntu2~24.04cross1 [11.5 MB]
+2025-11-09T19:23:07.8365234Z Get:42 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 gcc-aarch64-linux-gnu amd64 4:13.2.0-7ubuntu1 [1210 B]
+2025-11-09T19:23:07.9041215Z Get:43 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 g++-aarch64-linux-gnu amd64 4:13.2.0-7ubuntu1 [962 B]
+2025-11-09T19:23:07.9715465Z Get:44 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 gcc-arm-linux-gnueabihf amd64 4:13.2.0-7ubuntu1 [1230 B]
+2025-11-09T19:23:08.0387332Z Get:45 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 g++-arm-linux-gnueabihf amd64 4:13.2.0-7ubuntu1 [968 B]
+2025-11-09T19:23:08.3326812Z Fetched 117 MB in 6s (19.8 MB/s)
+2025-11-09T19:23:08.3856292Z Selecting previously unselected package gcc-13-aarch64-linux-gnu-base:amd64.
+2025-11-09T19:23:08.4558594Z (Reading database ... 
+2025-11-09T19:23:08.4559012Z (Reading database ... 5%
+2025-11-09T19:23:08.4559403Z (Reading database ... 10%
+2025-11-09T19:23:08.4559628Z (Reading database ... 15%
+2025-11-09T19:23:08.4559832Z (Reading database ... 20%
+2025-11-09T19:23:08.4560042Z (Reading database ... 25%
+2025-11-09T19:23:08.4560256Z (Reading database ... 30%
+2025-11-09T19:23:08.4560449Z (Reading database ... 35%
+2025-11-09T19:23:08.4560642Z (Reading database ... 40%
+2025-11-09T19:23:08.4560841Z (Reading database ... 45%
+2025-11-09T19:23:08.4561513Z (Reading database ... 50%
+2025-11-09T19:23:08.5473192Z (Reading database ... 55%
+2025-11-09T19:23:08.8842613Z (Reading database ... 60%
+2025-11-09T19:23:09.0555352Z (Reading database ... 65%
+2025-11-09T19:23:09.1674053Z (Reading database ... 70%
+2025-11-09T19:23:09.2878898Z (Reading database ... 75%
+2025-11-09T19:23:09.7530043Z (Reading database ... 80%
+2025-11-09T19:23:10.5968050Z (Reading database ... 85%
+2025-11-09T19:23:11.2424479Z (Reading database ... 90%
+2025-11-09T19:23:11.8115007Z (Reading database ... 95%
+2025-11-09T19:23:11.8115517Z (Reading database ... 100%
+2025-11-09T19:23:11.8116110Z (Reading database ... 215802 files and directories currently installed.)
+2025-11-09T19:23:11.8162720Z Preparing to unpack .../00-gcc-13-aarch64-linux-gnu-base_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:11.8198274Z Unpacking gcc-13-aarch64-linux-gnu-base:amd64 (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:11.8565998Z Selecting previously unselected package cpp-13-aarch64-linux-gnu.
+2025-11-09T19:23:11.8700334Z Preparing to unpack .../01-cpp-13-aarch64-linux-gnu_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:11.8735456Z Unpacking cpp-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.0248718Z Selecting previously unselected package gcc-13-arm-linux-gnueabihf-base:amd64.
+2025-11-09T19:23:12.0383909Z Preparing to unpack .../02-gcc-13-arm-linux-gnueabihf-base_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:12.0393678Z Unpacking gcc-13-arm-linux-gnueabihf-base:amd64 (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.0686145Z Selecting previously unselected package cpp-13-arm-linux-gnueabihf.
+2025-11-09T19:23:12.0819940Z Preparing to unpack .../03-cpp-13-arm-linux-gnueabihf_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:12.0854534Z Unpacking cpp-13-arm-linux-gnueabihf (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.2336631Z Selecting previously unselected package cpp-aarch64-linux-gnu.
+2025-11-09T19:23:12.2470360Z Preparing to unpack .../04-cpp-aarch64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+2025-11-09T19:23:12.2480269Z Unpacking cpp-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:12.2756662Z Selecting previously unselected package cpp-arm-linux-gnueabihf.
+2025-11-09T19:23:12.2889819Z Preparing to unpack .../05-cpp-arm-linux-gnueabihf_4%3a13.2.0-7ubuntu1_amd64.deb ...
+2025-11-09T19:23:12.2903845Z Unpacking cpp-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:12.3184075Z Selecting previously unselected package binutils-aarch64-linux-gnu.
+2025-11-09T19:23:12.3318343Z Preparing to unpack .../06-binutils-aarch64-linux-gnu_2.42-4ubuntu2.6_amd64.deb ...
+2025-11-09T19:23:12.3342665Z Unpacking binutils-aarch64-linux-gnu (2.42-4ubuntu2.6) ...
+2025-11-09T19:23:12.5503267Z Selecting previously unselected package gcc-13-cross-base.
+2025-11-09T19:23:12.5639554Z Preparing to unpack .../07-gcc-13-cross-base_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.5655210Z Unpacking gcc-13-cross-base (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.5878028Z Selecting previously unselected package gcc-14-cross-base.
+2025-11-09T19:23:12.6011091Z Preparing to unpack .../08-gcc-14-cross-base_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.6023760Z Unpacking gcc-14-cross-base (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.6262104Z Selecting previously unselected package libc6-arm64-cross.
+2025-11-09T19:23:12.6396839Z Preparing to unpack .../09-libc6-arm64-cross_2.39-0ubuntu8cross1_all.deb ...
+2025-11-09T19:23:12.6411652Z Unpacking libc6-arm64-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:12.6868605Z Selecting previously unselected package libgcc-s1-arm64-cross.
+2025-11-09T19:23:12.7003806Z Preparing to unpack .../10-libgcc-s1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.7016490Z Unpacking libgcc-s1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.7263060Z Selecting previously unselected package libgomp1-arm64-cross.
+2025-11-09T19:23:12.7397152Z Preparing to unpack .../11-libgomp1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.7432559Z Unpacking libgomp1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.7681442Z Selecting previously unselected package libitm1-arm64-cross.
+2025-11-09T19:23:12.7815553Z Preparing to unpack .../12-libitm1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.7827043Z Unpacking libitm1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.8073186Z Selecting previously unselected package libatomic1-arm64-cross.
+2025-11-09T19:23:12.8208328Z Preparing to unpack .../13-libatomic1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.8233231Z Unpacking libatomic1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.8458045Z Selecting previously unselected package libasan8-arm64-cross.
+2025-11-09T19:23:12.8594113Z Preparing to unpack .../14-libasan8-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.8608082Z Unpacking libasan8-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.8947647Z Selecting previously unselected package liblsan0-arm64-cross.
+2025-11-09T19:23:12.9082534Z Preparing to unpack .../15-liblsan0-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.9093527Z Unpacking liblsan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.9365768Z Selecting previously unselected package libtsan2-arm64-cross.
+2025-11-09T19:23:12.9500161Z Preparing to unpack .../16-libtsan2-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:12.9512943Z Unpacking libtsan2-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:12.9901047Z Selecting previously unselected package libstdc++6-arm64-cross.
+2025-11-09T19:23:13.0036081Z Preparing to unpack .../17-libstdc++6-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:13.0048001Z Unpacking libstdc++6-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:13.0451590Z Selecting previously unselected package libubsan1-arm64-cross.
+2025-11-09T19:23:13.0586125Z Preparing to unpack .../18-libubsan1-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:13.0597243Z Unpacking libubsan1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:13.0864856Z Selecting previously unselected package libhwasan0-arm64-cross.
+2025-11-09T19:23:13.1000222Z Preparing to unpack .../19-libhwasan0-arm64-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:13.1012595Z Unpacking libhwasan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:13.1294281Z Selecting previously unselected package libgcc-13-dev-arm64-cross.
+2025-11-09T19:23:13.1427471Z Preparing to unpack .../20-libgcc-13-dev-arm64-cross_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:13.1440419Z Unpacking libgcc-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:13.2489584Z Selecting previously unselected package gcc-13-aarch64-linux-gnu.
+2025-11-09T19:23:13.2632803Z Preparing to unpack .../21-gcc-13-aarch64-linux-gnu_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:13.2667385Z Unpacking gcc-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:13.5637851Z Selecting previously unselected package linux-libc-dev-arm64-cross.
+2025-11-09T19:23:13.5772334Z Preparing to unpack .../22-linux-libc-dev-arm64-cross_6.8.0-25.25cross1_all.deb ...
+2025-11-09T19:23:13.5785464Z Unpacking linux-libc-dev-arm64-cross (6.8.0-25.25cross1) ...
+2025-11-09T19:23:13.7688707Z Selecting previously unselected package libc6-dev-arm64-cross.
+2025-11-09T19:23:13.7827248Z Preparing to unpack .../23-libc6-dev-arm64-cross_2.39-0ubuntu8cross1_all.deb ...
+2025-11-09T19:23:13.7844917Z Unpacking libc6-dev-arm64-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:13.9149810Z Selecting previously unselected package libstdc++-13-dev-arm64-cross.
+2025-11-09T19:23:13.9287494Z Preparing to unpack .../24-libstdc++-13-dev-arm64-cross_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:13.9316864Z Unpacking libstdc++-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.1642038Z Selecting previously unselected package g++-13-aarch64-linux-gnu.
+2025-11-09T19:23:14.1782211Z Preparing to unpack .../25-g++-13-aarch64-linux-gnu_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:14.1820199Z Unpacking g++-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.3447023Z Selecting previously unselected package binutils-arm-linux-gnueabihf.
+2025-11-09T19:23:14.3584875Z Preparing to unpack .../26-binutils-arm-linux-gnueabihf_2.42-4ubuntu2.6_amd64.deb ...
+2025-11-09T19:23:14.3600594Z Unpacking binutils-arm-linux-gnueabihf (2.42-4ubuntu2.6) ...
+2025-11-09T19:23:14.4658581Z Selecting previously unselected package libc6-armhf-cross.
+2025-11-09T19:23:14.4795485Z Preparing to unpack .../27-libc6-armhf-cross_2.39-0ubuntu8cross1_all.deb ...
+2025-11-09T19:23:14.4811754Z Unpacking libc6-armhf-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:14.5205164Z Selecting previously unselected package libgcc-s1-armhf-cross.
+2025-11-09T19:23:14.5343009Z Preparing to unpack .../28-libgcc-s1-armhf-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.5357557Z Unpacking libgcc-s1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.5622960Z Selecting previously unselected package libgomp1-armhf-cross.
+2025-11-09T19:23:14.5758289Z Preparing to unpack .../29-libgomp1-armhf-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.5770856Z Unpacking libgomp1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.6003036Z Selecting previously unselected package libatomic1-armhf-cross.
+2025-11-09T19:23:14.6139733Z Preparing to unpack .../30-libatomic1-armhf-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.6151564Z Unpacking libatomic1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.6386734Z Selecting previously unselected package libasan8-armhf-cross.
+2025-11-09T19:23:14.6523966Z Preparing to unpack .../31-libasan8-armhf-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.6539814Z Unpacking libasan8-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.7188930Z Selecting previously unselected package libstdc++6-armhf-cross.
+2025-11-09T19:23:14.7325406Z Preparing to unpack .../32-libstdc++6-armhf-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.7337410Z Unpacking libstdc++6-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.7711867Z Selecting previously unselected package libubsan1-armhf-cross.
+2025-11-09T19:23:14.7848189Z Preparing to unpack .../33-libubsan1-armhf-cross_14.2.0-4ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.7862334Z Unpacking libubsan1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.8237047Z Selecting previously unselected package libgcc-13-dev-armhf-cross.
+2025-11-09T19:23:14.8374088Z Preparing to unpack .../34-libgcc-13-dev-armhf-cross_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:14.8385663Z Unpacking libgcc-13-dev-armhf-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:14.8985659Z Selecting previously unselected package gcc-13-arm-linux-gnueabihf.
+2025-11-09T19:23:14.9122781Z Preparing to unpack .../35-gcc-13-arm-linux-gnueabihf_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:14.9156145Z Unpacking gcc-13-arm-linux-gnueabihf (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:15.1870181Z Selecting previously unselected package linux-libc-dev-armhf-cross.
+2025-11-09T19:23:15.2006801Z Preparing to unpack .../36-linux-libc-dev-armhf-cross_6.8.0-25.25cross1_all.deb ...
+2025-11-09T19:23:15.2018110Z Unpacking linux-libc-dev-armhf-cross (6.8.0-25.25cross1) ...
+2025-11-09T19:23:15.3901469Z Selecting previously unselected package libc6-dev-armhf-cross.
+2025-11-09T19:23:15.4042190Z Preparing to unpack .../37-libc6-dev-armhf-cross_2.39-0ubuntu8cross1_all.deb ...
+2025-11-09T19:23:15.4061222Z Unpacking libc6-dev-armhf-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:15.5275792Z Selecting previously unselected package libstdc++-13-dev-armhf-cross.
+2025-11-09T19:23:15.5413491Z Preparing to unpack .../38-libstdc++-13-dev-armhf-cross_13.3.0-6ubuntu2~24.04cross1_all.deb ...
+2025-11-09T19:23:15.5428425Z Unpacking libstdc++-13-dev-armhf-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:15.7388015Z Selecting previously unselected package g++-13-arm-linux-gnueabihf.
+2025-11-09T19:23:15.7531643Z Preparing to unpack .../39-g++-13-arm-linux-gnueabihf_13.3.0-6ubuntu2~24.04cross1_amd64.deb ...
+2025-11-09T19:23:15.7567722Z Unpacking g++-13-arm-linux-gnueabihf (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:15.9043754Z Selecting previously unselected package gcc-aarch64-linux-gnu.
+2025-11-09T19:23:15.9182681Z Preparing to unpack .../40-gcc-aarch64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+2025-11-09T19:23:15.9196932Z Unpacking gcc-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:15.9553228Z Selecting previously unselected package g++-aarch64-linux-gnu.
+2025-11-09T19:23:15.9696126Z Preparing to unpack .../41-g++-aarch64-linux-gnu_4%3a13.2.0-7ubuntu1_amd64.deb ...
+2025-11-09T19:23:15.9708719Z Unpacking g++-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:15.9927794Z Selecting previously unselected package gcc-arm-linux-gnueabihf.
+2025-11-09T19:23:16.0068221Z Preparing to unpack .../42-gcc-arm-linux-gnueabihf_4%3a13.2.0-7ubuntu1_amd64.deb ...
+2025-11-09T19:23:16.0081325Z Unpacking gcc-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.0443170Z Selecting previously unselected package g++-arm-linux-gnueabihf.
+2025-11-09T19:23:16.0580242Z Preparing to unpack .../43-g++-arm-linux-gnueabihf_4%3a13.2.0-7ubuntu1_amd64.deb ...
+2025-11-09T19:23:16.0592413Z Unpacking g++-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.1048162Z Setting up libc6-armhf-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:16.1085736Z Setting up binutils-aarch64-linux-gnu (2.42-4ubuntu2.6) ...
+2025-11-09T19:23:16.1126995Z Setting up gcc-14-cross-base (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1164394Z Setting up libatomic1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1199298Z Setting up gcc-13-cross-base (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1228002Z Setting up libc6-arm64-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:16.1258394Z Setting up linux-libc-dev-armhf-cross (6.8.0-25.25cross1) ...
+2025-11-09T19:23:16.1302250Z Setting up libitm1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1334902Z Setting up linux-libc-dev-arm64-cross (6.8.0-25.25cross1) ...
+2025-11-09T19:23:16.1367987Z Setting up gcc-13-arm-linux-gnueabihf-base:amd64 (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1399571Z Setting up gcc-13-aarch64-linux-gnu-base:amd64 (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1428470Z Setting up binutils-arm-linux-gnueabihf (2.42-4ubuntu2.6) ...
+2025-11-09T19:23:16.1461264Z Setting up libgcc-s1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1491779Z Setting up libatomic1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1520293Z Setting up libgomp1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1549795Z Setting up liblsan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1580155Z Setting up libgomp1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1618240Z Setting up cpp-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1654950Z Setting up cpp-13-arm-linux-gnueabihf (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1687877Z Setting up libgcc-s1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1720703Z Setting up libc6-dev-armhf-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:16.1757840Z Setting up libhwasan0-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1793293Z Setting up libc6-dev-arm64-cross (2.39-0ubuntu8cross1) ...
+2025-11-09T19:23:16.1823216Z Setting up libstdc++6-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1856131Z Setting up cpp-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.1892721Z Setting up libstdc++6-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1926584Z Setting up libubsan1-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1955961Z Setting up libasan8-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.1992740Z Setting up libtsan2-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2026356Z Setting up cpp-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.2065959Z Setting up libasan8-armhf-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2139901Z Setting up libubsan1-arm64-cross (14.2.0-4ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2176219Z Setting up libgcc-13-dev-armhf-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2219500Z Setting up libgcc-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2258406Z Setting up libstdc++-13-dev-armhf-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2298569Z Setting up gcc-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2339598Z Setting up gcc-13-arm-linux-gnueabihf (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2377706Z Setting up libstdc++-13-dev-arm64-cross (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2415045Z Setting up gcc-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.2451614Z Setting up g++-13-arm-linux-gnueabihf (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2485059Z Setting up g++-13-aarch64-linux-gnu (13.3.0-6ubuntu2~24.04cross1) ...
+2025-11-09T19:23:16.2514306Z Setting up g++-arm-linux-gnueabihf (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.2542647Z Setting up gcc-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.2581608Z Setting up g++-aarch64-linux-gnu (4:13.2.0-7ubuntu1) ...
+2025-11-09T19:23:16.2624928Z Processing triggers for man-db (2.12.0-4build2) ...
+2025-11-09T19:23:33.8622539Z Processing triggers for libc-bin (2.39-0ubuntu8.6) ...
+2025-11-09T19:23:36.5870343Z 
+2025-11-09T19:23:36.5870862Z Running kernel seems to be up-to-date.
+2025-11-09T19:23:36.5871546Z 
+2025-11-09T19:23:36.5871733Z No services need to be restarted.
+2025-11-09T19:23:36.5872021Z 
+2025-11-09T19:23:36.5872166Z No containers need to be restarted.
+2025-11-09T19:23:36.5872432Z 
+2025-11-09T19:23:36.5872604Z No user sessions are running outdated binaries.
+2025-11-09T19:23:36.5872921Z 
+2025-11-09T19:23:36.5873210Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2025-11-09T19:23:37.5754693Z ##[group]Run echo "Building lgpio library for ARM 32-bit..."
+2025-11-09T19:23:37.5755096Z [36;1mecho "Building lgpio library for ARM 32-bit..."[0m
+2025-11-09T19:23:37.5755402Z [36;1m./scripts/setup-lgpio-cross.sh[0m
+2025-11-09T19:23:37.5789573Z shell: /usr/bin/bash -e {0}
+2025-11-09T19:23:37.5789790Z env:
+2025-11-09T19:23:37.5790042Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:37.5790435Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-09T19:23:37.5790805Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:37.5792273Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:37.5792633Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:37.5792989Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-09T19:23:37.5793273Z ##[endgroup]
+2025-11-09T19:23:37.5846365Z Building lgpio library for ARM 32-bit...
+2025-11-09T19:23:37.5858857Z ==================================================
+2025-11-09T19:23:37.5859171Z lgpio Cross-Compilation Setup
+2025-11-09T19:23:37.5859405Z ==================================================
+2025-11-09T19:23:37.5859573Z 
+2025-11-09T19:23:37.5885349Z ✓ Cross-compiler found: arm-linux-gnueabihf-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+2025-11-09T19:23:37.5885783Z   Architecture: ARM 32-bit (ARMv7)
+2025-11-09T19:23:37.5885945Z 
+2025-11-09T19:23:37.5886038Z Build directory: /tmp/lg-build
+2025-11-09T19:23:37.5886320Z Install directory: /home/runner/.local/arm-linux-gnueabihf
+2025-11-09T19:23:37.5886703Z Cross-compiler prefix: arm-linux-gnueabihf-
+2025-11-09T19:23:37.5886888Z 
+2025-11-09T19:23:37.5898965Z Cloning lg repository...
+2025-11-09T19:23:37.5911934Z Cloning into 'lg'...
+2025-11-09T19:23:38.2549575Z 
+2025-11-09T19:23:38.2551222Z Building lgpio library for ARM...
+2025-11-09T19:23:38.2586292Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgCtx.o lgCtx.c
+2025-11-09T19:23:38.3016457Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgDbg.o lgDbg.c
+2025-11-09T19:23:38.3629475Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgErr.o lgErr.c
+2025-11-09T19:23:38.3877318Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgGpio.o lgGpio.c
+2025-11-09T19:23:38.8258962Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgHdl.o lgHdl.c
+2025-11-09T19:23:38.9406393Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgI2C.o lgI2C.c
+2025-11-09T19:23:39.2595527Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgNotify.o lgNotify.c
+2025-11-09T19:23:39.3589392Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgPthAlerts.o lgPthAlerts.c
+2025-11-09T19:23:39.5457518Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgPthTx.o lgPthTx.c
+2025-11-09T19:23:39.6318483Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgSerial.o lgSerial.c
+2025-11-09T19:23:39.7352326Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgSPI.o lgSPI.c
+2025-11-09T19:23:39.8191587Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgThread.o lgThread.c
+2025-11-09T19:23:39.8630120Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgUtil.o lgUtil.c
+2025-11-09T19:23:39.9593090Z arm-linux-gnueabihf-gcc -shared -pthread  -Wl,-soname,liblgpio.so.1 -o liblgpio.so.1 lgCtx.o lgDbg.o lgErr.o lgGpio.o lgHdl.o lgI2C.o lgNotify.o lgPthAlerts.o lgPthTx.o lgSerial.o lgSPI.o lgThread.o lgUtil.o 
+2025-11-09T19:23:39.9802675Z ln -fs liblgpio.so.1 liblgpio.so
+2025-11-09T19:23:39.9812644Z arm-linux-gnueabihf-strip --strip-unneeded liblgpio.so
+2025-11-09T19:23:39.9831476Z arm-linux-gnueabihf-size     liblgpio.so
+2025-11-09T19:23:39.9842326Z    text	   data	    bss	    dec	    hex	filename
+2025-11-09T19:23:39.9842764Z   60165	   1844	  82320	 144329	  233c9	liblgpio.so
+2025-11-09T19:23:39.9845837Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic  -c -o rgpio.o rgpio.c
+2025-11-09T19:23:40.4658982Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgCfg.o lgCfg.c
+2025-11-09T19:23:40.5823039Z arm-linux-gnueabihf-gcc -O3 -Wall -pthread -fpic    -c -o lgMD5.o lgMD5.c
+2025-11-09T19:23:40.7142400Z arm-linux-gnueabihf-gcc -shared -pthread  -Wl,-soname,librgpio.so.1 -o librgpio.so.1 rgpio.o lgCfg.o lgErr.o lgDbg.o lgMD5.o 
+2025-11-09T19:23:40.7333026Z ln -fs librgpio.so.1 librgpio.so
+2025-11-09T19:23:40.7342210Z arm-linux-gnueabihf-strip --strip-unneeded librgpio.so
+2025-11-09T19:23:40.7359000Z arm-linux-gnueabihf-size     librgpio.so
+2025-11-09T19:23:40.7369133Z    text	   data	    bss	    dec	    hex	filename
+2025-11-09T19:23:40.7369627Z   32323	   1444	   5060	  38827	   97ab	librgpio.so
+2025-11-09T19:23:40.7373735Z 
+2025-11-09T19:23:40.7374022Z Installing to /home/runner/.local/arm-linux-gnueabihf...
+2025-11-09T19:23:40.7414106Z 'lgpio.h' -> '/home/runner/.local/arm-linux-gnueabihf/include/lgpio.h'
+2025-11-09T19:23:40.7414909Z 'rgpio.h' -> '/home/runner/.local/arm-linux-gnueabihf/include/rgpio.h'
+2025-11-09T19:23:40.7431052Z 'liblgpio.so' -> '/home/runner/.local/arm-linux-gnueabihf/lib/liblgpio.so'
+2025-11-09T19:23:40.7431878Z 'liblgpio.so.1' -> '/home/runner/.local/arm-linux-gnueabihf/lib/liblgpio.so.1'
+2025-11-09T19:23:40.7446577Z 'librgpio.so' -> '/home/runner/.local/arm-linux-gnueabihf/lib/librgpio.so'
+2025-11-09T19:23:40.7447394Z 'librgpio.so.1' -> '/home/runner/.local/arm-linux-gnueabihf/lib/librgpio.so.1'
+2025-11-09T19:23:40.7469639Z 
+2025-11-09T19:23:40.7469892Z ==================================================
+2025-11-09T19:23:40.7470631Z ✓ lgpio cross-compilation setup complete!
+2025-11-09T19:23:40.7471171Z ==================================================
+2025-11-09T19:23:40.7471347Z 
+2025-11-09T19:23:40.7471544Z Headers installed to: /home/runner/.local/arm-linux-gnueabihf/include/
+2025-11-09T19:23:40.7471993Z Libraries installed to: /home/runner/.local/arm-linux-gnueabihf/lib/
+2025-11-09T19:23:40.7472249Z 
+2025-11-09T19:23:40.7472377Z You can now build lgpio examples with PlatformIO:
+2025-11-09T19:23:40.7495299Z dirname: missing operand
+2025-11-09T19:23:40.7495753Z Try 'dirname --help' for more information.
+2025-11-09T19:23:40.7504699Z dirname: missing operand
+2025-11-09T19:23:40.7505081Z Try 'dirname --help' for more information.
+2025-11-09T19:23:40.7506082Z   cd 
+2025-11-09T19:23:40.7506365Z   source venv/bin/activate
+2025-11-09T19:23:40.7506728Z   pio run -d examples/lgpio-blink
+2025-11-09T19:23:40.7507268Z 
+2025-11-09T19:23:40.7555652Z ##[group]Run echo "Building lgpio library for ARM 64-bit..."
+2025-11-09T19:23:40.7556328Z [36;1mecho "Building lgpio library for ARM 64-bit..."[0m
+2025-11-09T19:23:40.7556864Z [36;1mCROSS_PREFIX=aarch64-linux-gnu- \[0m
+2025-11-09T19:23:40.7557373Z [36;1mINSTALL_DIR=$HOME/.local/aarch64-linux-gnu \[0m
+2025-11-09T19:23:40.7557889Z [36;1m./scripts/setup-lgpio-cross.sh[0m
+2025-11-09T19:23:40.7594745Z shell: /usr/bin/bash -e {0}
+2025-11-09T19:23:40.7594961Z env:
+2025-11-09T19:23:40.7595201Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:40.7595608Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-09T19:23:40.7596003Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:40.7596365Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:40.7596718Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:40.7597112Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-09T19:23:40.7597399Z ##[endgroup]
+2025-11-09T19:23:40.7651700Z Building lgpio library for ARM 64-bit...
+2025-11-09T19:23:40.7665244Z ==================================================
+2025-11-09T19:23:40.7665698Z lgpio Cross-Compilation Setup
+2025-11-09T19:23:40.7666074Z ==================================================
+2025-11-09T19:23:40.7666352Z 
+2025-11-09T19:23:40.7685335Z ✓ Cross-compiler found: aarch64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+2025-11-09T19:23:40.7685789Z   Architecture: ARM 64-bit (AArch64)
+2025-11-09T19:23:40.7685957Z 
+2025-11-09T19:23:40.7686055Z Build directory: /tmp/lg-build
+2025-11-09T19:23:40.7686340Z Install directory: /home/runner/.local/aarch64-linux-gnu
+2025-11-09T19:23:40.7686663Z Cross-compiler prefix: aarch64-linux-gnu-
+2025-11-09T19:23:40.7686851Z 
+2025-11-09T19:23:40.7698043Z Updating existing lg repository...
+2025-11-09T19:23:41.0804453Z Already up to date.
+2025-11-09T19:23:41.0809349Z 
+2025-11-09T19:23:41.0809615Z Building lgpio library for ARM...
+2025-11-09T19:23:41.0831323Z make: Nothing to be done for 'lib'.
+2025-11-09T19:23:41.0833371Z 
+2025-11-09T19:23:41.0833807Z Installing to /home/runner/.local/aarch64-linux-gnu...
+2025-11-09T19:23:41.0872993Z 'lgpio.h' -> '/home/runner/.local/aarch64-linux-gnu/include/lgpio.h'
+2025-11-09T19:23:41.0873782Z 'rgpio.h' -> '/home/runner/.local/aarch64-linux-gnu/include/rgpio.h'
+2025-11-09T19:23:41.0889569Z 'liblgpio.so' -> '/home/runner/.local/aarch64-linux-gnu/lib/liblgpio.so'
+2025-11-09T19:23:41.0890248Z 'liblgpio.so.1' -> '/home/runner/.local/aarch64-linux-gnu/lib/liblgpio.so.1'
+2025-11-09T19:23:41.0905507Z 'librgpio.so' -> '/home/runner/.local/aarch64-linux-gnu/lib/librgpio.so'
+2025-11-09T19:23:41.0906158Z 'librgpio.so.1' -> '/home/runner/.local/aarch64-linux-gnu/lib/librgpio.so.1'
+2025-11-09T19:23:41.0929481Z 
+2025-11-09T19:23:41.0930116Z ==================================================
+2025-11-09T19:23:41.0931410Z ✓ lgpio cross-compilation setup complete!
+2025-11-09T19:23:41.0931970Z ==================================================
+2025-11-09T19:23:41.0932222Z 
+2025-11-09T19:23:41.0932474Z Headers installed to: /home/runner/.local/aarch64-linux-gnu/include/
+2025-11-09T19:23:41.0933083Z Libraries installed to: /home/runner/.local/aarch64-linux-gnu/lib/
+2025-11-09T19:23:41.0933440Z 
+2025-11-09T19:23:41.0933601Z You can now build lgpio examples with PlatformIO:
+2025-11-09T19:23:41.0955704Z dirname: missing operand
+2025-11-09T19:23:41.0956115Z Try 'dirname --help' for more information.
+2025-11-09T19:23:41.0965021Z dirname: missing operand
+2025-11-09T19:23:41.0965452Z Try 'dirname --help' for more information.
+2025-11-09T19:23:41.0966394Z   cd 
+2025-11-09T19:23:41.0966704Z   source venv/bin/activate
+2025-11-09T19:23:41.0967111Z   pio run -d examples/lgpio-blink
+2025-11-09T19:23:41.0967413Z 
+2025-11-09T19:23:41.0995785Z ##[group]Run pip install -U https://github.com/platformio/platformio-core/archive/develop.zip
+2025-11-09T19:23:41.0996437Z [36;1mpip install -U https://github.com/platformio/platformio-core/archive/develop.zip[0m
+2025-11-09T19:23:41.1030354Z shell: /usr/bin/bash -e {0}
+2025-11-09T19:23:41.1030579Z env:
+2025-11-09T19:23:41.1030820Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:41.1031442Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-09T19:23:41.1031855Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:41.1032201Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:41.1032546Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:41.1032885Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-09T19:23:41.1033178Z ##[endgroup]
+2025-11-09T19:23:43.5986404Z Collecting https://github.com/platformio/platformio-core/archive/develop.zip
+2025-11-09T19:23:44.0114412Z   Downloading https://github.com/platformio/platformio-core/archive/develop.zip (552 kB)
+2025-11-09T19:23:44.1127991Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 552.8/552.8 kB 11.0 MB/s  0:00:00
+2025-11-09T19:23:44.1639250Z   Installing build dependencies: started
+2025-11-09T19:23:45.1095764Z   Installing build dependencies: finished with status 'done'
+2025-11-09T19:23:45.1101808Z   Getting requirements to build wheel: started
+2025-11-09T19:23:45.5900566Z   Getting requirements to build wheel: finished with status 'done'
+2025-11-09T19:23:45.5910499Z   Preparing metadata (pyproject.toml): started
+2025-11-09T19:23:45.7957360Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2025-11-09T19:23:45.8819062Z Collecting bottle==0.13.* (from platformio==6.1.19a2)
+2025-11-09T19:23:45.9361842Z   Downloading bottle-0.13.4-py2.py3-none-any.whl.metadata (1.6 kB)
+2025-11-09T19:23:45.9564125Z Collecting click<8.1.8,>=8.0.4 (from platformio==6.1.19a2)
+2025-11-09T19:23:45.9599187Z   Downloading click-8.1.7-py3-none-any.whl.metadata (3.0 kB)
+2025-11-09T19:23:45.9755783Z Collecting colorama (from platformio==6.1.19a2)
+2025-11-09T19:23:45.9795840Z   Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+2025-11-09T19:23:46.0310768Z Collecting marshmallow==3.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.0348028Z   Downloading marshmallow-3.26.1-py3-none-any.whl.metadata (7.3 kB)
+2025-11-09T19:23:46.0493265Z Collecting pyelftools<1,>=0.27 (from platformio==6.1.19a2)
+2025-11-09T19:23:46.0525324Z   Downloading pyelftools-0.32-py3-none-any.whl.metadata (372 bytes)
+2025-11-09T19:23:46.0637217Z Collecting pyserial==3.5.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.0678712Z   Downloading pyserial-3.5-py2.py3-none-any.whl.metadata (1.6 kB)
+2025-11-09T19:23:46.1102510Z Collecting requests==2.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.1141568Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2025-11-09T19:23:46.1281712Z Collecting semantic_version==2.10.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.1342414Z   Downloading semantic_version-2.10.0-py2.py3-none-any.whl.metadata (9.7 kB)
+2025-11-09T19:23:46.1486566Z Collecting tabulate==0.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.1528204Z   Downloading tabulate-0.9.0-py3-none-any.whl.metadata (34 kB)
+2025-11-09T19:23:46.1713259Z Collecting ajsonrpc==1.2.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.1764989Z   Downloading ajsonrpc-1.2.0-py3-none-any.whl.metadata (6.9 kB)
+2025-11-09T19:23:46.2092031Z Collecting starlette<0.49,>=0.19 (from platformio==6.1.19a2)
+2025-11-09T19:23:46.2143853Z   Downloading starlette-0.48.0-py3-none-any.whl.metadata (6.3 kB)
+2025-11-09T19:23:46.2465145Z Collecting uvicorn<0.37,>=0.16 (from platformio==6.1.19a2)
+2025-11-09T19:23:46.2510607Z   Downloading uvicorn-0.36.1-py3-none-any.whl.metadata (6.6 kB)
+2025-11-09T19:23:46.2638074Z Collecting wsproto==1.* (from platformio==6.1.19a2)
+2025-11-09T19:23:46.2672791Z   Downloading wsproto-1.2.0-py3-none-any.whl.metadata (5.6 kB)
+2025-11-09T19:23:46.2914446Z Collecting packaging>=17.0 (from marshmallow==3.*->platformio==6.1.19a2)
+2025-11-09T19:23:46.2948265Z   Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-09T19:23:46.3786706Z Collecting charset_normalizer<4,>=2 (from requests==2.*->platformio==6.1.19a2)
+2025-11-09T19:23:46.3830002Z   Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2025-11-09T19:23:46.4021795Z Collecting idna<4,>=2.5 (from requests==2.*->platformio==6.1.19a2)
+2025-11-09T19:23:46.4064791Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2025-11-09T19:23:46.4355991Z Collecting urllib3<3,>=1.21.1 (from requests==2.*->platformio==6.1.19a2)
+2025-11-09T19:23:46.4393988Z   Downloading urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+2025-11-09T19:23:46.4600085Z Collecting certifi>=2017.4.17 (from requests==2.*->platformio==6.1.19a2)
+2025-11-09T19:23:46.4639289Z   Downloading certifi-2025.10.5-py3-none-any.whl.metadata (2.5 kB)
+2025-11-09T19:23:46.4853329Z Collecting anyio<5,>=3.6.2 (from starlette<0.49,>=0.19->platformio==6.1.19a2)
+2025-11-09T19:23:46.4885059Z   Downloading anyio-4.11.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-09T19:23:46.5089998Z Collecting typing-extensions>=4.10.0 (from starlette<0.49,>=0.19->platformio==6.1.19a2)
+2025-11-09T19:23:46.5123302Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-09T19:23:46.5274956Z Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.49,>=0.19->platformio==6.1.19a2)
+2025-11-09T19:23:46.5308429Z   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-09T19:23:46.5515100Z Collecting h11>=0.8 (from uvicorn<0.37,>=0.16->platformio==6.1.19a2)
+2025-11-09T19:23:46.5548613Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2025-11-09T19:23:46.5733333Z Downloading ajsonrpc-1.2.0-py3-none-any.whl (22 kB)
+2025-11-09T19:23:46.5815772Z Downloading bottle-0.13.4-py2.py3-none-any.whl (103 kB)
+2025-11-09T19:23:46.5877688Z Downloading click-8.1.7-py3-none-any.whl (97 kB)
+2025-11-09T19:23:46.5950195Z Downloading marshmallow-3.26.1-py3-none-any.whl (50 kB)
+2025-11-09T19:23:46.6022508Z Downloading pyelftools-0.32-py3-none-any.whl (188 kB)
+2025-11-09T19:23:46.6097079Z Downloading pyserial-3.5-py2.py3-none-any.whl (90 kB)
+2025-11-09T19:23:46.6150655Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2025-11-09T19:23:46.6227048Z Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+2025-11-09T19:23:46.6287774Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2025-11-09T19:23:46.6345654Z Downloading semantic_version-2.10.0-py2.py3-none-any.whl (15 kB)
+2025-11-09T19:23:46.6399292Z Downloading starlette-0.48.0-py3-none-any.whl (73 kB)
+2025-11-09T19:23:46.6455627Z Downloading anyio-4.11.0-py3-none-any.whl (109 kB)
+2025-11-09T19:23:46.6519887Z Downloading tabulate-0.9.0-py3-none-any.whl (35 kB)
+2025-11-09T19:23:46.6580541Z Downloading urllib3-2.5.0-py3-none-any.whl (129 kB)
+2025-11-09T19:23:46.6658494Z Downloading uvicorn-0.36.1-py3-none-any.whl (67 kB)
+2025-11-09T19:23:46.6723604Z Downloading wsproto-1.2.0-py3-none-any.whl (24 kB)
+2025-11-09T19:23:46.6782211Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2025-11-09T19:23:46.6839876Z Downloading certifi-2025.10.5-py3-none-any.whl (163 kB)
+2025-11-09T19:23:46.6898468Z Downloading packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-09T19:23:46.6958369Z Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2025-11-09T19:23:46.7020335Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-09T19:23:46.7077649Z Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+2025-11-09T19:23:46.7266970Z Building wheels for collected packages: platformio
+2025-11-09T19:23:46.7275464Z   Building wheel for platformio (pyproject.toml): started
+2025-11-09T19:23:47.1402310Z   Building wheel for platformio (pyproject.toml): finished with status 'done'
+2025-11-09T19:23:47.1413775Z   Created wheel for platformio: filename=platformio-6.1.19a2-py3-none-any.whl size=420238 sha256=9b1dafcd5567059ff9b9398a85b70b71c52998744e6c76891bd25e21bf834bdc
+2025-11-09T19:23:47.1415725Z   Stored in directory: /tmp/pip-ephem-wheel-cache-ztw9nhfo/wheels/e7/48/d7/02c7bca5b89064555b31af059b6e7222c52885f9952dc82079
+2025-11-09T19:23:47.1444975Z Successfully built platformio
+2025-11-09T19:23:47.1796409Z Installing collected packages: pyserial, pyelftools, bottle, urllib3, typing-extensions, tabulate, sniffio, semantic_version, packaging, idna, h11, colorama, click, charset_normalizer, certifi, ajsonrpc, wsproto, uvicorn, requests, marshmallow, anyio, starlette, platformio
+2025-11-09T19:23:48.3475740Z 
+2025-11-09T19:23:48.3495018Z Successfully installed ajsonrpc-1.2.0 anyio-4.11.0 bottle-0.13.4 certifi-2025.10.5 charset_normalizer-3.4.4 click-8.1.7 colorama-0.4.6 h11-0.16.0 idna-3.11 marshmallow-3.26.1 packaging-25.0 platformio-6.1.19a2 pyelftools-0.32 pyserial-3.5 requests-2.32.5 semantic_version-2.10.0 sniffio-1.3.1 starlette-0.48.0 tabulate-0.9.0 typing-extensions-4.15.0 urllib3-2.5.0 uvicorn-0.36.1 wsproto-1.2.0
+2025-11-09T19:23:48.5494898Z ##[group]Run pio pkg install --global --platform symlink://.
+2025-11-09T19:23:48.5512582Z [36;1mpio pkg install --global --platform symlink://.[0m
+2025-11-09T19:23:48.5546858Z shell: /usr/bin/bash -e {0}
+2025-11-09T19:23:48.5547077Z env:
+2025-11-09T19:23:48.5547318Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:48.5547713Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-09T19:23:48.5548119Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:48.5548469Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:48.5548831Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:48.5549166Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-09T19:23:48.5549452Z ##[endgroup]
+2025-11-09T19:23:48.7613673Z ********************************************************************************
+2025-11-09T19:23:48.7614337Z If you like PlatformIO, please:
+2025-11-09T19:23:48.7614929Z - star it on GitHub > https://github.com/platformio/platformio-core
+2025-11-09T19:23:48.7615992Z - follow us on LinkedIn to stay up-to-date on the latest project news > https://www.linkedin.com/company/platformio/
+2025-11-09T19:23:48.7617119Z - try PlatformIO IDE for embedded development > https://platformio.org/platformio-ide
+2025-11-09T19:23:48.7617887Z ********************************************************************************
+2025-11-09T19:23:48.7618228Z 
+2025-11-09T19:23:48.7626843Z Platform Manager: Installing symlink://.
+2025-11-09T19:23:48.7634065Z Platform Manager: linux_arm@1.6.0 has been installed!
+2025-11-09T19:23:49.4024753Z ##[group]Run pio run -d examples/lgpio-blink
+2025-11-09T19:23:49.4025096Z [36;1mpio run -d examples/lgpio-blink[0m
+2025-11-09T19:23:49.4058143Z shell: /usr/bin/bash -e {0}
+2025-11-09T19:23:49.4058369Z env:
+2025-11-09T19:23:49.4058615Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:49.4059024Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-09T19:23:49.4059413Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:49.4059760Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:49.4060117Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-09T19:23:49.4060454Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-09T19:23:49.4060737Z ##[endgroup]
+2025-11-09T19:23:49.6511582Z Processing raspberrypi_3b (platform: linux_arm; framework: lgpio; board: raspberrypi_3b)
+2025-11-09T19:23:49.6512683Z --------------------------------------------------------------------------------
+2025-11-09T19:23:49.6545010Z Tool Manager: Installing platformio/tool-scons @ ~4.40801.0
+2025-11-09T19:23:51.9634080Z Downloading 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+2025-11-09T19:23:52.0278052Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+2025-11-09T19:23:52.0558461Z Tool Manager: tool-scons@4.40801.0 has been installed!
+2025-11-09T19:23:52.5377889Z Verbose mode can be enabled via `-v, --verbose` option
+2025-11-09T19:23:52.5429901Z Cross-compiling for ARM Linux (ARMv7 32-bit)
+2025-11-09T19:23:52.5430537Z Using toolchain prefix: arm-linux-gnueabihf-
+2025-11-09T19:23:52.5431339Z Ensure toolchain is installed:
+2025-11-09T19:23:52.5431989Z   Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+2025-11-09T19:23:52.5432489Z   macOS:   brew tap messense/macos-cross-toolchains
+2025-11-09T19:23:52.5432889Z            brew install arm-unknown-linux-gnueabihf
+2025-11-09T19:23:52.5434550Z CONFIGURATION: https://docs.platformio.org/page/boards/linux_arm/raspberrypi_3b.html
+2025-11-09T19:23:52.5435480Z PLATFORM: Linux ARM (1.6.0) > Raspberry Pi 3 Model B
+2025-11-09T19:23:52.5435957Z HARDWARE: BCM2837 1200MHz, 1GB RAM, 1GB Flash
+2025-11-09T19:23:52.5448473Z Found lgpio at: /home/runner/.local/arm-linux-gnueabihf
+2025-11-09T19:23:52.5458460Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+2025-11-09T19:23:52.5459184Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+2025-11-09T19:23:52.5461349Z Found 0 compatible libraries
+2025-11-09T19:23:52.5461797Z Scanning dependencies...
+2025-11-09T19:23:52.5478285Z No dependencies
+2025-11-09T19:23:52.5493668Z Building in release mode
+2025-11-09T19:23:52.5636542Z Compiling .pio/build/raspberrypi_3b/src/blink.o
+2025-11-09T19:23:52.6043819Z Linking .pio/build/raspberrypi_3b/program
+2025-11-09T19:23:52.6272084Z Checking size .pio/build/raspberrypi_3b/program
+2025-11-09T19:23:52.6294655Z Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+2025-11-09T19:23:52.6295350Z RAM:   [          ]   0.0% (used 352 bytes from 1073741824 bytes)
+2025-11-09T19:23:52.6295684Z Flash: [          ]   0.0% (used 2296 bytes from 1073741824 bytes)
+2025-11-09T19:23:52.6715608Z ========================= [SUCCESS] Took 3.02 seconds =========================
+2025-11-09T19:23:52.6716212Z 
+2025-11-09T19:23:52.6717089Z Processing raspberrypi_400 (platform: linux_arm; framework: lgpio; board: raspberrypi_400)
+2025-11-09T19:23:52.6718397Z --------------------------------------------------------------------------------
+2025-11-09T19:23:52.9041172Z Verbose mode can be enabled via `-v, --verbose` option
+2025-11-09T19:23:52.9100572Z Cross-compiling for ARM Linux (ARMv7 32-bit)
+2025-11-09T19:23:52.9101452Z Using toolchain prefix: arm-linux-gnueabihf-
+2025-11-09T19:23:52.9102016Z Ensure toolchain is installed:
+2025-11-09T19:23:52.9102625Z   Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+2025-11-09T19:23:52.9103274Z   macOS:   brew tap messense/macos-cross-toolchains
+2025-11-09T19:23:52.9104362Z            brew install arm-unknown-linux-gnueabihf
+2025-11-09T19:23:52.9105320Z CONFIGURATION: https://docs.platformio.org/page/boards/linux_arm/raspberrypi_400.html
+2025-11-09T19:23:52.9106110Z PLATFORM: Linux ARM (1.6.0) > Raspberry Pi 400
+2025-11-09T19:23:52.9106608Z HARDWARE: BCM2711 1800MHz, 4GB RAM, 4GB Flash
+2025-11-09T19:23:52.9118233Z Found lgpio at: /home/runner/.local/arm-linux-gnueabihf
+2025-11-09T19:23:52.9128385Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+2025-11-09T19:23:52.9129113Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+2025-11-09T19:23:52.9131555Z Found 0 compatible libraries
+2025-11-09T19:23:52.9131962Z Scanning dependencies...
+2025-11-09T19:23:52.9148565Z No dependencies
+2025-11-09T19:23:52.9163965Z Building in release mode
+2025-11-09T19:23:52.9278506Z Compiling .pio/build/raspberrypi_400/src/blink.o
+2025-11-09T19:23:52.9687915Z Linking .pio/build/raspberrypi_400/program
+2025-11-09T19:23:52.9921616Z Checking size .pio/build/raspberrypi_400/program
+2025-11-09T19:23:52.9944125Z Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+2025-11-09T19:23:52.9944959Z RAM:   [          ]   0.0% (used 352 bytes from 4294967296 bytes)
+2025-11-09T19:23:52.9945376Z Flash: [          ]   0.0% (used 2296 bytes from 4294967296 bytes)
+2025-11-09T19:23:53.0374411Z ========================= [SUCCESS] Took 0.37 seconds =========================
+2025-11-09T19:23:53.0374909Z 
+2025-11-09T19:23:53.0375743Z Processing raspberrypi_cm4 (platform: linux_arm; framework: lgpio; board: raspberrypi_cm4)
+2025-11-09T19:23:53.0377165Z --------------------------------------------------------------------------------
+2025-11-09T19:23:53.2686045Z Verbose mode can be enabled via `-v, --verbose` option
+2025-11-09T19:23:53.2742819Z Cross-compiling for ARM Linux (ARMv7 32-bit)
+2025-11-09T19:23:53.2743386Z Using toolchain prefix: arm-linux-gnueabihf-
+2025-11-09T19:23:53.2743881Z Ensure toolchain is installed:
+2025-11-09T19:23:53.2744498Z   Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+2025-11-09T19:23:53.2745204Z   macOS:   brew tap messense/macos-cross-toolchains
+2025-11-09T19:23:53.2745770Z            brew install arm-unknown-linux-gnueabihf
+2025-11-09T19:23:53.2746574Z CONFIGURATION: https://docs.platformio.org/page/boards/linux_arm/raspberrypi_cm4.html
+2025-11-09T19:23:53.2747412Z PLATFORM: Linux ARM (1.6.0) > Raspberry Pi Compute Module 4
+2025-11-09T19:23:53.2747978Z HARDWARE: BCM2711 1500MHz, 8GB RAM, 8GB Flash
+2025-11-09T19:23:53.2760423Z Found lgpio at: /home/runner/.local/arm-linux-gnueabihf
+2025-11-09T19:23:53.2770388Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+2025-11-09T19:23:53.2771253Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+2025-11-09T19:23:53.2772997Z Found 0 compatible libraries
+2025-11-09T19:23:53.2773424Z Scanning dependencies...
+2025-11-09T19:23:53.2790080Z No dependencies
+2025-11-09T19:23:53.2805007Z Building in release mode
+2025-11-09T19:23:53.2918332Z Compiling .pio/build/raspberrypi_cm4/src/blink.o
+2025-11-09T19:23:53.3324998Z Linking .pio/build/raspberrypi_cm4/program
+2025-11-09T19:23:53.3565853Z Checking size .pio/build/raspberrypi_cm4/program
+2025-11-09T19:23:53.3588533Z Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+2025-11-09T19:23:53.3589249Z RAM:   [          ]   0.0% (used 352 bytes from 8589934592 bytes)
+2025-11-09T19:23:53.3589767Z Flash: [          ]   0.0% (used 2296 bytes from 8589934592 bytes)
+2025-11-09T19:23:53.4014526Z ========================= [SUCCESS] Took 0.36 seconds =========================
+2025-11-09T19:23:53.4015033Z 
+2025-11-09T19:23:53.4015605Z Processing raspberrypi_zero2w (platform: linux_arm; framework: lgpio; board: raspberrypi_zero2w)
+2025-11-09T19:23:53.4016700Z --------------------------------------------------------------------------------
+2025-11-09T19:23:53.6300439Z Verbose mode can be enabled via `-v, --verbose` option
+2025-11-09T19:23:53.6357367Z Cross-compiling for ARM Linux (ARMv7 32-bit)
+2025-11-09T19:23:53.6358431Z Using toolchain prefix: arm-linux-gnueabihf-
+2025-11-09T19:23:53.6359094Z Ensure toolchain is installed:
+2025-11-09T19:23:53.6359824Z   Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+2025-11-09T19:23:53.6360667Z   macOS:   brew tap messense/macos-cross-toolchains
+2025-11-09T19:23:53.6361603Z            brew install arm-unknown-linux-gnueabihf
+2025-11-09T19:23:53.6362600Z CONFIGURATION: https://docs.platformio.org/page/boards/linux_arm/raspberrypi_zero2w.html
+2025-11-09T19:23:53.6363702Z PLATFORM: Linux ARM (1.6.0) > Raspberry Pi Zero 2 W
+2025-11-09T19:23:53.6364361Z HARDWARE: BCM2710 1000MHz, 512MB RAM, 512MB Flash
+2025-11-09T19:23:53.6375441Z Found lgpio at: /home/runner/.local/arm-linux-gnueabihf
+2025-11-09T19:23:53.6385269Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+2025-11-09T19:23:53.6385929Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+2025-11-09T19:23:53.6388114Z Found 0 compatible libraries
+2025-11-09T19:23:53.6388565Z Scanning dependencies...
+2025-11-09T19:23:53.6404998Z No dependencies
+2025-11-09T19:23:53.6419713Z Building in release mode
+2025-11-09T19:23:53.6533354Z Compiling .pio/build/raspberrypi_zero2w/src/blink.o
+2025-11-09T19:23:53.6945441Z Linking .pio/build/raspberrypi_zero2w/program
+2025-11-09T19:23:53.7179970Z Checking size .pio/build/raspberrypi_zero2w/program
+2025-11-09T19:23:53.7203010Z Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+2025-11-09T19:23:53.7203638Z RAM:   [          ]   0.0% (used 352 bytes from 536870912 bytes)
+2025-11-09T19:23:53.7204469Z Flash: [          ]   0.0% (used 2296 bytes from 536870912 bytes)
+2025-11-09T19:23:53.7597583Z ========================= [SUCCESS] Took 0.36 seconds =========================
+2025-11-09T19:23:53.7597992Z 
+2025-11-09T19:23:53.7599300Z Processing raspberrypi_5_64bit (platform: linux_arm; board: raspberrypi_5; framework: lgpio)
+2025-11-09T19:23:53.7600070Z --------------------------------------------------------------------------------
+2025-11-09T19:23:53.9901202Z Verbose mode can be enabled via `-v, --verbose` option
+2025-11-09T19:23:53.9958879Z Cross-compiling for ARM Linux (AArch64/ARMv8 64-bit)
+2025-11-09T19:23:53.9959485Z Using toolchain prefix: aarch64-linux-gnu-
+2025-11-09T19:23:53.9959985Z Ensure toolchain is installed:
+2025-11-09T19:23:53.9960560Z   Linux:   sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+2025-11-09T19:23:53.9961437Z   macOS:   brew tap messense/macos-cross-toolchains
+2025-11-09T19:23:53.9961992Z            brew install aarch64-unknown-linux-gnu
+2025-11-09T19:23:53.9962778Z CONFIGURATION: https://docs.platformio.org/page/boards/linux_arm/raspberrypi_5.html
+2025-11-09T19:23:53.9963523Z PLATFORM: Linux ARM (1.6.0) > Raspberry Pi 5
+2025-11-09T19:23:53.9964036Z HARDWARE: BCM2712 2400MHz, 16GB RAM, 16GB Flash
+2025-11-09T19:23:53.9976552Z Found lgpio at: /home/runner/.local/arm-linux-gnueabihf
+2025-11-09T19:23:53.9986241Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+2025-11-09T19:23:53.9986958Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+2025-11-09T19:23:53.9988965Z Found 0 compatible libraries
+2025-11-09T19:23:53.9989414Z Scanning dependencies...
+2025-11-09T19:23:54.0005961Z No dependencies
+2025-11-09T19:23:54.0020488Z Building in release mode
+2025-11-09T19:23:54.0131137Z Compiling .pio/build/raspberrypi_5_64bit/src/blink.o
+2025-11-09T19:23:54.0571947Z Linking .pio/build/raspberrypi_5_64bit/program
+2025-11-09T19:23:54.0637498Z /usr/lib/gcc-cross/aarch64-linux-gnu/13/../../../../aarch64-linux-gnu/bin/ld: skipping incompatible /home/runner/.local/arm-linux-gnueabihf/lib/liblgpio.so when searching for -llgpio
+2025-11-09T19:23:54.0639313Z /usr/lib/gcc-cross/aarch64-linux-gnu/13/../../../../aarch64-linux-gnu/bin/ld: cannot find -llgpio: No such file or directory
+2025-11-09T19:23:54.0641194Z /usr/lib/gcc-cross/aarch64-linux-gnu/13/../../../../aarch64-linux-gnu/bin/ld: skipping incompatible /home/runner/.local/arm-linux-gnueabihf/lib/liblgpio.so when searching for -llgpio
+2025-11-09T19:23:54.0645663Z collect2: error: ld returned 1 exit status
+2025-11-09T19:23:54.0652006Z *** [.pio/build/raspberrypi_5_64bit/program] Error 1
+2025-11-09T19:23:54.1039255Z ========================== [FAILED] Took 0.34 seconds ==========================
+2025-11-09T19:23:54.1039692Z 
+2025-11-09T19:23:54.1045645Z Environment          Status    Duration
+2025-11-09T19:23:54.1046079Z -------------------  --------  ------------
+2025-11-09T19:23:54.1046507Z raspberrypi_3b       SUCCESS   00:00:03.020
+2025-11-09T19:23:54.1046830Z raspberrypi_400      SUCCESS   00:00:00.366
+2025-11-09T19:23:54.1047110Z raspberrypi_cm4      SUCCESS   00:00:00.364
+2025-11-09T19:23:54.1047377Z raspberrypi_zero2w   SUCCESS   00:00:00.358
+2025-11-09T19:23:54.1047620Z raspberrypi_5_64bit  FAILED    00:00:00.344
+2025-11-09T19:23:54.1047908Z ==================== 1 failed, 4 succeeded in 00:00:04.451 ====================
+2025-11-09T19:23:54.1334694Z ##[error]Process completed with exit code 1.
+2025-11-09T19:23:54.1422328Z Post job cleanup.
+2025-11-09T19:23:54.2366115Z [command]/usr/bin/git version
+2025-11-09T19:23:54.2402321Z git version 2.51.2
+2025-11-09T19:23:54.2446526Z Temporarily overriding HOME='/home/runner/work/_temp/65fa4cd4-72fa-4d8b-87aa-9c188b0ddcef' before making global git config changes
+2025-11-09T19:23:54.2447835Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-09T19:23:54.2460396Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/platform-linux_arm/platform-linux_arm
+2025-11-09T19:23:54.2496287Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-09T19:23:54.2528643Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-09T19:23:54.2755116Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-09T19:23:54.2776880Z http.https://github.com/.extraheader
+2025-11-09T19:23:54.2789591Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-11-09T19:23:54.2820078Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-09T19:23:54.3148204Z Cleaning up orphan processes
+
