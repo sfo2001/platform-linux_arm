@@ -46,9 +46,12 @@ env = DefaultEnvironment()
 # Priority: 1) User local build, 2) System-wide build, 3) System package
 home = expanduser("~")
 lgpio_search_paths = [
-    join(home, ".local", "arm-linux-gnueabihf"),  # User-built (recommended)
-    "/usr/local/arm-linux-gnueabihf",             # System-wide build
-    "/usr/arm-linux-gnueabihf",                   # Multiarch package location
+    join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (recommended)
+    join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit
+    "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
+    "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
+    "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
+    "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
     "/usr",                                        # Native package fallback
 ]
 
@@ -58,27 +61,48 @@ lgpio_lib = None
 for base_path in lgpio_search_paths:
     inc_path = join(base_path, "include")
     lib_path = join(base_path, "lib")
+    lib_path_multiarch_armhf = join(base_path, "lib", "arm-linux-gnueabihf")
+    lib_path_multiarch_aarch64 = join(base_path, "lib", "aarch64-linux-gnu")
 
-    if isfile(join(inc_path, "lgpio.h")) and \
-       (isfile(join(lib_path, "liblgpio.so")) or isfile(join(lib_path, "liblgpio.so.1"))):
-        lgpio_include = inc_path
-        lgpio_lib = lib_path
-        print("Found lgpio at: %s" % base_path)
-        break
+    if isfile(join(inc_path, "lgpio.h")):
+        # Check standard lib path first
+        if isfile(join(lib_path, "liblgpio.so")) or isfile(join(lib_path, "liblgpio.so.1")):
+            lgpio_include = inc_path
+            lgpio_lib = lib_path
+            print("Found lgpio at: %s" % base_path)
+            break
+        # Check multiarch path for armhf
+        elif isfile(join(lib_path_multiarch_armhf, "liblgpio.so")) or isfile(join(lib_path_multiarch_armhf, "liblgpio.so.1")):
+            lgpio_include = inc_path
+            lgpio_lib = lib_path_multiarch_armhf
+            print("Found lgpio at: %s (multiarch armhf)" % base_path)
+            break
+        # Check multiarch path for aarch64
+        elif isfile(join(lib_path_multiarch_aarch64, "liblgpio.so")) or isfile(join(lib_path_multiarch_aarch64, "liblgpio.so.1")):
+            lgpio_include = inc_path
+            lgpio_lib = lib_path_multiarch_aarch64
+            print("Found lgpio at: %s (multiarch aarch64)" % base_path)
+            break
 
 if not lgpio_include or not lgpio_lib:
     sys.stderr.write(
         "ERROR: lgpio library not found!\n"
         "\n"
         "Please build and install lgpio for cross-compilation:\n"
-        "  1. Install ARM toolchain: sudo apt install gcc-arm-linux-gnueabihf\n"
+        "\n"
+        "For 32-bit ARM (ARMv7, default):\n"
+        "  1. Install toolchain: sudo apt install gcc-arm-linux-gnueabihf\n"
         "  2. Run setup script: ./scripts/setup-lgpio-cross.sh\n"
         "\n"
-        "Or install system package (requires multiarch setup):\n"
-        "  sudo dpkg --add-architecture armhf\n"
-        "  sudo apt install liblgpio-dev:armhf\n"
+        "For 64-bit ARM (AArch64):\n"
+        "  1. Install toolchain: sudo apt install gcc-aarch64-linux-gnu\n"
+        "  2. Build lgpio: See docs/LGPIO_SETUP.md\n"
         "\n"
-        "See docs/LGPIO_SETUP.md for details.\n"
+        "Or install system package (requires multiarch setup):\n"
+        "  sudo dpkg --add-architecture armhf  # or arm64 for AArch64\n"
+        "  sudo apt install liblgpio-dev:armhf  # or :arm64 for AArch64\n"
+        "\n"
+        "See docs/LGPIO_SETUP.md for complete instructions.\n"
     )
     env.Exit(1)
 
