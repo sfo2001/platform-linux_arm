@@ -9,23 +9,36 @@ echo "lgpio Cross-Compilation Setup"
 echo "=================================================="
 echo ""
 
+# Set paths and defaults
+BUILD_DIR="${BUILD_DIR:-/tmp/lg-build}"
+CROSS_PREFIX="${CROSS_PREFIX:-arm-linux-gnueabihf-}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/arm-linux-gnueabihf}"
+
+# Detect architecture from cross-compiler prefix
+if [[ "$CROSS_PREFIX" == "aarch64-"* ]]; then
+    ARCH_NAME="ARM 64-bit (AArch64)"
+else
+    ARCH_NAME="ARM 32-bit (ARMv7)"
+fi
+
 # Check if cross-compiler is installed
-if ! command -v arm-linux-gnueabihf-gcc &> /dev/null; then
-    echo "❌ ERROR: ARM cross-compiler not found!"
+CROSS_GCC="${CROSS_PREFIX}gcc"
+if ! command -v "$CROSS_GCC" &> /dev/null; then
+    echo "❌ ERROR: Cross-compiler not found: $CROSS_GCC"
     echo ""
     echo "Please install it first:"
-    echo "  sudo apt install gcc-arm-linux-gnueabihf"
+    if [[ "$CROSS_PREFIX" == "aarch64-"* ]]; then
+        echo "  sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu"
+    else
+        echo "  sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf"
+    fi
     echo ""
     exit 1
 fi
 
-echo "✓ ARM cross-compiler found: $(arm-linux-gnueabihf-gcc --version | head -1)"
+echo "✓ Cross-compiler found: $($CROSS_GCC --version | head -1)"
+echo "  Architecture: $ARCH_NAME"
 echo ""
-
-# Set paths
-BUILD_DIR="${BUILD_DIR:-/tmp/lg-build}"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/arm-linux-gnueabihf}"
-CROSS_PREFIX="arm-linux-gnueabihf-"
 
 echo "Build directory: $BUILD_DIR"
 echo "Install directory: $INSTALL_DIR"

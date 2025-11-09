@@ -29,14 +29,23 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install ARM cross-compilation toolchain
+      - name: Install ARM cross-compilation toolchains
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          sudo apt-get install -y \
+            gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      - name: Build lgpio for ARM cross-compilation
+      - name: Build lgpio for ARM cross-compilation (32-bit)
         run: |
-          echo "Building lgpio library for ARM..."
+          echo "Building lgpio library for ARM 32-bit..."
+          ./scripts/setup-lgpio-cross.sh
+
+      - name: Build lgpio for ARM cross-compilation (64-bit)
+        run: |
+          echo "Building lgpio library for ARM 64-bit..."
+          CROSS_PREFIX=aarch64-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
           ./scripts/setup-lgpio-cross.sh
 
       - name: Install PlatformIO Core
