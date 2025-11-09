@@ -285,7 +285,195 @@ When adding new references during analysis rounds, use this format:
 - **Commit dfa0489** (recent): "Added CLAUDE.md and analysis prompt"
 
 ### Round 2: Priority Deep-Dive
-*(References to be added during Round 2)*
+
+**Date**: 2025-11-09
+**Status**: ✅ Complete
+**Documents**: 02-priority-cross-compilation.md, 02-priority-frameworks.md, 02-priority-boards.md, 02-priority-ci-cd.md
+
+#### Priority 1: Cross-Compilation Toolchains
+
+**PlatformIO Core - get_systype()**:
+- **Function**: https://github.com/platformio/platformio-core/blob/develop/platformio/util.py
+- **Key Findings**: System type detection logic, possible return values (darwin_x86_64, linux_x86_64, windows_amd64, etc.)
+- **Referenced In**: 02-priority-cross-compilation.md
+
+**PlatformIO Package Issues**:
+- **GitHub Issue #2**: https://github.com/platformio/platform-linux_arm/issues/2
+  - Title: "The package 'toolchain-gccarmlinuxgnueabi' is not available"
+  - Confirmed: Windows not supported
+- **GitHub Issue #578**: https://github.com/platformio/platformio-core/issues/578
+  - Title: Package not available for linux_x86_64
+- **Package Registry**: https://registry.platformio.org/tools/platformio/toolchain-gccarmlinuxgnueabi
+  - Only supports: macOS, Linux ARM (native)
+
+**ARM GNU Toolchains**:
+- **ARM Developer Downloads**: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+  - Official toolchain downloads for all platforms
+- **Ubuntu ARM Cross-Compilation Guide**: https://jensd.be/1126/linux/cross-compiling-for-arm-or-aarch64-on-debian-or-ubuntu
+  - gcc-arm-linux-gnueabihf and gcc-aarch64-linux-gnu installation
+- **Homebrew arm-linux-gnueabihf-binutils**: https://formulae.brew.sh/formula/arm-linux-gnueabihf-binutils
+  - macOS toolchain (binutils only, not full GCC)
+- **messense/homebrew-macos-cross-toolchains**: https://github.com/messense/homebrew-macos-cross-toolchains
+  - Community full ARM toolchains for macOS (Intel and Apple Silicon)
+
+**ARM Architecture Documentation**:
+- **ARM Toolchain Comparison (StackOverflow)**: https://stackoverflow.com/questions/73686292/which-version-of-arm-gnu-toolchain-should-i-use-to-run-on-rpi-4b
+  - Explains arm-linux-gnueabihf (32-bit) vs aarch64-linux-gnu (64-bit)
+- **Raspberry Pi Processors**: https://www.raspberrypi.com/documentation/computers/processors.html
+  - BCM2711, BCM2712 specifications and capabilities
+- **ARMv7 vs ARMv8 Discussion**: https://raspberrypi.stackexchange.com/questions/101215/
+  - Why Pi 4 reports armv7l when running 32-bit OS on ARMv8 hardware
+
+**Reference Platforms**:
+- **platform-ststm32 builder/main.py**: https://github.com/platformio/platform-ststm32/blob/master/builder/main.py
+  - Cross-compilation patterns for ARM embedded (arm-none-eabi prefix)
+
+#### Priority 2: Framework Ecosystem (GPIO Libraries)
+
+**lgpio (Modern GPIO Library)**:
+- **Repository**: https://github.com/joan2937/lg
+- **Documentation**: http://abyz.me.uk/lg/index.html
+- **Key Findings**:
+  - Modern successor to pigpio by same author (Joan)
+  - Works on all Raspberry Pi models including Pi 5
+  - Uses /dev/gpiochip kernel interface (not direct register access)
+  - ~523k GPIO toggles/sec (slower than pigpio but Pi 5 compatible)
+  - Unlicense (public domain)
+- **Installation**: `sudo apt install liblgpio-dev liblgpio1`
+- **Referenced In**: 02-priority-frameworks.md
+
+**pigpio (High-Performance GPIO)**:
+- **Repository**: https://github.com/joan2937/pigpio
+- **Documentation**: http://abyz.me.uk/rpi/pigpio/
+- **C API Reference**: https://abyz.me.uk/rpi/pigpio/cif.html
+- **Examples**: https://abyz.me.uk/rpi/pigpio/examples.html
+- **Key Findings**:
+  - Very fast (~7.9M toggles/sec) via direct register access
+  - Hardware-timed PWM, high-speed sampling (1M samples/sec)
+  - NOT compatible with Raspberry Pi 5 (RP1 I/O controller incompatible)
+  - Works on Pi 1-4, Zero, Zero 2 W
+  - Requires root/sudo
+  - Unlicense (public domain)
+- **Installation**: `sudo apt install libpigpio-dev pigpio`
+- **Compilation**: Link with `-lpigpio -lrt -lpthread`
+- **Debian Package**: https://tracker.debian.org/pkg/pigpio
+- **StackOverflow Compilation Guide**: https://stackoverflow.com/questions/69759904/
+- **Future Status**: https://raspberrypi.stackexchange.com/questions/145553/future-of-pigpio-library-alive-or-dead
+- **Referenced In**: 02-priority-frameworks.md
+
+**WiringPi (GC2 Community Fork)**:
+- **Repository**: https://github.com/WiringPi/WiringPi
+- **Original**: http://wiringpi.com (deprecated 2019, defunct)
+- **Key Findings**:
+  - GC2 (Grazer Computer Club) took over maintenance in 2024
+  - Supports Raspberry Pi 5 (except GCLK function)
+  - Arduino-like API (pinMode, digitalWrite, etc.)
+  - Very fast (~7.9M toggles/sec)
+  - LGPL v3
+- **Installation**: `sudo apt install wiringpi`
+- **Referenced In**: 02-priority-frameworks.md, Round 1
+
+**libgpiod (Kernel-Standard)**:
+- **Repository**: https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
+- **Debian Package**: https://packages.debian.org/unstable/libgpiod-dev
+- **Ubuntu Package**: https://launchpad.net/ubuntu/+source/libgpiod
+- **Key Findings**:
+  - Official Linux kernel GPIO library
+  - Platform-independent (works on any Linux GPIO system)
+  - Raspberry Pi OS Bookworm has old v1.6 (poor docs, no examples)
+  - v2.x is modern but not yet in Pi OS repos
+  - LGPL v2.1+
+- **Installation**: `sudo apt install libgpiod-dev gpiod`
+- **Raspberry Pi Forum Discussion**: https://forums.raspberrypi.com/viewtopic.php?t=366693
+- **Pi 5 Support**: https://raspberrypi.stackexchange.com/questions/145295/
+- **Referenced In**: 02-priority-frameworks.md
+
+**GPIO Library Comparisons**:
+- **Performance Benchmarks (Xojo Forum)**: https://forum.xojo.com/t/libgpiod-vs-pigpiod-vs-wiringpi/59853
+  - WiringPi: 7.9M toggles/sec
+  - pigpio: 7.9M toggles/sec
+  - lgpio: 523k toggles/sec
+  - RPi.GPIO: 801k toggles/sec
+- **Current Best Practices (2024)**: https://raspberrypi.stackexchange.com/questions/147465/current-proper-way-to-interface-gpio-from-c-code
+- **Raspberry Pi GPIO White Paper**: https://pip-assets.raspberrypi.com/categories/685-app-notes-guides-whitepapers/documents/RP-006553-WP/A-history-of-GPIO-usage-on-Raspberry-Pi-devices-and-current-best-practices
+  - Official Raspberry Pi Foundation guidance on GPIO libraries
+- **Future of GPIO on Pi 5**: https://raspberrypi.stackexchange.com/questions/145013/future-of-gpio-access-on-pi5
+
+**Framework Builder Reference**:
+- **platform-espressif32 arduino.py**: https://github.com/platformio/platform-espressif32/blob/master/builder/frameworks/arduino.py
+  - Reusable patterns for framework builder scripts
+
+#### Priority 3: Modern Board Support (Hardware Specifications)
+
+**Official Raspberry Pi Documentation**:
+- **Raspberry Pi 4 Datasheet**: https://datasheets.raspberrypi.com/rpi4/raspberry-pi-4-datasheet.pdf
+  - BCM2711 specifications, GPIO, March 2024 release
+- **Raspberry Pi 4 Specifications**: https://www.raspberrypi.com/products/raspberry-pi-4-model-b/specifications/
+  - 1/2/4/8GB variants, Cortex-A72 @ 1.5GHz
+- **Raspberry Pi 5 Specifications**: https://www.raspberrypi.com/products/raspberry-pi-5/specifications/
+  - BCM2712 (Cortex-A76 @ 2.4GHz), 2/4/8/16GB variants, RP1 I/O controller
+- **Raspberry Pi 400 Specifications**: https://www.raspberrypi.com/products/raspberry-pi-400/specifications/
+  - BCM2711C0 @ 1.8GHz (higher than Pi 4), 4GB RAM, keyboard form factor
+- **Compute Module 4 Product Brief**: https://datasheets.raspberrypi.com/cm4/cm4-product-brief.pdf
+  - 1/2/4/8GB variants, 100-pin connectors, industrial specs
+- **Raspberry Pi Zero 2 W Product Brief**: https://datasheets.raspberrypi.com/rpizero2/raspberry-pi-zero-2-w-product-brief.pdf
+  - RP3A0 SiP (BCM2710A1), Cortex-A53 @ 1GHz, 512MB
+- **Raspberry Pi Processors Documentation**: https://www.raspberrypi.com/documentation/computers/processors.html
+  - Comprehensive BCM SoC technical details
+
+**Technical Analyses**:
+- **RP3A0 Teardown (Jeff Geerling)**: https://www.jeffgeerling.com/blog/2021/look-inside-raspberry-pi-zero-2-w-and-rp3a0-au
+  - Internal analysis of Zero 2 W processor packaging
+- **Pi 4 C0 Stepping (Jeff Geerling)**: https://www.jeffgeerling.com/blog/2021/raspberry-pi-4-model-bs-arriving-newer-c0-stepping
+  - BCM2711C0 improvements, higher clock speed (1.8GHz)
+- **Raspberry Pi 400 Announcement**: https://www.cnx-software.com/2020/11/02/raspberry-pi-400-keyboard-computer-features-1-8-ghz-bcm2711c0-processor/
+  - C0 stepping, clock speed differences vs Pi 4
+- **BCM2711 vs BCM2712**: https://www.cpu-monkey.com/en/cpu-raspberry_pi_4_b_broadcom_bcm2711
+  - CPU benchmarks and specifications comparison
+
+**Community Resources**:
+- **Understanding CPU Architectures**: https://forums.raspberrypi.com/viewtopic.php?t=355555
+  - ARMv7 vs ARMv8, 32-bit vs 64-bit OS
+- **Raspberry Pi 5 Announcement**: https://dataconomy.com/2023/09/28/pi5-raspberry-pi-5-specs-bcm2712/
+  - BCM2712 details, performance improvements over Pi 4
+- **Compute Module 4 Specs**: https://magazine.raspberrypi.com/articles/raspberry-pi-compute-module-4-specs-benchmarks-testing
+  - MagPi magazine analysis
+
+#### Priority 4: CI/CD Infrastructure
+
+**GitHub Actions & PlatformIO**:
+- **platform-espressif32 examples.yml**: https://github.com/platformio/platform-espressif32/blob/master/.github/workflows/examples.yml
+  - Complete workflow: 17 examples × 3 OS = 51 test combinations
+  - Symlink installation pattern, fail-fast: false strategy
+- **PlatformIO GitHub Actions Documentation**: https://docs.platformio.org/en/stable/integration/ci/github-actions.html
+  - Official CI/CD integration guide
+  - Matrix build examples
+- **GitHub Actions Documentation**: https://docs.github.com/en/actions
+  - Workflow syntax, matrix strategies, triggers
+- **actions/checkout**: https://github.com/actions/checkout
+  - Repository checkout action (v4)
+- **actions/setup-python**: https://github.com/actions/setup-python
+  - Python installation action (v5)
+
+**ARM Cross-Compilation in CI**:
+- **ARM Cross-Compiler Install Guide**: https://learn.arm.com/install-guides/gcc/cross/
+  - Official ARM GNU Toolchain installation across platforms
+- **Ubuntu ARM Cross-Compilation (Ask Ubuntu)**: https://askubuntu.com/questions/250696/how-to-cross-compile-for-arm
+  - gcc-arm-linux-gnueabihf installation and usage
+- **GitHub Actions ARM Example**: https://www.rohanjain.in/cargo-cross/
+  - Cross-compilation patterns in CI (Rust example, but concepts apply)
+- **messense/homebrew-macos-cross-toolchains**: https://github.com/messense/homebrew-macos-cross-toolchains
+  - macOS ARM cross-compiler tap for CI
+
+**Quality Tools**:
+- **pre-commit Framework**: https://pre-commit.com/
+  - Automated code quality hooks
+- **black (Python Formatter)**: https://github.com/psf/black
+  - Python code formatter for platform.py
+- **flake8 (Python Linter)**: https://github.com/PyCQA/flake8
+  - Python linter for code quality
+- **softprops/action-gh-release**: https://github.com/softprops/action-gh-release
+  - GitHub Release automation action
 
 ### Round 3: Implementation Roadmap
 *(References to be added during Round 3)*
