@@ -426,33 +426,38 @@ Phase 3: Quality Gates & Automation
 
 #### Task 1.4: CI/CD Phase 1 (Basic Ubuntu Testing)
 
-**Effort**: 2 hours | **Owner**: TBD | **Dependencies**: Phase 0 Task 0.1 (cross-compilation)
+**Status**: ✅ **COMPLETE** (2025-11-09, fixed on review)
+
+**Effort**: 2 hours (Estimated) | **Actual**: ~2h | **Owner**: Claude | **Dependencies**: Phase 0 Task 0.1 (cross-compilation)
 
 **Description**: Create GitHub Actions workflow to test examples on Ubuntu x86_64 (validates cross-compilation).
+
+**Completed**: 2025-11-09 | **Initial Commit**: `b4cb9d4`, **Fixed**: current commit
 
 **Success Criteria**:
 - ✅ `.github/workflows/examples.yml` created
 - ✅ Tests run on every push and pull_request
-- ✅ Builds 2-3 examples on Ubuntu
+- ✅ Builds 2 examples on Ubuntu (bare-metal + lgpio)
 - ✅ Uses symlink installation: `pio pkg install --global --platform symlink://.`
 - ✅ Installs ARM toolchain: `apt install gcc-arm-linux-gnueabihf`
+- ✅ Builds lgpio for ARM cross-compilation (runs setup script)
 - ✅ CI badge added to README
 
 **Implementation Notes**:
-- Copy pattern from platform-espressif32
-- Matrix: Ubuntu only, 2-3 examples initially
-- Install toolchain in workflow: `sudo apt install -y gcc-arm-linux-gnueabihf`
-- Use PlatformIO develop branch: `pip install -U https://github.com/platformio/platformio-core/archive/develop.zip`
-- Set `fail-fast: false` to see all test results
+- **Initial implementation** (commit `b4cb9d4`): Workflow created but failing
+- **Root cause identified**: Framework examples require ARM libraries, not x86_64
+- **Fix applied**: Run `scripts/setup-lgpio-cross.sh` in CI to build lgpio for ARM
+- **Test matrix**: bare-metal-hello (no framework) + lgpio-blink (primary framework)
+- **Excluded from CI**:
+  - pigpio-blink (deprecated framework, no automated setup)
+  - wiringpi examples (require native Pi hardware, no cross-compile support)
+
+**Files Modified**:
+- `.github/workflows/examples.yml` - Fixed to build lgpio for ARM
 
 **References**:
 - [02-priority-ci-cd.md](02-priority-ci-cd.md) - Full CI/CD design
-- platform-espressif32 .github/workflows/examples.yml
-
-**Breakdown** (2 hours):
-- 1h: Create workflow YAML, configure matrix
-- 30 min: Test workflow runs successfully
-- 30 min: Fix any issues, add CI badge
+- platform-espressif32 .github/workflows/examples.yml (reference)
 
 ---
 
