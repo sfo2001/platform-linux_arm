@@ -226,6 +226,22 @@ When adding new references during analysis rounds, use this format:
 - Stack Exchange: GPIO library comparisons
 - GitHub: WiringPi alternatives and forks
 
+**Detailed Technical Analysis (sfo2001)**:
+- **WiringPi vs libgpiod Analysis**: https://github.com/sfo2001/esphome/blob/feature/linux-platform/docs/linux-platform/notes/wiringpi-analysis.md
+- **Relevance**: In-depth comparison of WiringPi V3 vs libgpiod for Linux platform GPIO support
+- **Key Conclusions**:
+  - Recommends against WiringPi adoption due to Raspberry Pi-only support and architectural conflicts
+  - Strongly favors enhanced libgpiod implementation using native Linux kernel interfaces
+  - Identifies GPIO interrupt support as primary missing feature (not in current libgpiod wrapper)
+  - Proposes using chardev, i2c-dev, spidev kernel APIs for platform independence
+- **Main Differences**:
+  - WiringPi: RPi-only, full interrupt/PWM support, additional dependency
+  - libgpiod: Any Linux system, modern kernel APIs, minimal dependencies
+- **Implementation Approach**: Three-phase enhancement (1) Add libgpiod interrupt support, (2) Optional PWM, (3) Documentation/testing
+- **Referenced In**: Round 1 Initial Assessment - Framework alternatives research
+- **Priority Relevance**: Critical for Round 2 Priority #2 (Framework Ecosystem Modernization)
+- **Last Checked**: 2025-11-09
+
 #### Local Repository Analysis
 
 **platform-linux_arm** (this repository):
