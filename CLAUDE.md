@@ -6,6 +6,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a PlatformIO development platform for Linux ARM (including Raspberry Pi devices). It enables building native applications for ARM-based Linux systems using PlatformIO Core 6.0+. The platform supports cross-compilation from macOS and native compilation on ARM Linux systems.
 
+**Current Status**: This is a forked repository (original last updated 2022) undergoing modernization to:
+- Fix broken cross-compilation functionality
+- Achieve compatibility with latest PlatformIO Core
+- Match quality and feature completeness of reference platforms (platform-espressif32, platform-raspberrypi)
+
+## Modernization Research Workflow
+
+This repository includes a structured research and analysis workflow in the `research/` directory for planning and executing the modernization effort.
+
+### Research Structure
+
+The analysis follows an **iterative checkpoint approach** with manageable sessions:
+
+1. **Round 1: Initial Assessment** (`research/01-ROUND-1-PROMPT.md`)
+   - High-level comparison with reference platforms
+   - Critical blocker identification
+   - Priority area ranking for deep-dive
+   - Estimated time: 2-3 hours
+
+2. **Round 2: Priority Deep-Dive** (`research/02-ROUND-2-PROMPT.md`)
+   - Detailed analysis of top 3-5 priority areas from Round 1
+   - Technical solutions and code patterns
+   - Effort estimates and dependencies
+   - Customized based on Round 1 findings
+
+3. **Round 3: Implementation Roadmap** (`research/03-ROUND-3-PROMPT.md`)
+   - Synthesize findings into phased implementation plan
+   - Prioritized task list with dependencies
+   - Timeline and effort estimates
+   - Quick-start action plan
+
+### Key Files
+
+- **`research/00-INDEX.md`**: Master progress tracker, links all rounds and deliverables
+- **`research/REFERENCES.md`**: Centralized repository of all sources, links, and code references
+- **`research/FINDINGS-TEMPLATE.md`**: Standard structure for analysis outputs
+- **`research/ANALYSIS_PROMPT.md`**: Original comprehensive prompt (archived, use round-specific prompts instead)
+
+### Usage
+
+To conduct or continue research:
+1. Review `research/00-INDEX.md` for current status
+2. Execute the appropriate round prompt in a fresh Claude Code session
+3. Update tracking files (`00-INDEX.md`, `REFERENCES.md`) after each round
+4. Use findings to guide implementation work
+
+### Benefits of This Approach
+- Each round fits in single Claude session (avoids context overflow)
+- Can pause/resume between checkpoints
+- High-level patterns with references (detailed sources available for deep-dive)
+- Pivot based on discoveries
+- Clear decision trail and rationale
+
 ## Build and Development Commands
 
 ### Building Projects
