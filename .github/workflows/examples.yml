@@ -103,24 +103,44 @@ jobs:
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit | sed 's|^\./||')
           echo "Found toolchain directory: $TOOLCHAIN_DIR"
 
-          # Get absolute path
+          # Get absolute path - convert to Windows path format
           TOOLCHAIN_BIN="$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin"
-          echo "Adding to PATH: $TOOLCHAIN_BIN"
+          echo "Toolchain bin path: $TOOLCHAIN_BIN"
 
-          # Add to PATH for subsequent steps
-          echo "$TOOLCHAIN_BIN" >> $GITHUB_PATH
+          # Convert to Windows path format for GITHUB_PATH
+          TOOLCHAIN_BIN_WINDOWS=$(cygpath -w "$TOOLCHAIN_BIN")
+          echo "Windows path format: $TOOLCHAIN_BIN_WINDOWS"
+
+          # Add to PATH for subsequent steps (Windows format)
+          echo "$TOOLCHAIN_BIN_WINDOWS" >> $GITHUB_PATH
+          echo "Added to GITHUB_PATH: $TOOLCHAIN_BIN_WINDOWS"
 
           # Verify installation
           echo "Verifying toolchain binaries..."
-          ls -la "$TOOLCHAIN_DIR/bin/" | head -10
+          ls -la "$TOOLCHAIN_DIR/bin/" | head -15
 
           # Test if arm-linux-gnueabihf-gcc exists
           if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
-            echo "✅ arm-linux-gnueabihf-gcc.exe found"
+            echo "✅ arm-linux-gnueabihf-gcc.exe found at: $TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe"
           else
             echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
-            ls -la "$TOOLCHAIN_DIR/bin/" | grep -i gcc || true
+            echo "Searching for gcc binaries:"
+            find "$TOOLCHAIN_DIR/bin/" -iname "*gcc*.exe" || true
           fi
+
+      # Debug: Verify PATH (Windows only)
+      - name: Debug PATH (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "=== Current PATH ==="
+          echo "$PATH" | tr ':' '\n'
+          echo ""
+          echo "=== Checking for arm-linux-gnueabihf-gcc ==="
+          which arm-linux-gnueabihf-gcc || echo "arm-linux-gnueabihf-gcc not found in PATH"
+          echo ""
+          echo "=== All executables in PATH matching 'arm' ==="
+          find $(echo "$PATH" | tr ':' '\n') -maxdepth 1 -iname "*arm*" 2>/dev/null | head -20 || true
 
       # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (32-bit)
