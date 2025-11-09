@@ -1,12 +1,15 @@
 # Linux ARM: development platform for [PlatformIO](https://platformio.org)
 
+[![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
+
 Linux ARM is a Unix-like and mostly POSIX-compliant computer operating system (OS) assembled under the model of free and open-source software development and distribution. This platform enables building native applications for ARM-based Linux systems (Raspberry Pi) using PlatformIO Core 6.0+.
 
 **Key Features:**
 - Cross-compilation support from Linux x86_64, macOS (Intel/ARM), and Windows
 - Native compilation on ARM Linux systems
-- Support for Raspberry Pi 1, 2, 3, and 4
-- Optional WiringPi framework for GPIO access
+- Support for Raspberry Pi 1, 2, 3, 4, and 5
+- Modern GPIO frameworks: lgpio (Pi 5 compatible) and pigpio
+- Legacy WiringPi framework for compatibility
 - Bare-metal C/C++ application support
 
 * [Home](https://registry.platformio.org/platforms/platformio/linux_arm) (home page in the PlatformIO Registry)
@@ -47,7 +50,8 @@ When running PlatformIO directly on a Raspberry Pi or other ARM Linux system, th
 - `raspberrypi_1b` - Raspberry Pi 1 Model B
 - `raspberrypi_2b` - Raspberry Pi 2 Model B
 - `raspberrypi_3b` - Raspberry Pi 3 Model B
-- `raspberrypi_4b` - Raspberry Pi 4 Model B (NEW)
+- `raspberrypi_4b` - Raspberry Pi 4 Model B
+- `raspberrypi_5` - Raspberry Pi 5 (NEW - lgpio framework only)
 - `raspberrypi_zero` - Raspberry Pi Zero
 
 # Usage
@@ -73,7 +77,62 @@ board = ...
 ...
 ```
 
-# Examples
+# Frameworks
+
+This platform supports multiple frameworks for GPIO access:
+
+## lgpio Framework (Recommended for new projects)
+
+Modern GPIO library supporting all Raspberry Pi models including Pi 5:
+
+```ini
+[env:raspberrypi_5]
+platform = linux_arm
+framework = lgpio
+board = raspberrypi_5
+```
+
+**System requirements:**
+```bash
+sudo apt install liblgpio-dev liblgpio1
+```
+
+See `examples/lgpio-blink/` for a complete example.
+
+## pigpio Framework
+
+Advanced GPIO library with precise timing, PWM, and servo control (Pi 1-4 only):
+
+```ini
+[env:raspberrypi_4b]
+platform = linux_arm
+framework = pigpio
+board = raspberrypi_4b
+```
+
+**System requirements:**
+```bash
+sudo apt install libpigpio-dev pigpio
+```
+
+**Note:** pigpio is NOT compatible with Raspberry Pi 5. Use lgpio for Pi 5.
+
+See `examples/pigpio-blink/` for a complete example.
+
+## WiringPi Framework (Legacy)
+
+Classic GPIO library for compatibility with older projects:
+
+```ini
+[env:raspberrypi_3b]
+platform = linux_arm
+framework = wiringpi
+board = raspberrypi_3b
+```
+
+**Note:** WiringPi framework currently requires building directly on a Raspberry Pi device (cross-compilation is not supported for WiringPi).
+
+See `examples/wiringpi-blink/` and `examples/wiringpi-serial/` for complete examples.
 
 ## Bare-Metal Application (No Framework)
 
@@ -87,21 +146,6 @@ board = raspberrypi_4b
 ```
 
 See `examples/baremetal-hello/` for a complete example.
-
-## WiringPi Framework
-
-Use the WiringPi library for GPIO access:
-
-```ini
-[env:raspberrypi_3b]
-platform = linux_arm
-framework = wiringpi
-board = raspberrypi_3b
-```
-
-**Note:** WiringPi framework currently requires building directly on a Raspberry Pi device (cross-compilation is not supported for WiringPi).
-
-See `examples/wiringpi-blink/` and `examples/wiringpi-serial/` for complete examples.
 
 # Building and Running
 
