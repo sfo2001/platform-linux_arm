@@ -5,20 +5,62 @@ on:
     branches:
       - master
       - develop
+      - 'claude/**'
   pull_request:
 
 jobs:
-  build:
+  # Validation checks (JSON, Python)
+  validate:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating board definition JSON files..."
+          for file in boards/*.json; do
+            echo "Checking $file"
+            python -m json.tool "$file" > /dev/null || exit 1
+          done
+          echo "✅ All JSON files are valid"
+
+      - name: Validate platform.json
+        run: |
+          echo "Validating platform.json..."
+          python -m json.tool platform.json > /dev/null || exit 1
+          echo "✅ platform.json is valid"
+
+      - name: Check Python syntax
+        run: |
+          echo "Checking Python syntax..."
+          python -m py_compile platform.py
+          python -m py_compile builder/main.py
+          python -m py_compile builder/frameworks/*.py
+          echo "✅ All Python files have valid syntax"
+
+  # Build examples on multiple OS
+  build:
+    runs-on: ${{ matrix.os }}
+    needs: validate
 
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         example:
           - examples/baremetal-hello
           - examples/lgpio-blink
           # Note: pigpio-blink not tested (deprecated framework, no CI setup)
           # Note: wiringpi examples not tested (require native Pi hardware)
+        exclude:
+          # Exclude lgpio on Windows (complex cross-compile setup)
+          - os: windows-latest
+            example: examples/lgpio-blink
 
     steps:
       - uses: actions/checkout@v4
@@ -29,19 +71,43 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install ARM cross-compilation toolchains
+      # Ubuntu: Install ARM cross-compilation toolchains
+      - name: Install ARM toolchains (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
+      # macOS: Install ARM cross-compilation toolchains
+      - name: Install ARM toolchains (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew tap messense/macos-cross-toolchains
+          brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
+
+      # Windows: Install ARM cross-compilation toolchains
+      - name: Install ARM toolchains (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Download ARM GNU Toolchain
+          curl -L -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
+          unzip -q gcc-arm.zip
+          echo "$PWD/arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-arm-none-linux-gnueabihf/bin" >> $GITHUB_PATH
+
+      # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (32-bit)
+        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        shell: bash
         run: |
           echo "Building lgpio library for ARM 32-bit..."
           ./scripts/setup-lgpio-cross.sh
 
+      # Build lgpio for ARM cross-compilation (64-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (64-bit)
+        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        shell: bash
         run: |
           echo "Building lgpio library for ARM 64-bit..."
           CROSS_PREFIX=aarch64-linux-gnu- \
