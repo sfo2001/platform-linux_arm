@@ -10,6 +10,9 @@ env/
 .pioenvs/
 .piolibdeps/
 
+# Sphinx documentation
+docs/_build/
+
 # IDE
 .vscode/
 .idea/
