@@ -42,6 +42,14 @@ import sys
 
 env = DefaultEnvironment()
 
+# Detect target architecture (same logic as builder/main.py)
+board = env.BoardConfig()
+target_arch = board.get("build.arch", "armv7")
+if env.GetProjectOption("board_build.arch", None):
+    target_arch = env.GetProjectOption("board_build.arch")
+
+is_aarch64 = (target_arch == "aarch64")
+
 # Detect lgpio installation paths
 # Priority: 1) User local build, 2) System-wide build, 3) System package
 home = expanduser("~")
@@ -65,42 +73,48 @@ for base_path in lgpio_search_paths:
     lib_path_multiarch_aarch64 = join(base_path, "lib", "aarch64-linux-gnu")
 
     if isfile(join(inc_path, "lgpio.h")):
-        # Check standard lib path first
+        # Check correct architecture's path first
+        if is_aarch64:
+            # Building for 64-bit, check aarch64 first
+            if isfile(join(lib_path_multiarch_aarch64, "liblgpio.so")) or isfile(join(lib_path_multiarch_aarch64, "liblgpio.so.1")):
+                lgpio_include = inc_path
+                lgpio_lib = lib_path_multiarch_aarch64
+                print("Found lgpio at: %s (multiarch aarch64)" % base_path)
+                break
+        else:
+            # Building for 32-bit, check armhf first
+            if isfile(join(lib_path_multiarch_armhf, "liblgpio.so")) or isfile(join(lib_path_multiarch_armhf, "liblgpio.so.1")):
+                lgpio_include = inc_path
+                lgpio_lib = lib_path_multiarch_armhf
+                print("Found lgpio at: %s (multiarch armhf)" % base_path)
+                break
+
+        # Check standard lib path (native package)
         if isfile(join(lib_path, "liblgpio.so")) or isfile(join(lib_path, "liblgpio.so.1")):
             lgpio_include = inc_path
             lgpio_lib = lib_path
             print("Found lgpio at: %s" % base_path)
             break
-        # Check multiarch path for armhf
-        elif isfile(join(lib_path_multiarch_armhf, "liblgpio.so")) or isfile(join(lib_path_multiarch_armhf, "liblgpio.so.1")):
-            lgpio_include = inc_path
-            lgpio_lib = lib_path_multiarch_armhf
-            print("Found lgpio at: %s (multiarch armhf)" % base_path)
-            break
-        # Check multiarch path for aarch64
-        elif isfile(join(lib_path_multiarch_aarch64, "liblgpio.so")) or isfile(join(lib_path_multiarch_aarch64, "liblgpio.so.1")):
-            lgpio_include = inc_path
-            lgpio_lib = lib_path_multiarch_aarch64
-            print("Found lgpio at: %s (multiarch aarch64)" % base_path)
-            break
 
 if not lgpio_include or not lgpio_lib:
+    arch_name = "aarch64 (64-bit)" if is_aarch64 else "armhf (32-bit)"
+    bits = "64-bit" if is_aarch64 else "32-bit"
+    toolchain = "aarch64-linux-gnu" if is_aarch64 else "arm-linux-gnueabihf"
+    dpkg_arch = "arm64" if is_aarch64 else "armhf"
+
     sys.stderr.write(
-        "ERROR: lgpio library not found!\n"
+        f"ERROR: lgpio library not found for {arch_name} architecture!\n"
         "\n"
-        "Please build and install lgpio for cross-compilation:\n"
+        f"Building for: {arch_name}\n"
         "\n"
-        "For 32-bit ARM (ARMv7, default):\n"
-        "  1. Install toolchain: sudo apt install gcc-arm-linux-gnueabihf\n"
-        "  2. Run setup script: ./scripts/setup-lgpio-cross.sh\n"
-        "\n"
-        "For 64-bit ARM (AArch64):\n"
-        "  1. Install toolchain: sudo apt install gcc-aarch64-linux-gnu\n"
-        "  2. Build lgpio: See docs/LGPIO_SETUP.md\n"
+        f"For {bits} ARM:\n"
+        f"  1. Install toolchain: sudo apt install gcc-{toolchain}\n"
+        f"  2. Build lgpio for {toolchain}: See docs/LGPIO_SETUP.md\n"
         "\n"
         "Or install system package (requires multiarch setup):\n"
-        "  sudo dpkg --add-architecture armhf  # or arm64 for AArch64\n"
-        "  sudo apt install liblgpio-dev:armhf  # or :arm64 for AArch64\n"
+        f"  sudo dpkg --add-architecture {dpkg_arch}\n"
+        f"  sudo apt update\n"
+        f"  sudo apt install liblgpio-dev:{dpkg_arch}\n"
         "\n"
         "See docs/LGPIO_SETUP.md for complete instructions.\n"
     )
