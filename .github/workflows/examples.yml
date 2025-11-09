@@ -1,0 +1,43 @@
+name: Examples
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - examples/baremetal-hello
+          - examples/lgpio-blink
+          - examples/pigpio-blink
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ARM toolchain and GPIO libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf liblgpio-dev libpigpio-dev
+
+      - name: Install PlatformIO Core
+        run: pip install -U https://github.com/platformio/platformio-core/archive/develop.zip
+
+      - name: Install platform (symlink mode)
+        run: pio pkg install --global --platform symlink://.
+
+      - name: Build example
+        run: pio run -d ${{ matrix.example }}

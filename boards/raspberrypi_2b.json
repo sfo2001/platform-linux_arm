@@ -6,7 +6,8 @@
   },
   "frameworks": [
     "wiringpi",
-    "lgpio"
+    "lgpio",
+    "pigpio"
   ],
   "name": "Raspberry Pi 2 Model B",
   "upload": {
