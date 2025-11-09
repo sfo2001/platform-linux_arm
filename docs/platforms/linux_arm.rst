@@ -268,6 +268,268 @@ Framework Comparison
 * **For legacy compatibility (Pi 1-4):** Use **WiringPi** only if maintaining existing projects (cross-compilation not supported)
 * **For maximum portability:** Use **bare-metal** - direct system calls work on all boards
 
+Detailed Framework Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lgpio Framework
+^^^^^^^^^^^^^^^
+
+**Status:** ✅ Actively maintained | **Author:** Joan (pigpio author) | **Pi 5:** ✅ Compatible
+
+lgpio is Joan's modern successor to pigpio, using the ``/dev/gpiochip`` kernel interface instead of direct register access. This makes it compatible with all Raspberry Pi models including Pi 5's new RP1 I/O controller.
+
+**Key Features:**
+
+* GPIO read/write (single and groups)
+* Software-timed PWM and wave generation
+* Real-time callbacks on GPIO level changes
+* Pipe-based notifications for GPIO state changes
+* I2C, SPI, serial communication wrappers
+* Network daemon interface (lgd)
+
+**Advantages:**
+
+* Works on all Pi models (1-5, Zero, CM4)
+* Future-proof (kernel interface, not hardware-specific)
+* Clean, modern API
+* Permissive license (Unlicense - public domain)
+
+**Basic Usage:**
+
+.. code-block:: c
+
+    #include <stdio.h>
+    #include <lgpio.h>
+    #include <unistd.h>
+
+    #define GPIO_PIN 23
+
+    int main() {
+        int h = lgGpiochipOpen(0);  // Open GPIO chip 0
+        if (h < 0) {
+            printf("Failed to open gpiochip0\n");
+            return 1;
+        }
+
+        // Claim GPIO 23 as output
+        lgGpioClaimOutput(h, 0, GPIO_PIN, 0);
+
+        // Blink LED
+        for (int i = 0; i < 10; i++) {
+            lgGpioWrite(h, GPIO_PIN, 1);  // HIGH
+            sleep(1);
+            lgGpioWrite(h, GPIO_PIN, 0);  // LOW
+            sleep(1);
+        }
+
+        lgGpiochipClose(h);
+        return 0;
+    }
+
+pigpio Framework
+^^^^^^^^^^^^^^^^
+
+**Status:** ⚠️ Maintained (Pi 1-4 only) | **Author:** Joan | **Pi 5:** ❌ Not compatible
+
+pigpio is a high-performance GPIO library using direct hardware register access. Widely deployed and feature-rich, but incompatible with Pi 5 due to the new RP1 I/O controller.
+
+**Key Features:**
+
+* **Hardware-timed PWM** on all GPIO (DMA-based, microsecond precision)
+* High-speed GPIO sampling (up to 1M samples/sec)
+* Wave generation for complex PWM patterns
+* GPIO callbacks, alerts, notifications
+* I2C, SPI, serial communication
+* Network daemon (pigpiod) for remote GPIO control
+
+**Advantages:**
+
+* Very fast (~7.9M GPIO toggles/sec)
+* Unique hardware-timed PWM capability
+* Mature ecosystem with extensive documentation
+* Battle-tested in production systems
+
+**Limitations:**
+
+* Does NOT work on Raspberry Pi 5
+* Hardware-specific (Broadcom SoC only)
+
+**Basic Usage:**
+
+.. code-block:: c
+
+    #include <stdio.h>
+    #include <pigpio.h>
+    #include <unistd.h>
+
+    #define GPIO_PIN 23
+
+    int main() {
+        if (gpioInitialise() < 0) {
+            printf("Failed to initialize pigpio\n");
+            return 1;
+        }
+
+        gpioSetMode(GPIO_PIN, PI_OUTPUT);
+
+        // Blink LED
+        for (int i = 0; i < 10; i++) {
+            gpioWrite(GPIO_PIN, 1);  // HIGH
+            sleep(1);
+            gpioWrite(GPIO_PIN, 0);  // LOW
+            sleep(1);
+        }
+
+        gpioTerminate();
+        return 0;
+    }
+
+WiringPi Framework
+^^^^^^^^^^^^^^^^^^
+
+**Status:** ⚠️ Maintenance Mode (GC2 fork) | **Maintainer:** GC2 (Grazer Computer Club) | **Pi 5:** ⚠️ Limited
+
+Community-maintained fork of Gordon Henderson's original WiringPi (deprecated 2019). The GC2 fork adds Pi 5 support, though the GCLK (general purpose clock) function is not available on Pi 5.
+
+**Key Features:**
+
+* Arduino-like API (pinMode, digitalWrite, analogWrite)
+* GPIO, PWM, I2C, SPI, serial communication
+* Multiple pin numbering schemes (WiringPi, BCM, physical)
+* Familiar to Arduino developers
+
+**Advantages:**
+
+* Easy migration from Arduino
+* Fast performance (~7.9M toggles/sec)
+* Pi 5 support (except GCLK)
+
+**Limitations:**
+
+* Cross-compilation not supported in PlatformIO (must build natively on Pi)
+* Legacy codebase with technical debt
+* GCLK function unavailable on Pi 5
+
+**Basic Usage:**
+
+.. code-block:: c
+
+    #include <wiringPi.h>
+    #include <unistd.h>
+
+    #define GPIO_PIN 23
+
+    int main() {
+        if (wiringPiSetupGpio() < 0) {
+            printf("Failed to setup WiringPi\n");
+            return 1;
+        }
+
+        pinMode(GPIO_PIN, OUTPUT);
+
+        // Blink LED
+        for (int i = 0; i < 10; i++) {
+            digitalWrite(GPIO_PIN, HIGH);
+            sleep(1);
+            digitalWrite(GPIO_PIN, LOW);
+            sleep(1);
+        }
+
+        return 0;
+    }
+
+Migration Guide
+~~~~~~~~~~~~~~~
+
+WiringPi to lgpio
+^^^^^^^^^^^^^^^^^
+
+**Pin Numbering:**
+
+* WiringPi: Custom pin numbering (WiringPi pin 2 = BCM GPIO 27)
+* lgpio: BCM GPIO numbering only
+
+**API Mapping:**
+
+.. list-table::
+    :header-rows: 1
+
+    * - WiringPi
+      - lgpio
+      - Notes
+    * - ``wiringPiSetup()``
+      - ``lgGpiochipOpen(0)``
+      - Returns chip handle
+    * - ``pinMode(pin, OUTPUT)``
+      - ``lgGpioClaimOutput(h, 0, gpio, 0)``
+      -
+    * - ``pinMode(pin, INPUT)``
+      - ``lgGpioClaimInput(h, 0, gpio)``
+      -
+    * - ``digitalWrite(pin, HIGH)``
+      - ``lgGpioWrite(h, gpio, 1)``
+      -
+    * - ``digitalRead(pin)``
+      - ``lgGpioRead(h, gpio)``
+      - Returns 0/1
+    * - *(cleanup implicit)*
+      - ``lgGpiochipClose(h)``
+      - Required
+
+**Example Migration:**
+
+Before (WiringPi):
+
+.. code-block:: c
+
+    #include <wiringPi.h>
+
+    wiringPiSetup();
+    pinMode(2, OUTPUT);        // WiringPi pin 2
+    digitalWrite(2, HIGH);
+
+After (lgpio):
+
+.. code-block:: c
+
+    #include <lgpio.h>
+
+    int h = lgGpiochipOpen(0);
+    int gpio = 27;             // BCM GPIO 27 (was WiringPi pin 2)
+    lgGpioClaimOutput(h, 0, gpio, 0);
+    lgGpioWrite(h, gpio, 1);
+    lgGpiochipClose(h);
+
+pigpio to lgpio
+^^^^^^^^^^^^^^^
+
+For Pi 5 migration, pigpio code needs to be converted to lgpio:
+
+.. list-table::
+    :header-rows: 1
+
+    * - pigpio
+      - lgpio
+      - Notes
+    * - ``gpioInitialise()``
+      - ``lgGpiochipOpen(0)``
+      - Returns chip handle
+    * - ``gpioSetMode(gpio, PI_OUTPUT)``
+      - ``lgGpioClaimOutput(h, 0, gpio, 0)``
+      -
+    * - ``gpioWrite(gpio, 1)``
+      - ``lgGpioWrite(h, gpio, 1)``
+      -
+    * - ``gpioRead(gpio)``
+      - ``lgGpioRead(h, gpio)``
+      -
+    * - ``gpioTerminate()``
+      - ``lgGpiochipClose(h)``
+      -
+
+.. note::
+    For advanced pigpio features like hardware-timed PWM and wave generation, you'll need to implement manual PWM or use hardware PWM via sysfs, as lgpio doesn't provide the same high-level PWM API.
+
 System Dependencies
 ~~~~~~~~~~~~~~~~~~~
 
