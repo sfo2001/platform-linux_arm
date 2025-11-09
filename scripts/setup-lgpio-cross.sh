@@ -10,6 +10,9 @@ echo "=================================================="
 echo ""
 
 # Set paths and defaults
+# Resolve script and repo directories BEFORE any cd commands
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="${BUILD_DIR:-/tmp/lg-build}"
 CROSS_PREFIX="${CROSS_PREFIX:-arm-linux-gnueabihf-}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/arm-linux-gnueabihf}"
@@ -92,9 +95,6 @@ echo "Headers installed to: $INSTALL_DIR/include/"
 echo "Libraries installed to: $INSTALL_DIR/lib/"
 echo ""
 echo "You can now build lgpio examples with PlatformIO:"
-# Get the repository root directory safely
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 echo "  cd $REPO_ROOT"
 echo "  source venv/bin/activate"
 echo "  pio run -d examples/lgpio-blink"
