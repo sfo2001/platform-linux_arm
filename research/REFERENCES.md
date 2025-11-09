@@ -119,7 +119,170 @@ When adding new references during analysis rounds, use this format:
 ## Round-Specific References
 
 ### Round 1: Initial Assessment
-*(References to be added during Round 1)*
+
+**Date**: 2025-11-09
+**Status**: ✅ Complete
+
+#### Platform Repositories Analyzed
+
+**platform-espressif32**:
+- **Repository**: https://github.com/platformio/platform-espressif32
+- **platform.json**: https://raw.githubusercontent.com/platformio/platform-espressif32/master/platform.json
+- **platform.py**: https://raw.githubusercontent.com/platformio/platform-espressif32/master/platform.py
+- **CI Workflow**: https://github.com/platformio/platform-espressif32/tree/master/.github/workflows
+- **examples.yml**: https://raw.githubusercontent.com/platformio/platform-espressif32/master/.github/workflows/examples.yml
+- **Latest Release**: v6.12.0 (July 31, 2025)
+- **Key Findings**:
+  - 1.1k stars, 760 forks, 94 contributors, 84 releases
+  - 21 packages (7 toolchains, 2 frameworks, 9 tools, 3 debuggers)
+  - 2 frameworks (Arduino, ESP-IDF)
+  - ~380 lines in platform.py with advanced dynamic configuration
+  - CI/CD: 17 examples × 3 OS = 51 test combinations
+- **Referenced In**: Round 1 Initial Assessment, Reference Platform Comparison
+
+**platform-raspberrypi**:
+- **Repository**: https://github.com/platformio/platform-raspberrypi
+- **platform.json**: https://raw.githubusercontent.com/platformio/platform-raspberrypi/master/platform.json
+- **platform.py**: https://raw.githubusercontent.com/platformio/platform-raspberrypi/master/platform.py
+- **Latest Release**: v1.18.0 (October 23, 2025)
+- **Key Findings**:
+  - 83 stars, 127 forks, 4 contributors
+  - Focus: RP2040 microcontroller (not Linux ARM SBCs)
+  - 4 packages (toolchain, framework, uploaders, debug tools)
+  - 1 framework (Arduino with mbed)
+  - ~95 lines in platform.py with moderate sophistication
+  - GitHub Actions CI/CD for example testing
+- **Referenced In**: Round 1 Initial Assessment, Reference Platform Comparison
+
+**platform-linux_i686**:
+- **Repository**: https://github.com/platformio/platform-linux_i686
+- **platform.py**: https://raw.githubusercontent.com/platformio/platform-linux_i686/develop/platform.py
+- **Key Findings**:
+  - Similar pattern to linux_arm: removes 32-bit toolchain on native 32-bit Linux
+  - Conditional package filtering in `packages` property
+  - Defensive programming (checks package existence before deletion)
+- **Referenced In**: Round 1 Initial Assessment, Platform Class Analysis
+
+#### PlatformIO Core Research
+
+**PlatformIO Core Releases**:
+- **Repository**: https://github.com/platformio/platformio-core
+- **Latest Release**: v6.1.18 (March 11, 2025)
+- **Release Page**: https://github.com/platformio/platformio-core/releases
+- **Key Findings**:
+  - PIO Core 6.0+ is fully backward compatible with 5.0 projects
+  - No breaking changes in 6.x series (6.0 → 6.1.18)
+  - Unified package management (no more global packages)
+  - Cross-platform virtual symlinks
+- **Last Checked**: 2025-11-09
+
+**PlatformIO Documentation** (attempted access, returned 403):
+- Platform Creation Guide: https://docs.platformio.org/en/latest/platforms/creating_platform.html
+- Platform JSON Schema: https://docs.platformio.org/en/latest/manifests/platform-json.html
+- Migration Guide 5.x → 6.0: https://docs.platformio.org/en/latest/core/migration.html
+- Build Scripts API: https://docs.platformio.org/en/latest/scripting/index.html
+
+**PlatformIO Core Source Code**:
+- **public.py**: https://github.com/platformio/platformio-core/blob/develop/platformio/public.py
+  - Exports PlatformBase from platformio.platform.base
+  - Public API for platform developers
+
+#### WiringPi and GPIO Alternatives
+
+**WiringPi Status**:
+- **Original WiringPi**: http://wiringpi.com (defunct, deprecated August 2019)
+- **Relevance**: Single framework supported by platform-linux_arm
+- **Deprecation**: Gordon Henderson discontinued project in 2019
+- **Community Fork**: GC2 took over maintenance in 2024, supporting new OS and hardware
+- **Key Findings**:
+  - Official WiringPi is deprecated and unmaintained
+  - Community fork exists but not official/guaranteed long-term
+  - Modern alternatives recommended for new projects
+- **Last Checked**: 2025-11-09
+
+**Modern GPIO Alternatives**:
+1. **pigpio**:
+   - Website: https://abyz.me.uk/rpi/pigpio/
+   - Status: Actively maintained, powerful daemon-based approach
+   - Use case: Advanced GPIO with precise timing
+
+2. **lgpio** (libgpiod successor):
+   - Transformation from pigpio codebase
+   - Works with Raspberry Pi 5
+   - Modern kernel-based GPIO access
+
+3. **gpiozero**:
+   - Official Raspberry Pi Foundation recommendation for beginners
+   - Simple wrapper library
+   - Well-documented
+
+4. **RPi.GPIO**:
+   - Most popular, first GPIO library
+   - Extensive examples available
+   - May not support latest hardware
+
+**Community Discussion Sources**:
+- Raspberry Pi Forums: WiringPi replacement discussions
+- Stack Exchange: GPIO library comparisons
+- GitHub: WiringPi alternatives and forks
+
+**Detailed Technical Analysis (sfo2001)**:
+- **WiringPi vs libgpiod Analysis**: https://github.com/sfo2001/esphome/blob/feature/linux-platform/docs/linux-platform/notes/wiringpi-analysis.md
+- **Relevance**: In-depth comparison of WiringPi V3 vs libgpiod for Linux platform GPIO support
+- **Key Conclusions**:
+  - Recommends against WiringPi adoption due to Raspberry Pi-only support and architectural conflicts
+  - Strongly favors enhanced libgpiod implementation using native Linux kernel interfaces
+  - Identifies GPIO interrupt support as primary missing feature (not in current libgpiod wrapper)
+  - Proposes using chardev, i2c-dev, spidev kernel APIs for platform independence
+- **Main Differences**:
+  - WiringPi: RPi-only, full interrupt/PWM support, additional dependency
+  - libgpiod: Any Linux system, modern kernel APIs, minimal dependencies
+- **Implementation Approach**: Three-phase enhancement (1) Add libgpiod interrupt support, (2) Optional PWM, (3) Documentation/testing
+- **Referenced In**: Round 1 Initial Assessment - Framework alternatives research
+- **Priority Relevance**: Critical for Round 2 Priority #2 (Framework Ecosystem Modernization)
+- **Last Checked**: 2025-11-09
+
+#### Local Repository Analysis
+
+**platform-linux_arm** (this repository):
+- **platform.json**: Lines 1-42
+  - Version: 1.6.0
+  - Declares PIO Core ^6 compatibility
+  - 1 framework (WiringPi), 2 packages
+
+- **platform.py**: Lines 1-41
+  - ~40 lines total
+  - Imports from platformio.public (modern style)
+  - _is_native() method: Detects linux_arm/linux_aarch64
+  - packages property: Removes toolchain on native ARM
+  - configure_default_packages(): Blocks WiringPi cross-compilation
+
+- **builder/main.py**: Lines 1-63
+  - Simple SCons build script
+  - Lines 39-42: macOS x86_64 cross-compilation only
+  - No Windows, Linux x86_64, macOS ARM support
+
+- **builder/frameworks/wiringpi.py**: Lines 1-67
+  - WiringPi framework integration
+  - Compiler flags, pthread linking
+  - Builds WiringPi library from package
+
+- **boards/**: 4 board definitions
+  - raspberrypi_1b.json, raspberrypi_2b.json, raspberrypi_3b.json, raspberrypi_zero.json
+  - Missing: RPi 4, 5, 400, CM variants, Zero 2 W
+
+- **examples/**: 2 example projects
+  - wiringpi-blink, wiringpi-serial
+  - No automated testing
+
+**Git History Analysis**:
+- **Commit 87daebb** (May 27, 2022): "Add compatibility with PIO Core 6.0"
+  - Changed platform.json: ^5 → ^6
+  - Updated imports: platformio.managers.platform → platformio.public
+  - Modernized super() call
+  - Author: Ivan Kravets (PlatformIO maintainer)
+- **Commit a5f75bd** (recent): "refined research approach"
+- **Commit dfa0489** (recent): "Added CLAUDE.md and analysis prompt"
 
 ### Round 2: Priority Deep-Dive
 *(References to be added during Round 2)*
