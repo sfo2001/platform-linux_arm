@@ -92,7 +92,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          # Download ARM GNU Toolchain
+          # Download ARM GNU Toolchain (arm-none-linux-gnueabihf variant works for Linux)
           echo "Downloading ARM GNU Toolchain for Windows..."
           curl -L -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
 
@@ -102,6 +102,19 @@ jobs:
           # Find the extracted directory (case-insensitive) and get absolute path
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit | sed 's|^\./||')
           echo "Found toolchain directory: $TOOLCHAIN_DIR"
+
+          # Create symlinks from arm-linux-gnueabihf-* to arm-none-linux-gnueabihf-*
+          # The toolchain uses "arm-none-linux-gnueabihf" but PlatformIO expects "arm-linux-gnueabihf"
+          echo "Creating symlinks for PlatformIO compatibility..."
+          cd "$TOOLCHAIN_DIR/bin"
+          for file in arm-none-linux-gnueabihf-*; do
+            link_name=$(echo "$file" | sed 's/arm-none-linux-gnueabihf-/arm-linux-gnueabihf-/')
+            if [ ! -e "$link_name" ]; then
+              ln -s "$file" "$link_name"
+              echo "  Created: $link_name -> $file"
+            fi
+          done
+          cd "$GITHUB_WORKSPACE"
 
           # Get absolute path - convert to Windows path format
           TOOLCHAIN_BIN="$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin"
@@ -115,17 +128,15 @@ jobs:
           echo "$TOOLCHAIN_BIN_WINDOWS" >> $GITHUB_PATH
           echo "Added to GITHUB_PATH: $TOOLCHAIN_BIN_WINDOWS"
 
-          # Verify installation
-          echo "Verifying toolchain binaries..."
-          ls -la "$TOOLCHAIN_DIR/bin/" | head -15
+          # Verify installation and symlinks
+          echo "Verifying toolchain binaries and symlinks..."
+          ls -la "$TOOLCHAIN_DIR/bin/" | grep -E "(arm-linux-gnueabihf-gcc|arm-none-linux-gnueabihf-gcc)" || true
 
           # Test if arm-linux-gnueabihf-gcc exists
-          if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
-            echo "✅ arm-linux-gnueabihf-gcc.exe found at: $TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe"
+          if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ] || [ -L "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
+            echo "✅ arm-linux-gnueabihf-gcc.exe found (symlink or file)"
           else
             echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
-            echo "Searching for gcc binaries:"
-            find "$TOOLCHAIN_DIR/bin/" -iname "*gcc*.exe" || true
           fi
 
       # Debug: Verify PATH (Windows only)
