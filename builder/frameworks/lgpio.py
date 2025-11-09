@@ -52,16 +52,33 @@ is_aarch64 = (target_arch == "aarch64")
 
 # Detect lgpio installation paths
 # Priority: 1) User local build, 2) System-wide build, 3) System package
+# For correct cross-compilation, prioritize architecture-specific paths first
 home = expanduser("~")
-lgpio_search_paths = [
-    join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (recommended)
-    join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit
-    "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
-    "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
-    "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
-    "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
-    "/usr",                                        # Native package fallback
-]
+
+# Build architecture-specific search path list
+# Put the target architecture's paths FIRST to avoid finding wrong architecture
+if is_aarch64:
+    # 64-bit build: prioritize aarch64 paths
+    lgpio_search_paths = [
+        join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (recommended)
+        "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
+        "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
+        join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (fallback)
+        "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
+        "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
+        "/usr",                                        # Native package fallback
+    ]
+else:
+    # 32-bit build: prioritize armhf paths
+    lgpio_search_paths = [
+        join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (recommended)
+        "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
+        "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
+        join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (fallback)
+        "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
+        "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
+        "/usr",                                        # Native package fallback
+    ]
 
 lgpio_include = None
 lgpio_lib = None
