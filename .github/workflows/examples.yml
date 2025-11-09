@@ -90,11 +90,25 @@ jobs:
       # Windows: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (Windows)
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           # Download ARM GNU Toolchain
+          echo "Downloading ARM GNU Toolchain for Windows..."
           curl -L -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
+
+          echo "Extracting toolchain..."
           unzip -q gcc-arm.zip
-          echo "$PWD/arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-arm-none-linux-gnueabihf/bin" >> $GITHUB_PATH
+
+          # Find the extracted directory (case-insensitive)
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" | head -1)
+          echo "Found toolchain directory: $TOOLCHAIN_DIR"
+
+          # Add to PATH for subsequent steps
+          echo "$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin" >> $GITHUB_PATH
+
+          # Verify installation
+          ls -la "$TOOLCHAIN_DIR/bin/" | head -10
+          echo "Toolchain installation complete"
 
       # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (32-bit)
