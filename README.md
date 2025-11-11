@@ -2,12 +2,13 @@
 
 [![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
 
-Linux ARM is a Unix-like and mostly POSIX-compliant computer operating system (OS) assembled under the model of free and open-source software development and distribution. This platform enables building native applications for ARM-based Linux systems (Raspberry Pi) using PlatformIO Core 6.0+.
+Linux ARM is a Unix-like and mostly POSIX-compliant computer operating system (OS) assembled under the model of free and open-source software development and distribution. This platform enables building native applications for ARM-based Linux systems (Raspberry Pi, Orange Pi) using PlatformIO Core 6.0+.
 
 **Key Features:**
 - Cross-compilation support from Linux x86_64, macOS (Intel/ARM), and Windows
 - Native compilation on ARM Linux systems
 - Support for Raspberry Pi 1-5, Pi 400, Compute Module 4, and Zero/Zero 2W
+- Support for Orange Pi Zero (Allwinner H2+/H3)
 - Modern GPIO frameworks: lgpio (Pi 5 compatible) and pigpio
 - Legacy WiringPi framework for compatibility
 - Bare-metal C/C++ application support
@@ -95,6 +96,8 @@ sudo apt install liblgpio-dev:arm64
 
 # Supported Boards
 
+## Raspberry Pi Boards
+
 - `raspberrypi_1b` - Raspberry Pi 1 Model B
 - `raspberrypi_2b` - Raspberry Pi 2 Model B
 - `raspberrypi_3b` - Raspberry Pi 3 Model B
@@ -104,6 +107,10 @@ sudo apt install liblgpio-dev:arm64
 - `raspberrypi_cm4` - Raspberry Pi Compute Module 4
 - `raspberrypi_zero` - Raspberry Pi Zero
 - `raspberrypi_zero2w` - Raspberry Pi Zero 2 W
+
+## Orange Pi Boards
+
+- `orangepi_zero` - Orange Pi Zero (Allwinner H2+/H3, 256MB/512MB RAM)
 
 # Usage
 
