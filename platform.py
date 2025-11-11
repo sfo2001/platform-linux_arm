@@ -337,3 +337,173 @@ class Linux_armPlatform(PlatformBase):
         result = subprocess.run(cmd)
 
         return result.returncode
+
+    def configure_debug_session(self, debug_config):
+        """
+        Configure remote debugging session for ARM Linux targets.
+        Supports GDB/gdbserver over SSH for remote debugging.
+        """
+        # Get board configuration
+        board_config = self.board_config(debug_config.get("env_name"))
+        target_arch = board_config.get("build.arch", "armv7")
+
+        # Determine GDB executable based on architecture
+        if target_arch == "aarch64":
+            gdb_path = "aarch64-linux-gnu-gdb"
+        else:
+            gdb_path = "arm-linux-gnueabihf-gdb"
+
+        # On native ARM, use system GDB
+        if self._is_native():
+            gdb_path = "gdb"
+
+        # Get debug tool (default to gdbserver-ssh for remote debugging)
+        debug_tool = debug_config.get("tool", "gdbserver-ssh")
+
+        # Get upload configuration for SSH connection
+        upload_port = debug_config.get("upload_port")
+        ssh_port = debug_config.get("ssh_port", "22")
+        ssh_key = debug_config.get("ssh_key")
+
+        # Get remote program path
+        prog_path = debug_config.get("prog_path", "/tmp/program")
+        if upload_port and ":" in upload_port:
+            # Extract path from upload_port if specified
+            if "@" in upload_port:
+                _, host_part = upload_port.split("@", 1)
+            else:
+                host_part = upload_port
+            if ":" in host_part:
+                _, prog_path = host_part.split(":", 1)
+
+        # Build SSH connection string
+        ssh_target = None
+        if upload_port:
+            if "@" in upload_port:
+                user_host = upload_port.split(":")[0]
+                ssh_target = user_host
+            else:
+                ssh_target = upload_port.split(":")[0]
+
+        # Configure debug server based on tool
+        if debug_tool == "gdbserver-ssh":
+            # SSH-tunneled gdbserver
+            if not ssh_target:
+                raise exception.PlatformioException(
+                    "debug_port or upload_port must be configured for SSH debugging.\n"
+                    "Add to platformio.ini:\n"
+                    "  debug_port = user@hostname\n"
+                    "  or use existing upload_port configuration"
+                )
+
+            # Build SSH command for GDB remote target
+            ssh_cmd_parts = ["ssh", "-T"]
+            if ssh_port and ssh_port != "22":
+                ssh_cmd_parts.extend(["-p", str(ssh_port)])
+            if ssh_key:
+                ssh_cmd_parts.extend(["-i", os.path.expanduser(ssh_key)])
+            ssh_cmd_parts.append(ssh_target)
+            ssh_cmd_parts.append("gdbserver - " + prog_path)
+
+            ssh_cmd = " ".join(ssh_cmd_parts)
+
+            debug_config["server_executable"] = None
+            debug_config["server_arguments"] = []
+            debug_config["port"] = f"| {ssh_cmd}"
+
+        elif debug_tool == "gdb-remote":
+            # Direct TCP connection to gdbserver (manual setup required)
+            debug_port = debug_config.get("port", "localhost:2345")
+            debug_config["port"] = debug_port
+
+        # Set GDB executable
+        debug_config["executable"] = gdb_path
+
+        # Set program path for symbol loading
+        debug_config["prog_path"] = prog_path
+
+        # Add init commands
+        init_cmds = []
+
+        if debug_tool == "gdbserver-ssh":
+            # For SSH tunneling, use extended-remote with pipe
+            init_cmds.extend([
+                f"target extended-remote {debug_config['port']}",
+                f"set remote exec-file {prog_path}",
+                "set sysroot /",
+            ])
+        else:
+            # For direct TCP connection
+            init_cmds.append(f"target extended-remote {debug_config['port']}")
+
+        # Add custom init commands from config
+        custom_init = debug_config.get("init_cmds", [])
+        if custom_init:
+            init_cmds.extend(custom_init)
+
+        debug_config["init_cmds"] = init_cmds
+
+        return debug_config
+
+    def get_boards(self, id_=None):
+        """
+        Return board configurations.
+        Overridden to add debug configuration to board definitions.
+        """
+        result = super().get_boards(id_)
+        if not result:
+            return result
+
+        # Add debug tool support to all boards
+        if id_:
+            # Single board
+            return self._add_debug_to_board(result)
+        else:
+            # All boards
+            return {key: self._add_debug_to_board(value)
+                    for key, value in result.items()}
+
+    def _add_debug_to_board(self, board):
+        """Add debug configuration to a board definition."""
+        debug = board.manifest.get("debug", {})
+
+        # Set default debug tools
+        debug["tools"] = {
+            "gdbserver-ssh": {
+                "server": {
+                    "package": None,
+                    "executable": None,
+                    "arguments": []
+                },
+                "init_cmds": [
+                    "target extended-remote $DEBUG_PORT",
+                    "set remote exec-file $PROG_PATH",
+                    "set sysroot /"
+                ],
+                "extra_cmds": [
+                    "break main",
+                    "continue"
+                ]
+            },
+            "gdb-remote": {
+                "server": {
+                    "package": None,
+                    "executable": None,
+                    "arguments": []
+                },
+                "init_cmds": [
+                    "target extended-remote $DEBUG_PORT"
+                ],
+                "extra_cmds": [
+                    "break main",
+                    "continue"
+                ]
+            }
+        }
+
+        # Set default debug tool
+        if "default" not in debug:
+            debug["default"] = "gdbserver-ssh"
+
+        board.manifest["debug"] = debug
+        return board
