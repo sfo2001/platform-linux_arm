@@ -13,9 +13,11 @@
 - Our framework strategy is **modern** (lgpio for all Pi 1-5)
 - Our CI/CD is **better** (multi-platform testing, they have none)
 
-**🔴 TWO CRITICAL GAPS FOUND:**
+**🔴 ONE REMAINING CRITICAL GAP:**
 1. **GDB remote debugging** - SRCX-IOTG fork has this, we don't (professional development need)
-2. **SCP upload protocol** - SRCX-IOTG fork has this, we don't (headless Pi deployment)
+
+**✅ GAP CLOSED (2025-11-11):**
+2. ~~**SCP upload protocol**~~ - ✅ **IMPLEMENTED** (3 protocols: SCP/rsync/SSH vs fork's 1)
 
 **🟡 ONE INTERESTING NICHE FEATURE:**
 - **RaspIArduino framework** - ferbar fork has Arduino API on Pi (attracts maker community)
@@ -86,7 +88,7 @@ board_build.arch = aarch64  # Override to 64-bit
 
 **GitHub Issues:**
 - [#35 - Enhancement: Remote Debugging Support (GDB over SSH)](https://github.com/sfo2001/platform-linux_arm/issues/35)
-- [#36 - Enhancement: Custom Upload/Deployment Protocol (SCP/Rsync/SSH)](https://github.com/sfo2001/platform-linux_arm/issues/36)
+- [#36 - Enhancement: Custom Upload/Deployment Protocol (SCP/Rsync/SSH)](https://github.com/sfo2001/platform-linux_arm/issues/36) - ✅ **CLOSED (2025-11-11)**
 
 **Fork Has It (SRCX-IOTG):**
 ```ini
@@ -100,23 +102,31 @@ debug_tool = gdb
 debug_port = 192.168.1.100:2345
 ```
 
-**We Don't Have:**
-- Remote debugging via GDB
-- SCP upload for headless deployment
-- Upload protocol infrastructure
+**We Now Have:** ✅ **COMPLETE - SUPERIOR TO FORK**
+- ✅ SCP upload for headless deployment
+- ✅ Rsync upload (faster incremental transfer) - **NOT IN FORK**
+- ✅ SSH upload (alternative method) - **NOT IN FORK**
+- ✅ Post-upload execution support - **NOT IN FORK**
+- ✅ Comprehensive documentation (465 lines) - **SUPERIOR TO FORK**
+- ✅ Complete example project - **NOT IN FORK**
+- ❌ Remote debugging via GDB - **STILL MISSING**
 
-**Why This Matters:**
-- 🔴 **Professional development** requires debugging
-- 🔴 **Headless Pi** is common (no monitor/keyboard)
-- 🔴 **Remote workflow** is standard for embedded Linux
+**Why This Mattered:**
+- ✅ **Headless Pi** deployment now supported
+- ✅ **Remote workflow** now enabled
+- ❌ **Professional debugging** still needs GDB support
 
-**Impact:** HIGH - This is a significant feature gap for professional users
+**Impact:** ✅ **GAP CLOSED** - Automated deployment now available
 
-**Status:** Issues created with comprehensive requirements, acceptance criteria, and implementation guidance
+**Status:** ✅ **IMPLEMENTED** (Issue #36 closed, commit 53bf979)
 
-**Recommendation:** Add as **Phase 3 Extension** or **Phase 4 Priority 1**
+**Implementation:**
+- `platform.py`: +324 lines (on_upload methods)
+- `builder/main.py`: +12 lines (upload target)
+- `docs/UPLOAD.md`: 465 lines comprehensive guide
+- `examples/remote-deployment/`: Complete working example
 
-**Reference:** research/FORK-ROADMAP-CROSSREF.md Section 4 & 5
+**Reference:** research/FORK-ROADMAP-CROSSREF.md Section 5 (updated with completion details)
 
 ---
 
@@ -169,10 +179,11 @@ void loop() {
 **Effort:** 8-10 hours
 **Priority:** 🟡 MEDIUM (can defer to Phase 4)
 
-**Subtask 3.5.1: SCP Upload Protocol (3-4h)**
-- Implement SCP upload in platform.py
-- Support credentials in platformio.ini
-- Test headless deployment
+**Subtask 3.5.1: SCP Upload Protocol (3-4h)** - ✅ **COMPLETE (2025-11-11)**
+- ✅ Implemented SCP/rsync/SSH upload in platform.py
+- ✅ Support configuration in platformio.ini
+- ✅ Comprehensive docs and example project
+- **Commit:** 53bf979
 
 **Subtask 3.5.2: GDB Remote Debugging (4-5h)**
 - Configure debug session for remote GDB
@@ -238,9 +249,9 @@ void loop() {
 **Status:** Platform is production-ready for core use cases
 
 ### Phase 3 Extension (Recommended)
-- [ ] SCP upload protocol
+- [x] SCP upload protocol ✅ **COMPLETE (2025-11-11)**
 - [ ] GDB remote debugging
-- [ ] Remote development documentation
+- [x] Remote development documentation ✅ **COMPLETE (docs/UPLOAD.md)**
 
 **Priority:** 🟡 MEDIUM - Adds professional development capabilities
 
@@ -280,9 +291,9 @@ void loop() {
 ### Areas for Improvement 🔴
 
 **1. Remote Development**
-- Issue: No upload protocol infrastructure
-- Impact: Headless Pi workflow requires manual file transfer
-- Solution: Add SCP upload (Phase 3 ext or Phase 4)
+- ~~Issue: No upload protocol infrastructure~~ ✅ **RESOLVED (2025-11-11)**
+- ~~Impact: Headless Pi workflow requires manual file transfer~~ ✅ **FIXED**
+- ✅ Solution Implemented: SCP/rsync/SSH upload (commit 53bf979)
 
 **2. Debugging Support**
 - Issue: No GDB remote debugging configuration
@@ -394,16 +405,16 @@ void loop() {
 ### Short-term (Next 1-2 weeks)
 
 **If adding remote development:**
-- [ ] Implement SCP upload protocol (3-4h)
+- [x] Implement SCP upload protocol (3-4h) ✅ **DONE (2025-11-11)**
 - [ ] Implement GDB remote debugging (4-5h)
-- [ ] Document remote workflow (1h)
+- [x] Document remote workflow (1h) ✅ **DONE (docs/UPLOAD.md, 465 lines)**
 
 ### Long-term (Month 2+)
 
 **Phase 4 considerations:**
 - [ ] Research piduino library for RaspIArduino
 - [ ] Evaluate non-Pi ARM board demand
-- [ ] Consider advanced upload protocols
+- [x] Advanced upload protocols ✅ **DONE** (rsync + SSH in addition to SCP)
 
 ---
 
@@ -417,15 +428,15 @@ void loop() {
 - ✅ More modern (lgpio, WiringPi GC2)
 - ✅ Better tested (multi-platform CI/CD)
 
-**Two valuable features found in forks:**
-- 🔴 GDB remote debugging (professional development)
-- 🔴 SCP upload protocol (headless workflow)
+**Valuable features found in forks (status):**
+- 🔴 GDB remote debugging (professional development) - **REMAINING GAP**
+- ~~🔴 SCP upload protocol (headless workflow)~~ - ✅ **IMPLEMENTED (2025-11-11)**
 
 **One interesting niche feature:**
 - 🟡 RaspIArduino framework (Arduino API)
 
 **Recommendation:**
-Continue with current roadmap (Phases 0-3 complete). Consider adding remote development tools (GDB/SCP) as Phase 3 extension or Phase 4 priority based on user demand.
+Continue with current roadmap (Phases 0-3 complete). Upload/deployment is now complete. Consider adding GDB remote debugging as Phase 4 priority based on user demand.
 
 ---
 
