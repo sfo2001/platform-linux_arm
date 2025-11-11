@@ -318,11 +318,15 @@ debug_server = :1234
 
 **🔴 VERDICT: HIGH PRIORITY MISSING FEATURE**
 
+**GitHub Issue:** [#35 - Enhancement: Remote Debugging Support (GDB over SSH)](https://github.com/sfo2001/platform-linux_arm/issues/35)
+
 **Why This Matters:**
 1. **Professional Development:** GDB debugging is essential for serious development
 2. **Remote Pi Development:** Most Pi's run headless - need remote debugging
 3. **PlatformIO Integration:** Leverages PlatformIO's built-in debug infrastructure
 4. **Proven Pattern:** SRCX-IOTG fork shows it works
+
+**Status:** Issue already created with comprehensive requirements, acceptance criteria, and implementation considerations. Ready for implementation when prioritized.
 
 **Lessons Learned from Fork:**
 
@@ -523,6 +527,8 @@ def on_upload(self, target, source, env):
 
 **🟡 VERDICT: MEDIUM PRIORITY - Useful Pattern**
 
+**GitHub Issue:** [#36 - Enhancement: Custom Upload/Deployment Protocol (SCP/Rsync/SSH)](https://github.com/sfo2001/platform-linux_arm/issues/36)
+
 **Value Proposition:**
 - Headless Pi deployment (no monitor/keyboard)
 - Automatic binary upload after build
@@ -538,6 +544,8 @@ Covered in GDB Debugging section above (Task: Upload Protocol Implementation)
 - 2h: Implement SCP upload protocol
 - 1h: Documentation
 - 1h: Testing
+
+**Status:** Issue already created with comprehensive requirements for SCP, rsync, and SSH protocols. Includes configuration examples and success criteria.
 
 ---
 
