@@ -523,29 +523,39 @@ def on_upload(self, target, source, env):
 - Configuration via platformio.ini
 - Credential management (host/user/password)
 
-**Our Status:** ❌ **NOT IMPLEMENTED** (Not in roadmap)
+**Our Status:** ✅ **COMPLETE** (Implemented 2025-11-11)
 
-**🟡 VERDICT: MEDIUM PRIORITY - Useful Pattern**
+**✅ VERDICT: IMPLEMENTED - Feature Parity Achieved and Exceeded**
 
-**GitHub Issue:** [#36 - Enhancement: Custom Upload/Deployment Protocol (SCP/Rsync/SSH)](https://github.com/sfo2001/platform-linux_arm/issues/36)
+**GitHub Issue:** [#36 - Enhancement: Custom Upload/Deployment Protocol (SCP/Rsync/SSH)](https://github.com/sfo2001/platform-linux_arm/issues/36) - ✅ **CLOSED**
 
-**Value Proposition:**
-- Headless Pi deployment (no monitor/keyboard)
-- Automatic binary upload after build
-- Remote development workflow
+**Our Implementation:**
+- ✅ SCP upload protocol (secure copy via SSH)
+- ✅ Rsync upload protocol (efficient incremental transfer) - **SUPERIOR to fork**
+- ✅ SSH upload protocol (piped transfer) - **ADDITIONAL method**
+- ✅ Manual upload mode (instructions only)
+- ✅ Post-upload execution support (`upload_run_after`, `upload_run_command`)
+- ✅ Flexible target specification (`user@host:/path` formats)
+- ✅ SSH authentication (keys, custom ports, custom flags)
+- ✅ Comprehensive documentation (`docs/UPLOAD.md`, 465 lines)
+- ✅ Complete example project (`examples/remote-deployment/`)
 
-**Implementation Guidance:**
+**Comparison to Fork:**
+- ✅ **SUPERIOR**: We support 3 protocols (SCP, rsync, SSH) vs their 1 (SCP only)
+- ✅ **SUPERIOR**: Post-upload execution support
+- ✅ **SUPERIOR**: Comprehensive 465-line documentation vs minimal fork docs
+- ✅ **SUPERIOR**: Full working example project with 8 scenarios
 
-Covered in GDB Debugging section above (Task: Upload Protocol Implementation)
+**Implementation Details:**
+- **Files Modified:** `platform.py` (+324 lines), `builder/main.py` (+12 lines)
+- **Documentation:** `docs/UPLOAD.md`, README.md, CHANGELOG.md
+- **Examples:** `examples/remote-deployment/`, updated `examples/lgpio-blink/`
+- **Commit:** 53bf979 "feat: add custom upload/deployment protocol support"
 
-**Priority:** Can be implemented standalone (without GDB) as **Phase 3 Extension**
-
-**Effort:** 3-4 hours (if done without GDB debugging)
-- 2h: Implement SCP upload protocol
-- 1h: Documentation
-- 1h: Testing
-
-**Status:** Issue already created with comprehensive requirements for SCP, rsync, and SSH protocols. Includes configuration examples and success criteria.
+**Effort Actual:** ~3-4 hours (as estimated)
+- 2h: Implement upload protocols (SCP, rsync, SSH)
+- 1h: Documentation (comprehensive guide)
+- 1h: Examples and testing
 
 ---
 
@@ -572,10 +582,10 @@ Covered in GDB Debugging section above (Task: Upload Protocol Implementation)
 | ARMv8 64-bit support | tsandmann | CRITICAL | Phase 2 | Task 2.2 | ✅ **COMPLETE** | ✅ **SUPERIOR** |
 | RPi 3 Model B board | tsandmann | MEDIUM | Phase 2 | Task 2.1 | ✅ **COMPLETE** | ✅ **SUPERIOR** (9 boards vs 1) |
 | WiringPi 2.42 update | tsandmann | LOW | Phase 2 | Task 2.3 | ✅ **COMPLETE** | ✅ **SUPERIOR** (GC2 v3.16) |
+| SCP upload protocol | SRCX-IOTG | MEDIUM | **Phase 3 Ext** | Issue #36 | ✅ **COMPLETE** | ✅ **SUPERIOR** (3 protocols vs 1) |
 | RaspIArduino framework | ferbar | HIGH | **Not Planned** | N/A | ❌ **MISSING** | 🟡 **EVALUATE** (Phase 4?) |
 | Generic Linux board | ferbar | LOW | **Not Planned** | N/A | ❌ **MISSING** | 🟢 **OPTIONAL** |
 | GDB debugging support | SRCX-IOTG | HIGH | **Not Planned** | N/A | ❌ **MISSING** | 🔴 **HIGH PRIORITY** |
-| SCP upload protocol | SRCX-IOTG | MEDIUM | **Not Planned** | N/A | ❌ **MISSING** | 🟡 **MEDIUM PRIORITY** |
 | Board config extensions | SRCX-IOTG | LOW | **Not Planned** | N/A | ❌ **MISSING** | 🟢 **OPTIONAL** |
 | ARTIK boards (520/710/1020) | SRCX-IOTG | N/A | **Not Relevant** | N/A | ❌ **SKIP** | ⚫ **VENDOR-SPECIFIC** |
 
@@ -592,8 +602,8 @@ Covered in GDB Debugging section above (Task: Upload Protocol Implementation)
 - Multi-platform CI/CD
 
 **2. Identified High-Priority Gaps 🔴**
-- GDB remote debugging (professional development)
-- Upload protocols (SCP/SSH for headless deployment)
+- GDB remote debugging (professional development) - **REMAINING**
+- ~~Upload protocols (SCP/SSH for headless deployment)~~ - ✅ **COMPLETE**
 
 **3. Potential Future Enhancements 🟡**
 - RaspIArduino framework (Arduino API compatibility)
@@ -610,12 +620,13 @@ Covered in GDB Debugging section above (Task: Upload Protocol Implementation)
 **Dependencies:** Phase 2 complete
 
 **Subtasks:**
-1. **SCP Upload Protocol (3-4h)**
-   - Implement SCP upload in platform.py
-   - Document platformio.ini configuration
-   - Test on remote Pi
+1. **SCP Upload Protocol (3-4h)** - ✅ **COMPLETE (2025-11-11)**
+   - ✅ Implemented SCP/rsync/SSH upload in platform.py
+   - ✅ Documented platformio.ini configuration (docs/UPLOAD.md)
+   - ✅ Created complete example project (examples/remote-deployment/)
+   - **Commit:** 53bf979 "feat: add custom upload/deployment protocol support"
 
-2. **GDB Remote Debugging (4-5h)**
+2. **GDB Remote Debugging (4-5h)** - ❌ **NOT IMPLEMENTED**
    - Configure debug session for remote GDB
    - Document gdbserver setup on target
    - Test breakpoints and stepping
