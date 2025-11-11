@@ -84,6 +84,10 @@ board_build.arch = aarch64  # Override to 64-bit
 
 ### 3. GDB Debugging Support ❌ WE'RE MISSING THIS
 
+**GitHub Issues:**
+- [#35 - Enhancement: Remote Debugging Support (GDB over SSH)](https://github.com/sfo2001/platform-linux_arm/issues/35)
+- [#36 - Enhancement: Custom Upload/Deployment Protocol (SCP/Rsync/SSH)](https://github.com/sfo2001/platform-linux_arm/issues/36)
+
 **Fork Has It (SRCX-IOTG):**
 ```ini
 # Their platformio.ini
@@ -107,6 +111,8 @@ debug_port = 192.168.1.100:2345
 - 🔴 **Remote workflow** is standard for embedded Linux
 
 **Impact:** HIGH - This is a significant feature gap for professional users
+
+**Status:** Issues created with comprehensive requirements, acceptance criteria, and implementation guidance
 
 **Recommendation:** Add as **Phase 3 Extension** or **Phase 4 Priority 1**
 
