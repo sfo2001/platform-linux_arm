@@ -43,5 +43,43 @@
       "owner": "platformio",
       "version": "~1.40802.0"
     }
+  },
+  "debug": {
+    "tools": {
+      "gdb-remote": {
+        "server": {
+          "package": null,
+          "executable": null,
+          "arguments": []
+        },
+        "init_cmds": [
+          "target extended-remote $DEBUG_PORT",
+          "monitor reset halt",
+          "load",
+          "monitor reset halt"
+        ],
+        "extra_cmds": [
+          "break main",
+          "continue"
+        ]
+      },
+      "gdbserver-ssh": {
+        "server": {
+          "package": null,
+          "executable": null,
+          "arguments": []
+        },
+        "init_cmds": [
+          "target extended-remote | ssh -T $UPLOAD_PORT gdbserver - $PROG_PATH",
+          "set remote exec-file $PROG_PATH",
+          "set sysroot /",
+          "file $PROG_PATH"
+        ],
+        "extra_cmds": [
+          "break main",
+          "continue"
+        ]
+      }
+    }
   }
 }
