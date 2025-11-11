@@ -478,6 +478,108 @@ When adding new references during analysis rounds, use this format:
 ### Round 3: Implementation Roadmap
 *(References to be added during Round 3)*
 
+### Fork Analysis: Parallel Forks Investigation
+
+**Date**: 2025-11-11
+**Status**: ✅ Complete
+**Document**: FORK-ANALYSIS.md
+
+#### Repository Network
+**Original Repository**:
+- **platformio/platform-linux_arm**: https://github.com/platformio/platform-linux_arm
+- **Network Graph**: https://github.com/platformio/platform-linux_arm/network/members
+- **Total Forks**: 27 identified
+
+#### Notable Forks with Unique Contributions
+
+**ferbar/platform-linux_arm** - RaspIArduino Framework:
+- **Repository**: https://github.com/ferbar/platform-linux_arm
+- **Branch**: raspiarduino
+- **Key Commits**: https://github.com/ferbar/platform-linux_arm/commits/raspiarduino
+- **Unique Contribution**: RaspIArduino framework integration
+- **Key Files**:
+  - Framework: https://github.com/ferbar/platform-linux_arm/blob/raspiarduino/builder/frameworks/raspiarduino.py
+  - Board: https://github.com/ferbar/platform-linux_arm/blob/raspiarduino/boards/generic_linux.json
+- **Commits**:
+  - "add/fix RaspiAndroid" (Feb 11, 2022)
+  - "boards: add bplus variant" (Feb 11, 2022)
+- **Priority**: HIGH - Arduino API compatibility for Raspberry Pi
+- **Referenced In**: FORK-ANALYSIS.md
+- **Last Checked**: 2025-11-11
+
+**tsandmann/platform-linux_armv8l** - ARMv8 64-bit Support:
+- **Repository**: https://github.com/tsandmann/platform-linux_armv8l
+- **Branch**: ts
+- **Key Commits**: https://github.com/tsandmann/platform-linux_armv8l/commits/ts
+- **Unique Contribution**: ARMv8 64-bit architecture support
+- **Critical Commit**: "Handle ARM 64bits architecture" (Apr 7, 2017)
+- **Board Additions**:
+  - Raspberry Pi 3 Model B (Jun 3, 2017)
+  - Kitra 520 (Jun 28, 2017)
+- **Framework Updates**: WiringPi 2.42 (Jun 3, 2017)
+- **Technical Changes**:
+  - Architecture suffix handling (Jun 27-30, 2018)
+  - Default compiler settings for ARMv8 (Jun 30, 2018)
+  - Custom ARM Linux toolchain testing (Jun 27, 2018)
+- **Priority**: CRITICAL - Required for modern ARM boards (Pi 3, 4, 5)
+- **Referenced In**: FORK-ANALYSIS.md
+- **Last Checked**: 2025-11-11
+
+**SRCX-IOTG/platform-linux_arm** - ARTIK SDK & Upload/Debug:
+- **Repository**: https://github.com/SRCX-IOTG/platform-linux_arm
+- **Branch**: develop
+- **Key Commits**: https://github.com/SRCX-IOTG/platform-linux_arm/commits/develop
+- **Unique Contributions**: Samsung ARTIK board support, SCP upload, GDB debugging
+- **Board Definitions**:
+  - ARTIK 520: https://github.com/SRCX-IOTG/platform-linux_arm/blob/develop/boards/artik_520.json
+  - ARTIK 710: https://github.com/SRCX-IOTG/platform-linux_arm/blob/develop/boards/artik_710.json
+  - ARTIK 1020: https://github.com/SRCX-IOTG/platform-linux_arm/blob/develop/boards/artik_1020.json
+- **Framework**:
+  - ARTIK SDK: https://github.com/SRCX-IOTG/platform-linux_arm/blob/develop/builder/frameworks/artik-sdk.py
+- **Key Commits**:
+  - "support for Samsung ARTIK boards...and ARTIK SDK as a framework" (Dec 2016)
+  - "support for cross compile of Artik 5/7/10" (Feb 7, 2017)
+  - "add basic support for upload and debug with gdb" (Feb 8, 2017)
+  - "support config board addr/user/password in platformio.ini" (Feb 2017)
+  - "modify the version of toolchain because of the difference between it in Linux and Win" (Feb 20, 2017)
+- **Priority**: MEDIUM - Upload/debug patterns valuable, ARTIK boards not relevant
+- **Referenced In**: FORK-ANALYSIS.md
+- **Last Checked**: 2025-11-11
+
+**techiedarren/platform-linux_riscv** - RISC-V Architecture Port:
+- **Repository**: https://github.com/techiedarren/platform-linux_riscv
+- **Unique Contribution**: Complete RISC-V architecture port
+- **Status**: 109 commits, 17 releases
+- **Priority**: INFORMATIONAL - Different architecture, shows platform portability patterns
+- **Referenced In**: FORK-ANALYSIS.md
+- **Last Checked**: 2025-11-11
+
+**OS-Q/platform-linux_arm** - Synchronized Mirror:
+- **Repository**: https://github.com/OS-Q/platform-linux_arm
+- **Branch**: develop
+- **Status**: 107 commits, 16 releases
+- **Analysis**: No unique commits, appears to be tracking mirror
+- **Priority**: MINIMAL
+- **Referenced In**: FORK-ANALYSIS.md
+- **Last Checked**: 2025-11-11
+
+#### Fork Analysis Findings
+
+**Key Features Identified**:
+1. ARMv8 64-bit architecture support (CRITICAL priority)
+2. RaspIArduino framework integration (HIGH priority)
+3. GDB debugging support (HIGH priority)
+4. SCP upload protocol (MEDIUM priority)
+5. Raspberry Pi 3 Model B board definition (MEDIUM priority)
+
+**Actionable Recommendations**:
+- Immediate: Review ARMv8 architecture detection from tsandmann fork
+- Short-term: Extract upload/debug patterns from SRCX-IOTG fork
+- Medium-term: Evaluate RaspIArduino framework feasibility
+- Future: Consider generic Linux board pattern from ferbar fork
+
+**Complete Analysis**: See research/FORK-ANALYSIS.md
+
 ---
 
 **Maintenance Notes**:
