@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Custom upload/deployment protocol support** for automated binary deployment to remote targets (#36)
+  - SCP upload protocol (secure copy via SSH)
+  - Rsync upload protocol (efficient incremental transfer)
+  - SSH upload protocol (alternative transfer method)
+  - Manual upload mode with instructions
+  - Post-upload execution support (`upload_run_after`, `upload_run_command`)
+  - Comprehensive upload configuration options (SSH port, key file, custom flags)
+  - Flexible target specification formats (`user@host:/path`)
+  - Complete upload documentation (`docs/UPLOAD.md`)
+  - Remote deployment example project (`examples/remote-deployment/`)
 - Comprehensive RST documentation (`docs/platforms/linux_arm.rst`) for PlatformIO registry submission
 - Testing matrix documentation (`docs/TESTING.md`) covering all boards, frameworks, and architectures
 - Framework comparison table and migration guide in RST format
