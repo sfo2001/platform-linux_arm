@@ -126,10 +126,8 @@ Located in `boards/` directory, each JSON file defines:
 - Memory specifications
 
 Supported boards:
-- `raspberrypi_1b.json`
-- `raspberrypi_2b.json`
-- `raspberrypi_3b.json`
-- `raspberrypi_zero.json`
+- Raspberry Pi: `raspberrypi_1b.json`, `raspberrypi_2b.json`, `raspberrypi_3b.json`, `raspberrypi_4b.json`, `raspberrypi_5.json`, `raspberrypi_400.json`, `raspberrypi_cm4.json`, `raspberrypi_zero.json`, `raspberrypi_zero2w.json`
+- Orange Pi: `orangepi_zero.json` (Allwinner H2+/H3)
 
 ### Example Projects
 
