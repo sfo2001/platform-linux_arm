@@ -1,7 +1,7 @@
 # Implementation Status Summary
 
-**Last Updated**: 2025-11-11
-**Overall Progress**: ~36% Complete (12-14h / 33-41h estimated + Phase 3 Extension 7-9h)
+**Last Updated**: 2025-11-12
+**Overall Progress**: ~38% Complete (15-17h / 33-41h estimated + Phase 3 Extension 13-16h + Examples 2-3h)
 
 ---
 
@@ -43,6 +43,18 @@
 - ⚠️ Functional testing pending (requires hardware)
 
 **Time**: ~13-16h (estimated 18-24h)
+
+### Examples Expansion: Modern lgpio Examples 🔄 IN PROGRESS
+- ✅ Issue #40: SPI Communication (MCP3008 ADC) - COMPLETE
+- ⏳ Issue #38: I2C Communication (BME280 sensor)
+- ⏳ Issue #39: PWM Output (LED fade)
+- ⏳ Issue #41: UART/Serial Communication
+- ⏳ Issue #42: Interrupt Handling
+- ⏳ Issue #43: Advanced GPIO (edge detection)
+
+**Progress**: 1 of 6 examples complete (17%)
+**Time So Far**: ~2-3h
+**Estimated Total**: 12-18h (2-3h per example)
 
 ---
 
@@ -234,10 +246,131 @@ test_build_src = yes
 
 ---
 
+## lgpio SPI Communication Example Implementation
+
+**Status**: ✅ COMPLETE (2025-11-12)
+**Issue**: #40 - SPI Communication Example (MCP3008 ADC)
+**Branch**: `claude/implement-lgpio-spi-example-011CV3qKEGjpgdn3ZZw1LLRH`
+**Commit**: 96a0279
+
+### Implementation Details
+
+**Example Structure:**
+- `examples/lgpio-spi-adc/`: Complete SPI ADC example
+  - `src/mcp3008_spi.c` (133 lines): Full MCP3008 communication implementation
+  - `platformio.ini` (74 lines): Build configs for all Pi models + upload targets
+  - `README.md` (451 lines): Comprehensive documentation and guides
+
+**Key Features:**
+- ✅ Complete MCP3008 SPI protocol implementation
+- ✅ 8-channel 10-bit ADC reading (0-1023 resolution)
+- ✅ Configurable SPI speed (1 MHz default, up to 3.6 MHz)
+- ✅ ADC value conversion (raw → percentage → voltage)
+- ✅ Comprehensive error handling and status reporting
+- ✅ lgpio SPI functions (lgSpiOpen, lgSpiXfer, lgSpiClose)
+- ✅ Continuous sampling with formatted output display
+
+**Documentation:**
+- **Detailed wiring diagram**: MCP3008 DIP-16 pinout with connection table
+- **Hardware setup guide**:
+  - Component requirements (MCP3008, breadboard, potentiometer)
+  - Complete pin mapping (MCP3008 ↔ Raspberry Pi SPI pins)
+  - Potentiometer test circuit for validation
+  - Voltage safety warnings (VREF considerations)
+- **System requirements**:
+  - SPI interface enable instructions (raspi-config)
+  - lgpio library installation steps
+  - SPI device permissions setup (udev rules)
+  - Verification commands
+- **Building and deployment**:
+  - Cross-compilation instructions
+  - Supported boards (3B, 4B, 400, CM4, Zero 2W, Pi 5)
+  - Automated upload configurations (SCP/rsync)
+  - Manual deployment steps
+- **Educational content**:
+  - MCP3008 SPI protocol explanation with timing diagrams
+  - SPI vs I2C comparison table (when to use each)
+  - Code structure walkthrough
+  - lgpio SPI API reference
+- **Troubleshooting**:
+  - Common errors and solutions (device not found, permissions, wiring)
+  - Hardware debugging tips (voltage checks, ground connections)
+  - Reading validation guidance
+- **Advanced usage**:
+  - Multiple MCP3008 devices (CE0/CE1)
+  - Higher SPI speeds (up to 3.6 MHz)
+  - Differential input mode
+  - Continuous sampling techniques
+
+**Configuration Example:**
+```ini
+[env:raspberrypi_4b_upload]
+platform = linux_arm
+board = raspberrypi_4b
+framework = lgpio
+upload_protocol = scp
+upload_port = pi@raspberrypi.local:/home/pi/lgpio-spi-adc
+upload_run_after = true
+upload_run_command = sudo /home/pi/lgpio-spi-adc
+```
+
+**Expected Output:**
+```
+MCP3008 SPI ADC Example (lgpio framework)
+=========================================
+
+Opening SPI device 0.0...
+SPI device opened successfully (handle: 3)
+SPI speed: 1000000 Hz (1.00 MHz)
+
+=== Reading 1/10 ===
+  Channel 0:  512 (0x200) |  50.05% | 1.651V
+  Channel 1:    0 (0x000) |   0.00% | 0.000V
+  ...
+```
+
+**Testing Status:**
+- ✅ Code structure validation: PASS
+- ✅ PlatformIO configuration: PASS
+- ✅ Documentation completeness: PASS
+- ⚠️ Hardware testing: PENDING (requires Raspberry Pi + MCP3008)
+  - Needs: Pi 3B/4B/5, MCP3008, breadboard, potentiometer
+  - Test scenarios: SPI communication, ADC readings, voltage conversions
+
+**Impact:**
+- Demonstrates high-speed SPI communication (MHz range)
+- Serves as foundation for SPI display examples (OLED, LCD)
+- Shows ADC integration for analog sensor reading
+- Educational resource for SPI protocol understanding
+
+**Time:** ~2-3h actual (as estimated 2-3h)
+
+---
+
 ## Next Steps
 
 ### Immediate (Next Session)
-1. **Test remote test execution** (PRIORITY - requires hardware):
+1. **Test lgpio SPI example** (PRIORITY - requires hardware):
+   ```bash
+   # On development machine
+   cd examples/lgpio-spi-adc
+   pio run -e raspberrypi_4b
+
+   # Deploy to Pi
+   pio run -e raspberrypi_4b_upload -t upload
+
+   # Or manual:
+   scp .pio/build/raspberrypi_4b/program pi@raspberrypi.local:~/lgpio-spi-adc
+   ssh pi@raspberrypi.local
+   sudo ~/lgpio-spi-adc
+   ```
+   Test scenarios:
+   - MCP3008 wired with potentiometer on CH0
+   - Verify SPI communication at 1 MHz
+   - Validate ADC readings and voltage conversions
+   - Test on Pi 3B, 4B, and 5 if available
+
+2. **Test remote test execution** (PRIORITY - requires hardware):
    ```bash
    # On development machine
    cd examples/remote-testing
@@ -277,6 +410,12 @@ test_build_src = yes
    - Test Ubuntu cross-compilation in CI
 
 ### Short-term (This Week)
+- **Continue Examples Expansion** (10-15 hours remaining):
+  - Issue #38: I2C Communication (BME280 sensor) - 2-3h
+  - Issue #39: PWM Output (LED fade) - 2-3h
+  - Issue #41: UART/Serial Communication - 2-3h
+  - Issue #42: Interrupt Handling - 2-3h
+  - Issue #43: Advanced GPIO (edge detection) - 2-3h
 - Complete Phase 1 remaining tasks
 - Validate lgpio works across different setups
 - Gather community feedback

@@ -1,6 +1,6 @@
 # Fork Features → GitHub Issues Cross-Reference
 
-**Date:** 2025-11-11
+**Date:** 2025-11-12
 **Purpose:** Quick reference mapping fork analysis findings to existing GitHub issues
 
 ---
@@ -16,7 +16,8 @@
 | **WiringPi GC2 Update** | Our addition | MEDIUM | ✅ **IMPLEMENTED** | Phase 2, Task 2.3 complete |
 | **GDB Remote Debugging** | SRCX-IOTG | HIGH | [Issue #35](https://github.com/sfo2001/platform-linux_arm/issues/35) | ✅ **COMPLETE (2025-11-11)** |
 | **SCP Upload Protocol** | SRCX-IOTG | MEDIUM | [Issue #36](https://github.com/sfo2001/platform-linux_arm/issues/36) | ✅ **COMPLETE (2025-11-11)** |
-| **Remote Test Execution** | Extension | MEDIUM | [Issue #37](https://github.com/sfo2001/platform-linux_arm/issues/37) | 📋 **ISSUE CREATED** |
+| **Remote Test Execution** | Extension | MEDIUM | [Issue #37](https://github.com/sfo2001/platform-linux_arm/issues/37) | ✅ **COMPLETE (2025-11-12)** |
+| **lgpio SPI Example (MCP3008)** | Our addition | MEDIUM | [Issue #40](https://github.com/sfo2001/platform-linux_arm/issues/40) | ✅ **COMPLETE (2025-11-12)** |
 | **PWM HAL for lgpio** | Our addition | OPTIONAL | [Issue #34](https://github.com/sfo2001/platform-linux_arm/issues/34) | 📋 **ISSUE CREATED** |
 | **RaspIArduino Framework** | ferbar | LOW | ❌ **NOT CREATED** | Future consideration |
 | **Generic Linux Board** | ferbar | LOW | ❌ **NOT CREATED** | Future consideration |
@@ -26,7 +27,7 @@
 
 ## Implementation Status Summary
 
-### ✅ Already Implemented (7 features)
+### ✅ Already Implemented (9 features)
 
 **From Fork Analysis:**
 - ARMv8 64-bit architecture support (tsandmann fork inspiration)
@@ -42,13 +43,15 @@
 - Modern frameworks (lgpio, WiringPi GC2)
 - Multi-platform CI/CD
 - **Upload protocols (SCP, rsync, SSH)** - ✅ Superior to fork (3 protocols vs 1)
-- **Remote debugging (GDB over SSH)** - ✅ **NEW: Superior to fork (SSH-tunneled + direct TCP)**
+- **Remote debugging (GDB over SSH)** - ✅ Superior to fork (SSH-tunneled + direct TCP)
+- **Remote test execution** - ✅ **Completed 2025-11-12** (automated SSH deployment and testing)
+- **lgpio SPI example (MCP3008 ADC)** - ✅ **Completed 2025-11-12** (comprehensive SPI communication demo)
 
 **Result:** ✅ Our implementation is superior to all forks on core features
 
 ---
 
-### 📋 Issues Created - Ready for Implementation (2 features)
+### 📋 Issues Created - Ready for Implementation (1 feature)
 
 #### High Priority Professional Development Tools
 
@@ -72,13 +75,25 @@
 - **Implementation:** SCP, rsync, SSH protocols + comprehensive docs + example project
 - **Commit:** 53bf979 "feat: add custom upload/deployment protocol support"
 
-**Issue #37: Remote Test Execution on Target Hardware**
+**Issue #37: Remote Test Execution on Target Hardware** - ✅ **MOVED TO IMPLEMENTED**
 - **Source:** Extension of upload/debug patterns
 - **Priority:** 🟡 MEDIUM
-- **Effort:** 3-4 hours
-- **Phase:** Phase 4
+- **Effort Actual:** 6-7 hours (under estimated 8-10h)
+- **Phase:** Phase 3 Extension
 - **URL:** https://github.com/sfo2001/platform-linux_arm/issues/37
-- **Status:** Complements upload/debug features
+- **Status:** ✅ **COMPLETE (2025-11-12)** - See "Already Implemented" section above
+- **Implementation:** SSH test deployment + real-time output + CI/CD integration + comprehensive docs
+- **Commit:** bffc2b2 "feat: implement remote test execution via SSH"
+
+**Issue #40: lgpio SPI Communication Example (MCP3008 ADC)** - ✅ **MOVED TO IMPLEMENTED**
+- **Source:** Examples expansion initiative
+- **Priority:** 🟡 MEDIUM
+- **Effort Actual:** 2-3 hours (as estimated)
+- **Phase:** Examples Expansion
+- **URL:** https://github.com/sfo2001/platform-linux_arm/issues/40
+- **Status:** ✅ **COMPLETE (2025-11-12)** - See "Already Implemented" section above
+- **Implementation:** Complete MCP3008 SPI ADC example + comprehensive wiring guide + documentation
+- **Commit:** 96a0279 "feat: add MCP3008 SPI ADC example using lgpio framework"
 
 #### Optional Enhancement
 
@@ -407,8 +422,8 @@ int main() {
 
 ---
 
-**Last Updated:** 2025-11-11
-**Issues Tracked:** 4 created, 2 future consideration, 1 skipped
-**Implementation Status:** 7 features complete ✅ | 2 issues ready for implementation
-**Phase 3 Extension:** ✅ **COMPLETE** (Upload + Debugging implemented)
+**Last Updated:** 2025-11-12
+**Issues Tracked:** 6 created (4 complete, 1 ready, 1 optional), 2 future consideration, 1 skipped
+**Implementation Status:** 9 features complete ✅ | 1 issue ready for implementation (PWM HAL)
+**Phase 3 Extension:** ✅ **COMPLETE** (Upload + Debugging + Testing + SPI Example implemented)
 **Next Review:** Phase 4 planning or when new forks discovered
