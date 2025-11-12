@@ -88,15 +88,22 @@ test_build_src = yes
 
 ### Example Coverage
 
-| Example | Frameworks | GPIO | Complexity | Priority |
-|---------|-----------|------|------------|----------|
-| baremetal-hello | None | No | Trivial | 🔴 HIGH |
-| lgpio-blink | lgpio | Yes | Simple | 🔴 HIGH |
-| wiringpi-blink | WiringPi | Yes | Simple | 🟡 MEDIUM |
-| wiringpi-serial | WiringPi | Yes (UART) | Medium | 🟡 MEDIUM |
-| pigpio-blink | pigpio | Yes | Simple | 🟢 LOW |
+| Example | Frameworks | GPIO | Complexity | Priority | Hardware Needed |
+|---------|-----------|------|------------|----------|----------------|
+| baremetal-hello | None | No | Trivial | 🔴 HIGH | None |
+| lgpio-blink | lgpio | Yes | Simple | 🔴 HIGH | LED + resistor |
+| lgpio-spi-adc | lgpio | Yes (SPI) | Medium | 🟡 MEDIUM | MCP3008 ADC + potentiometer |
+| lgpio-pwm-fade | lgpio | Yes (PWM) | Medium | 🔴 HIGH | LED + resistor |
+| lgpio-pwm-servo | lgpio | Yes (PWM) | Medium | 🟡 MEDIUM | Servo + 5V power supply |
+| wiringpi-blink | WiringPi | Yes | Simple | 🟡 MEDIUM | LED + resistor |
+| wiringpi-serial | WiringPi | Yes (UART) | Medium | 🟡 MEDIUM | USB-TTL adapter |
+| pigpio-blink | pigpio | Yes | Simple | 🟢 LOW | LED + resistor |
 
-**Total**: 5 examples × 3 hardware platforms × 4 frameworks = **60 test combinations** (with exclusions: ~35 valid tests)
+**PWM Testing Status**: ⚠️ **HARDWARE TESTING NEEDED**
+- lgpio-pwm-fade: Implementation complete, requires Pi hardware + LED for validation
+- lgpio-pwm-servo: Implementation complete, requires Pi hardware + servo + 5V PSU for validation
+
+**Total**: 8 examples × 3 hardware platforms × 4 frameworks = **96 test combinations** (with exclusions: ~50 valid tests)
 
 ---
 
@@ -370,6 +377,153 @@ Starting blink...
 - GPIO pin toggles
 
 **⚠️ Note**: pigpio deprecated, lgpio is recommended
+
+---
+
+#### Test 1.6: lgpio PWM LED Fade ⚠️ Hardware Testing Needed
+
+**Purpose**: Validate hardware PWM functionality with LED brightness control
+
+**Status**: ⚠️ **Implementation complete, HARDWARE TESTING NEEDED**
+
+**Prerequisites**:
+```bash
+# On target Raspberry Pi
+# 1. Enable PWM device tree overlay
+sudo nano /boot/config.txt  # Pi 1-4
+# OR
+sudo nano /boot/firmware/config.txt  # Pi 5
+
+# Add this line:
+dtoverlay=pwm,pin=18,func=2
+
+# 2. Reboot
+sudo reboot
+
+# 3. Run permissions setup script
+cd /path/to/platform-linux_arm
+sudo ./scripts/setup-pwm-perms.sh
+```
+
+**Hardware Setup**:
+```
+GPIO 18 (pin 12) → 220Ω resistor → LED anode (+, long leg)
+LED cathode (-, short leg) → GND (pin 6)
+```
+
+**Test Execution**:
+```bash
+# On dev machine
+cd examples/lgpio-pwm-fade
+pio run -e raspberrypi_3b
+
+# Deploy to target
+scp .pio/build/raspberrypi_3b/program pi@raspberrypi.local:/tmp/pwm-fade-test
+
+# Execute on target
+ssh pi@raspberrypi.local "sudo /tmp/pwm-fade-test"
+```
+
+**Expected Output**:
+```
+PWM LED Fade Example (lgpio framework with PWM HAL)
+====================================================
+GPIO Pin: 18
+Frequency: 1000 Hz
+Fade Steps: 100
+
+Initializing PWM on GPIO 18 at 1000 Hz...
+PWM initialized successfully!
+
+PWM Status:
+  Chip: 0, Channel: 0
+  Enabled: yes
+  Frequency: 1000 Hz
+
+Fade cycle 1: UP -> DOWN
+Fade cycle 2: UP -> DOWN
+```
+
+**✅ Success Criteria**:
+- Program runs without errors
+- LED smoothly fades in and out continuously
+- No visible flicker (1 kHz is above human flicker threshold)
+- Exit code: 0
+
+**❌ Failure Modes**:
+- "Permission denied" → Run setup script: `sudo ./scripts/setup-pwm-perms.sh`
+- "PWM channel not exported" → Device tree overlay not loaded, reboot after editing config.txt
+- "GPIO pin does not support PWM" → Only GPIO 12, 13, 18, 19 support PWM
+- "PWM channel already in use" → GPIO 12/18 share PWM0, GPIO 13/19 share PWM1
+- LED not fading → Check wiring polarity (long leg to resistor/GPIO, short leg to GND)
+
+**See Also**: [PWM_SETUP.md](PWM_SETUP.md) for complete troubleshooting
+
+---
+
+#### Test 1.7: lgpio PWM Servo Control ⚠️ Hardware Testing Needed
+
+**Purpose**: Validate hardware PWM with servo motor positioning
+
+**Status**: ⚠️ **Implementation complete, HARDWARE TESTING NEEDED**
+
+**Prerequisites**:
+- Same as Test 1.6 (PWM device tree overlay + permissions)
+- **CRITICAL**: External 5V power supply for servo (DO NOT use Pi's 5V pin!)
+
+**Hardware Setup**:
+```
+⚠️ SAFETY WARNING: Never power servo from Pi's 5V pin!
+Servos draw 500mA-2A which will damage Raspberry Pi.
+
+GPIO 18 (pin 12) → Servo signal wire (orange/yellow/white)
+External 5V PSU (+) → Servo power wire (red)
+External 5V PSU GND + Pi GND (pin 6) → Servo ground wire (brown/black)
+```
+
+**Test Execution**:
+```bash
+# On dev machine
+cd examples/lgpio-pwm-servo
+pio run -e raspberrypi_3b
+
+# Deploy to target
+scp .pio/build/raspberrypi_3b/program pi@raspberrypi.local:/tmp/pwm-servo-test
+
+# Execute on target
+ssh pi@raspberrypi.local "sudo /tmp/pwm-servo-test"
+```
+
+**Expected Output**:
+```
+PWM Servo Motor Control Example
+================================
+GPIO Pin: 18
+Frequency: 50 Hz (standard servo frequency)
+
+Initializing PWM on GPIO 18 at 50 Hz...
+PWM initialized successfully!
+
+Demo 1: Basic positions (0°, 90°, 180°)
+Moving to 0° (full left)...
+Moving to 90° (center)...
+Moving to 180° (full right)...
+```
+
+**✅ Success Criteria**:
+- Servo moves to distinct positions (0°, 90°, 180°)
+- Smooth sweeping motion in demo 2
+- No jittering or vibration
+- Servo holds position when stopped
+
+**❌ Failure Modes**:
+- Servo jittering → Insufficient power supply current (use 2A+ supply)
+- Servo not moving → Check wiring, verify signal wire to GPIO 18
+- Pi rebooting → Servo powered from Pi's 5V pin (NEVER DO THIS!)
+
+**See Also**:
+- [PWM_SETUP.md](PWM_SETUP.md) - Complete PWM setup guide
+- [../examples/lgpio-pwm-servo/README.md](../examples/lgpio-pwm-servo/README.md) - Servo wiring and safety
 
 ---
 
