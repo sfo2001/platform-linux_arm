@@ -5,6 +5,8 @@
 **Status**: ✅ Implemented | ⚠️ Testing Pending (Requires Hardware)
 **Related**: Issue #35, examples/remote-debugging/
 
+> **💡 Quick Start:** For VS Code-specific setup, IntelliSense configuration, and troubleshooting, see **[VSCODE.md](VSCODE.md)** - Complete VS Code integration guide.
+
 ---
 
 ## Overview
@@ -36,7 +38,7 @@ The debugging workflow differs fundamentally from embedded platforms:
 - **SSH-tunneled debugging** - Secure connection using existing SSH authentication
 - **Direct TCP debugging** - Manual gdbserver setup for advanced scenarios
 - **Cross-architecture support** - Automatic GDB selection for ARMv7 (32-bit) and AArch64 (64-bit)
-- **IDE integration** - Works with VS Code, CLion, and other PlatformIO-compatible IDEs
+- **IDE integration** - Works with VS Code, CLion, and other PlatformIO-compatible IDEs (see [VSCODE.md](VSCODE.md) for complete VS Code guide)
 - **Automatic setup** - Platform handles gdbserver connection and symbol loading
 - **Zero target setup** - Uses system gdbserver (pre-installed on Raspberry Pi OS)
 - **Configuration reuse** - Leverages existing upload configuration (SSH host, port, keys)
@@ -335,7 +337,9 @@ debug_prog_path = /tmp/myapp
 
 The platform automatically generates debug configurations for VS Code.
 
-**Workflow:**
+> **📖 For comprehensive VS Code setup, IntelliSense configuration, build tasks, and detailed troubleshooting, see [VSCODE.md](VSCODE.md).**
+
+**Quick Workflow:**
 
 1. Open project in VS Code
 2. Click "Debug" icon in sidebar

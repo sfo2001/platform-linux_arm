@@ -309,7 +309,7 @@ The platform supports **IDE-integrated remote debugging** using GDB/gdbserver ov
 ### Features
 
 - **SSH-tunneled debugging** - Secure connection using existing SSH authentication
-- **IDE integration** - Works with VS Code, CLion, and other PlatformIO-compatible IDEs
+- **IDE integration** - Works with VS Code, CLion, and other PlatformIO-compatible IDEs (see [docs/VSCODE.md](docs/VSCODE.md))
 - **Automatic setup** - Platform handles gdbserver connection and symbol loading
 - **Architecture support** - Automatic GDB selection for 32-bit (ARMv7) and 64-bit (AArch64)
 
@@ -376,9 +376,10 @@ pio debug
 
 ### See Also
 
-- Complete guide: [`examples/remote-debugging/README.md`](examples/remote-debugging/README.md)
-- Working example: [`examples/remote-debugging/`](examples/remote-debugging/)
-- PlatformIO Debug docs: https://docs.platformio.org/en/latest/plus/debugging.html
+- **VS Code Integration Guide:** [`docs/VSCODE.md`](docs/VSCODE.md) - Complete VS Code setup, IntelliSense, debugging, and troubleshooting
+- **Debugging Guide:** [`docs/DEBUGGING.md`](docs/DEBUGGING.md) - Comprehensive remote debugging reference
+- **Example Project:** [`examples/remote-debugging/`](examples/remote-debugging/) - Working debugging example with 7+ scenarios
+- **PlatformIO Debug Docs:** https://docs.platformio.org/en/latest/plus/debugging.html
 
 ## Run the compiled program
 
