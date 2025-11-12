@@ -20,9 +20,6 @@ import sys
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
 
-# Import test uploader
-from platformio.public import load_build_script
-
 
 class Linux_armPlatform(PlatformBase):
 
