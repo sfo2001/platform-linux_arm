@@ -172,7 +172,7 @@ jobs:
           ./scripts/setup-lgpio-cross.sh
 
       - name: Install PlatformIO Core
-        run: pip install -U https://github.com/platformio/platformio-core/archive/develop.zip
+        run: pip install -U platformio
 
       - name: Install platform (symlink mode)
         run: pio pkg install --global --platform symlink://.
