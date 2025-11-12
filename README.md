@@ -158,7 +158,19 @@ board = raspberrypi_5
 sudo apt install liblgpio-dev liblgpio1
 ```
 
-See `examples/lgpio-blink/` for a complete example.
+**Features:**
+- Basic GPIO control (digital I/O)
+- SPI communication (high-speed peripherals)
+- **Hardware PWM** (LED fading, servo control, motor control)
+
+**Examples:**
+- `examples/lgpio-blink/` - Basic GPIO control
+- `examples/lgpio-spi-adc/` - SPI communication with MCP3008 ADC
+- `examples/lgpio-pwm-fade/` - Hardware PWM LED fading
+- `examples/lgpio-pwm-servo/` - Servo motor control
+
+**PWM Setup:**
+See [docs/PWM_SETUP.md](docs/PWM_SETUP.md) for complete hardware PWM configuration guide.
 
 ## pigpio Framework
 
