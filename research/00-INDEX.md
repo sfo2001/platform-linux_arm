@@ -207,12 +207,12 @@ This analysis follows an **iterative checkpoint approach** with high-level patte
 - Testing status: ⚠️ Functional testing pending (requires hardware)
 
 **Examples Expansion: Modern lgpio Examples** - 🔄 IN PROGRESS (Started 2025-11-12)
-- Status: 1 of 6 examples complete
+- Status: 2 of 6 examples complete
 - Estimated effort: 12-18 hours total (2-3h per example)
 - Key deliverables:
   - ✅ Issue #40: SPI Communication (MCP3008 ADC) - COMPLETE (2-3h)
+  - ✅ Issue #34: PWM HAL Implementation - COMPLETE (6-9h) ⚠️ Hardware testing needed
   - ⏳ Issue #38: I2C Communication (BME280 sensor)
-  - ⏳ Issue #39: PWM Output (LED fade)
   - ⏳ Issue #41: UART/Serial Communication
   - ⏳ Issue #42: Interrupt Handling
   - ⏳ Issue #43: Advanced GPIO (multiple pins, edge detection)
@@ -223,27 +223,47 @@ This analysis follows an **iterative checkpoint approach** with high-level patte
 
 **Examples Expansion: lgpio SPI Communication** - ✅ COMPLETE (2025-11-12)
 
-**Latest: lgpio SPI Example (MCP3008 ADC)** - Issue #40
+**Latest: PWM Hardware Abstraction Layer (HAL)** - Issue #34
+- Branch: `claude/issue-34-pwm-hal-implementation-011CV4LwzNEhNnDpDRTa3S1W`
+- Commit: 6e7f4c8 "feat(pwm): implement Linux PWM Hardware Abstraction Layer (HAL) for lgpio framework"
+- **Feature**: Hardware PWM HAL using Linux kernel PWM subsystem (sysfs)
+- **Scope**:
+  - Complete PWM HAL library (framework-lgpio/pwm-hal.c + pwm-hal.h, 1,150 lines)
+  - Core API: pwm_init(), pwm_write(), pwm_deinit()
+  - Extended API: pwm_set_frequency(), pwm_set_polarity(), pwm_get_status()
+  - Utility functions: pwm_error_string(), pwm_pin_is_valid(), pwm_get_chip_channel()
+  - Comprehensive edge case handling:
+    * Permission errors with helpful solutions
+    * Busy channel detection (GPIO 12/18 share PWM0, GPIO 13/19 share PWM1)
+    * Invalid pin validation
+    * Multi-channel conflict prevention
+  - Auto-detection of Pi model (pwmchip0 for Pi 1-4, pwmchip2 for Pi 5)
+  - State tracking for multi-channel support
+  - Two complete examples:
+    * examples/lgpio-pwm-fade/ - LED brightness fading (1 kHz PWM)
+    * examples/lgpio-pwm-servo/ - Servo motor position control (50 Hz PWM)
+  - Setup automation:
+    * scripts/setup-pwm-perms.sh - Auto-configures permissions
+    * scripts/platformio-pwm.service - Systemd boot-time setup
+  - 4,079 lines total (850 core + 640 examples + 1,049 docs + 1,540 example docs)
+- **Documentation**:
+  - docs/PWM_SETUP.md - Comprehensive guide (1,049 lines):
+    * Hardware/software requirements
+    * Step-by-step setup (device tree, permissions, systemd)
+    * Complete API reference with examples
+    * Detailed troubleshooting (permission, export, busy channel errors)
+    * Advanced topics (multi-channel, servo control, motor control, gamma correction)
+    * Pi model-specific information
+  - Example READMEs with wiring diagrams, safety warnings, calibration guides
+- **Impact**: Hardware PWM support for LED control, motor control, servo motors
+- **Time**: ~6-9 hours (as estimated)
+- **Status**: ✅ Implementation complete, ⚠️ **HARDWARE TESTING NEEDED**
+
+**Previous: lgpio SPI Example (MCP3008 ADC)** - Issue #40
 - Branch: `claude/implement-lgpio-spi-example-011CV3qKEGjpgdn3ZZw1LLRH`
 - Commit: 96a0279 "feat: add MCP3008 SPI ADC example using lgpio framework"
 - **Feature**: SPI Communication Example (MCP3008 8-channel 10-bit ADC)
-- **Scope**:
-  - Complete MCP3008 SPI protocol implementation using lgpio
-  - Reads all 8 analog channels with 10-bit resolution
-  - Configurable SPI speed (1 MHz default, up to 3.6 MHz)
-  - ADC value conversion to percentage and voltage
-  - Comprehensive error handling and status reporting
-  - 658 lines total (133 code + 74 config + 451 docs)
-- **Documentation**:
-  - Detailed wiring diagram (MCP3008 pinout + Raspberry Pi SPI pins)
-  - Hardware requirements and component recommendations
-  - SPI enable and permission setup instructions
-  - Potentiometer test circuit for validation
-  - SPI vs I2C comparison and use cases
-  - Troubleshooting guide and advanced usage patterns
-- **Impact**: Demonstrates high-speed SPI communication, serves as foundation for display/sensor examples
-- **Time**: ~2-3 hours (as estimated)
-- **Status**: ✅ Implementation complete, ready for hardware testing
+- **Status**: ✅ Implementation complete, ⚠️ ready for hardware testing
 
 **Phase 3 Extension: Professional Development Tools** - ✅ COMPLETE (2025-11-12)
 
@@ -282,6 +302,37 @@ This analysis follows an **iterative checkpoint approach** with high-level patte
 ---
 
 ### Checkpoint History
+- **2025-11-12**: ✅ Examples Expansion - PWM Hardware Abstraction Layer (Issue #34) complete
+  - Implemented comprehensive hardware PWM HAL using Linux kernel PWM subsystem (sysfs)
+  - Complete API library: framework-lgpio/pwm-hal.c + pwm-hal.h (1,150 lines)
+  - Core functions: pwm_init(), pwm_write(), pwm_deinit()
+  - Extended functions: pwm_set_frequency(), pwm_set_polarity(), pwm_get_status()
+  - Utility functions: pwm_error_string(), pwm_pin_is_valid(), pwm_get_chip_channel()
+  - Comprehensive edge case handling:
+    * Permission errors (EACCES, EPERM) with helpful solutions
+    * Busy channel detection (GPIO 12/18 share PWM0, GPIO 13/19 share PWM1)
+    * Invalid pin validation (only GPIO 12, 13, 18, 19 support PWM)
+    * Multi-channel conflict prevention (state tracking)
+  - Auto-detection of Raspberry Pi model (pwmchip0 for Pi 1-4, pwmchip2 for Pi 5)
+  - Two complete examples with comprehensive documentation:
+    * examples/lgpio-pwm-fade/ - LED brightness fading (1 kHz PWM, 100 steps)
+    * examples/lgpio-pwm-servo/ - Servo motor control (50 Hz PWM, smooth positioning)
+  - Setup automation scripts:
+    * scripts/setup-pwm-perms.sh - Automated permissions setup (auto-detects Pi model)
+    * scripts/platformio-pwm.service - Systemd service for boot-time setup
+  - docs/PWM_SETUP.md - Comprehensive documentation (1,049 lines):
+    * Hardware and software requirements for all Pi models
+    * Step-by-step setup guide (device tree overlay, permissions, systemd)
+    * Complete API reference with code examples
+    * Detailed troubleshooting guide (permission denied, channel not exported, busy, etc.)
+    * Advanced topics (multi-channel, servo control, motor control, LED gamma correction)
+  - Updated builder/frameworks/lgpio.py to include PWM HAL in build system
+  - Updated README.md to document PWM HAL features and examples
+  - Total: 4,079 lines (850 core library + 640 examples + 1,049 setup docs + 1,540 example docs)
+  - Examples Expansion: 2 of 6 complete (SPI ✅, PWM ✅, I2C ⏳, UART ⏳, Interrupts ⏳, Advanced GPIO ⏳)
+  - Time: 6-9 hours (as estimated)
+  - ⚠️ **Status**: Implementation complete, **HARDWARE TESTING NEEDED** (requires actual Pi hardware with LED, servo)
+
 - **2025-11-12**: ✅ Examples Expansion - lgpio SPI Communication (Issue #40) complete
   - Implemented comprehensive MCP3008 SPI ADC example using lgpio framework
   - Complete SPI protocol implementation with 8-channel 10-bit ADC reading

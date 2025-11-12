@@ -155,7 +155,8 @@ env.Append(
     ],
 
     CPPPATH=[
-        lgpio_include
+        lgpio_include,
+        join(env.PioPlatform().get_dir(), "framework-lgpio")
     ],
 
     LIBPATH=[
@@ -163,4 +164,11 @@ env.Append(
     ],
 
     LIBS=["lgpio"]
+)
+
+# Build PWM HAL library
+pwm_hal_src = join(env.PioPlatform().get_dir(), "framework-lgpio", "pwm-hal.c")
+env.BuildSources(
+    join("$BUILD_DIR", "FrameworkLgpioPwmHAL"),
+    pwm_hal_src
 )
