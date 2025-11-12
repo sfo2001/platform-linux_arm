@@ -152,7 +152,7 @@ Compiled binaries are placed in `.pio/build/<board_name>/program` (note: the exa
 
 ## Version Management
 
-- Current version: 1.6.0 (defined in `platform.json:19`)
+- Current version: 1.7.0 (defined in `platform.json:19`)
 - Uses conventional commit messages (see git history)
 - Git-flow workflow: `develop` branch for development, `release/*` branches for releases
 - Versions should be bumped in `platform.json` before tagging releases
