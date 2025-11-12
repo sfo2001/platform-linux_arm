@@ -170,9 +170,9 @@ This analysis follows an **iterative checkpoint approach** with high-level patte
 
 ## Progress Tracking
 
-**Last Updated**: 2025-11-11
-**Current Phase**: Phase 0 Complete ✅ | Phase 1 Partial ✅ | Phase 3 Extension Complete ✅
-**Next Action**: Phase 2 - Complete Coverage (remaining boards, full CI matrix)
+**Last Updated**: 2025-11-12
+**Current Phase**: Phase 0 Complete ✅ | Phase 1 Partial ✅ | Phase 3 Extension Complete ✅ | Examples Expansion In Progress 🔄
+**Next Action**: Continue Examples Expansion (Issue #38-#43), Phase 2 - Complete Coverage
 
 ### Implementation Progress
 
@@ -206,11 +206,48 @@ This analysis follows an **iterative checkpoint approach** with high-level patte
 - Impact: Platform now provides complete professional remote development workflow (build → deploy → test → debug)
 - Testing status: ⚠️ Functional testing pending (requires hardware)
 
+**Examples Expansion: Modern lgpio Examples** - 🔄 IN PROGRESS (Started 2025-11-12)
+- Status: 1 of 6 examples complete
+- Estimated effort: 12-18 hours total (2-3h per example)
+- Key deliverables:
+  - ✅ Issue #40: SPI Communication (MCP3008 ADC) - COMPLETE (2-3h)
+  - ⏳ Issue #38: I2C Communication (BME280 sensor)
+  - ⏳ Issue #39: PWM Output (LED fade)
+  - ⏳ Issue #41: UART/Serial Communication
+  - ⏳ Issue #42: Interrupt Handling
+  - ⏳ Issue #43: Advanced GPIO (multiple pins, edge detection)
+- Goal: Expand from 5 basic examples to 10-15 comprehensive examples
+- Impact: Better learning path for users, demonstrates all major I/O capabilities
+
 ### Recent Implementation Work
+
+**Examples Expansion: lgpio SPI Communication** - ✅ COMPLETE (2025-11-12)
+
+**Latest: lgpio SPI Example (MCP3008 ADC)** - Issue #40
+- Branch: `claude/implement-lgpio-spi-example-011CV3qKEGjpgdn3ZZw1LLRH`
+- Commit: 96a0279 "feat: add MCP3008 SPI ADC example using lgpio framework"
+- **Feature**: SPI Communication Example (MCP3008 8-channel 10-bit ADC)
+- **Scope**:
+  - Complete MCP3008 SPI protocol implementation using lgpio
+  - Reads all 8 analog channels with 10-bit resolution
+  - Configurable SPI speed (1 MHz default, up to 3.6 MHz)
+  - ADC value conversion to percentage and voltage
+  - Comprehensive error handling and status reporting
+  - 658 lines total (133 code + 74 config + 451 docs)
+- **Documentation**:
+  - Detailed wiring diagram (MCP3008 pinout + Raspberry Pi SPI pins)
+  - Hardware requirements and component recommendations
+  - SPI enable and permission setup instructions
+  - Potentiometer test circuit for validation
+  - SPI vs I2C comparison and use cases
+  - Troubleshooting guide and advanced usage patterns
+- **Impact**: Demonstrates high-speed SPI communication, serves as foundation for display/sensor examples
+- **Time**: ~2-3 hours (as estimated)
+- **Status**: ✅ Implementation complete, ready for hardware testing
 
 **Phase 3 Extension: Professional Development Tools** - ✅ COMPLETE (2025-11-12)
 
-**Latest: Remote Test Execution** - Issue #37
+**Previous: Remote Test Execution** - Issue #37
 - Branch: `claude/implement-remote-test-execution-011CV3TC5cqA4SrGCKPHcHj8`
 - Commit: bffc2b2 "feat: implement remote test execution via SSH"
 - **Feature**: Remote Test Execution (SSH deployment and execution)
@@ -245,6 +282,23 @@ This analysis follows an **iterative checkpoint approach** with high-level patte
 ---
 
 ### Checkpoint History
+- **2025-11-12**: ✅ Examples Expansion - lgpio SPI Communication (Issue #40) complete
+  - Implemented comprehensive MCP3008 SPI ADC example using lgpio framework
+  - Complete SPI protocol implementation with 8-channel 10-bit ADC reading
+  - Configurable SPI speed (1 MHz default, supports up to 3.6 MHz)
+  - ADC value conversion to percentage and voltage display
+  - Created examples/lgpio-spi-adc/ with source code and configuration
+  - 658 lines total: 133 lines code + 74 lines config + 451 lines documentation
+  - Comprehensive README with detailed wiring diagrams and pinout tables
+  - Hardware setup guide: MCP3008 pinout, Raspberry Pi SPI pins, potentiometer test circuit
+  - System requirements: SPI enable instructions, lgpio library installation, permissions setup
+  - Educational content: SPI protocol explanation, SPI vs I2C comparison
+  - Troubleshooting guide for common issues and hardware debugging
+  - Advanced usage: multiple devices, higher speeds, differential mode
+  - Builds for all Pi models (3B, 4B, 400, CM4, Zero 2W, Pi 5)
+  - Examples Expansion: 1 of 6 complete (SPI ✅, I2C ⏳, PWM ⏳, UART ⏳, Interrupts ⏳, Advanced GPIO ⏳)
+  - Time: 2-3 hours (as estimated)
+
 - **2025-11-12**: ✅ Phase 3 Extension - Remote Test Execution (Issue #37) complete
   - Implemented automated remote test execution via SSH
   - Test binaries cross-compiled, deployed via SCP, executed remotely
