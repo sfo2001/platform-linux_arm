@@ -2,6 +2,8 @@
 
 [![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
 
+> **📢 Modernized Fork:** This is an actively maintained fork of the official [platformio/platform-linux_arm](https://github.com/platformio/platform-linux_arm) platform, which was last updated in May 2022. This fork adds **Raspberry Pi 5 support**, **modern lgpio framework**, **remote development workflows** (deployment, debugging, testing), and **extensive examples**. See [CHANGELOG.md](CHANGELOG.md) for complete details.
+
 Linux ARM is a Unix-like and mostly POSIX-compliant computer operating system (OS) assembled under the model of free and open-source software development and distribution. This platform enables building native applications for ARM-based Linux systems (Raspberry Pi, Orange Pi) using PlatformIO Core 6.0+.
 
 **Key Features:**
