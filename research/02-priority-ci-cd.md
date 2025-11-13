@@ -30,7 +30,8 @@
 - Platform testing uses **symlink installation** (`pio pkg install --global --platform symlink://.`)
 - **fail-fast: false** ensures all tests run even if some fail
 - ARM toolchain installation on Ubuntu is **simple**: `sudo apt install gcc-arm-linux-gnueabihf`
-- Windows and macOS require **manual toolchain setup** (more complex)
+- Windows toolchain: Download ARM GNU Toolchain from ARM Developer (PowerShell automation available)
+- macOS requires **community tap**: `messense/macos-cross-toolchains`
 
 **Recommended Actions**:
 1. **Phase 1** (Immediate - after Priority 1): Basic workflow for Ubuntu + 2 examples (2 hours)
@@ -329,7 +330,7 @@ jobs:
             board: raspberrypi_3b
             os: ubuntu-latest  # Only Ubuntu for serial (reduce jobs)
 
-          # lgpio examples (Ubuntu + macOS, exclude Windows - toolchain complexity)
+          # lgpio examples (Ubuntu + macOS, Windows optional - can add if needed)
           - example: examples/lgpio-blink
             board: raspberrypi_5
             os: ubuntu-latest
@@ -368,21 +369,64 @@ jobs:
           sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 
       # macOS: Install ARM cross-compiler via Homebrew
-      - name: Install ARM cross-compiler (macOS)
-        if: runner.os == 'macOS'
+      - name: Install ARM toolchains (macOS)
+        if: matrix.os == 'macos-latest'
         run: |
           brew tap messense/macos-cross-toolchains
-          brew install armv7-unknown-linux-gnueabihf || echo "Toolchain install failed, trying alternative..."
-          # Fallback: Download from ARM Developer (manual installation)
+          brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 
-      # Windows: Install ARM cross-compiler (manual download)
-      - name: Install ARM cross-compiler (Windows)
-        if: runner.os == 'Windows'
+      # Windows: Install ARM cross-compiler (download from ARM Developer)
+      # NOTE: This matches the WORKING implementation in .github/workflows/examples.yml
+      - name: Install ARM toolchains (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
-          # Download ARM GNU Toolchain from ARM Developer site
-          # This is complex - may require pre-built package or chocolatey
-          echo "Windows ARM toolchain installation - manual step required"
-          # TODO: Implement Windows toolchain installation
+          # Download ARM GNU Toolchain (arm-none-linux-gnueabihf variant works for Linux)
+          echo "Downloading ARM GNU Toolchain for Windows..."
+          curl -L -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
+
+          echo "Extracting toolchain..."
+          unzip -q gcc-arm.zip
+
+          # Find the extracted directory (case-insensitive) and get absolute path
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit | sed 's|^\./||')
+          echo "Found toolchain directory: $TOOLCHAIN_DIR"
+
+          # Create symlinks from arm-linux-gnueabihf-* to arm-none-linux-gnueabihf-*
+          # The toolchain uses "arm-none-linux-gnueabihf" but PlatformIO expects "arm-linux-gnueabihf"
+          echo "Creating symlinks for PlatformIO compatibility..."
+          cd "$TOOLCHAIN_DIR/bin"
+          for file in arm-none-linux-gnueabihf-*; do
+            link_name=$(echo "$file" | sed 's/arm-none-linux-gnueabihf-/arm-linux-gnueabihf-/')
+            if [ ! -e "$link_name" ]; then
+              ln -s "$file" "$link_name"
+              echo "  Created: $link_name -> $file"
+            fi
+          done
+          cd "$GITHUB_WORKSPACE"
+
+          # Get absolute path - convert to Windows path format
+          TOOLCHAIN_BIN="$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin"
+          echo "Toolchain bin path: $TOOLCHAIN_BIN"
+
+          # Convert to Windows path format for GITHUB_PATH
+          TOOLCHAIN_BIN_WINDOWS=$(cygpath -w "$TOOLCHAIN_BIN")
+          echo "Windows path format: $TOOLCHAIN_BIN_WINDOWS"
+
+          # Add to PATH for subsequent steps (Windows format)
+          echo "$TOOLCHAIN_BIN_WINDOWS" >> $GITHUB_PATH
+          echo "Added to GITHUB_PATH: $TOOLCHAIN_BIN_WINDOWS"
+
+          # Verify installation and symlinks
+          echo "Verifying toolchain binaries and symlinks..."
+          ls -la "$TOOLCHAIN_DIR/bin/" | grep -E "(arm-linux-gnueabihf-gcc|arm-none-linux-gnueabihf-gcc)" || true
+
+          # Test if arm-linux-gnueabihf-gcc exists
+          if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ] || [ -L "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
+            echo "✅ arm-linux-gnueabihf-gcc.exe found (symlink or file)"
+          else
+            echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
+          fi
 
       - name: Install PlatformIO Core
         run: |
@@ -414,24 +458,27 @@ jobs:
 - ✅ OS-specific toolchain installation
 - ✅ Binary architecture validation (Linux)
 - ✅ Cross-platform shell compatibility (`shell: bash`)
+- ✅ Windows toolchain: Downloads ARM GNU Toolchain from ARM Developer
 
 **Challenges**:
-- ⚠️ **Windows toolchain**: Complex installation, may need pre-packaged solution
 - ⚠️ **macOS toolchain**: Community tap required, not official Homebrew
 - ⚠️ **Matrix complexity**: 11+ job combinations (but optimized)
+- ⚠️ **Windows toolchain naming**: ARM provides `arm-none-linux-gnueabihf-` prefix, platform expects `arm-linux-gnueabihf-` (may need platform.py adjustment)
 
 **Effort**: 3-4 hours (implement OS-specific steps, test on all platforms)
 
 ---
 
-### Simplified Phase 2: Ubuntu + macOS Only
+### Simplified Phase 2: Ubuntu + macOS Only (Optional)
 
-**Recommendation**: **Start with Ubuntu + macOS, defer Windows to Phase 3**
+**Note**: Windows toolchain implementation is now available (see above), but can be deferred if needed.
+
+**Recommendation**: **Start with Ubuntu + macOS, optionally add Windows in Phase 3**
 
 **Rationale**:
-- Windows ARM toolchain is most complex
 - Ubuntu + macOS cover 80%+ of developers
-- Can add Windows later once basic CI works
+- Windows implementation available but adds testing complexity
+- Can validate core functionality on 2 platforms first
 
 **Reduced Matrix**:
 ```yaml
@@ -441,7 +488,7 @@ strategy:
     # ... rest of matrix
 ```
 
-**Effort reduction**: 2-3 hours (skip Windows complexity)
+**Effort reduction**: 1-2 hours (defer Windows testing to Phase 3)
 
 ---
 
@@ -472,14 +519,17 @@ strategy:
 
 ### macOS
 
-**Option 1: Community Homebrew tap** (recommended):
+**✅ WORKING Implementation** (matches `.github/workflows/examples.yml`):
 
 ```yaml
-- name: Install ARM cross-compiler
+- name: Install ARM toolchains (macOS)
+  if: matrix.os == 'macos-latest'
   run: |
     brew tap messense/macos-cross-toolchains
-    brew install armv7-unknown-linux-gnueabihf
+    brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 ```
+
+**Note**: Installs both 32-bit (arm) and 64-bit (aarch64) toolchains
 
 **Option 2: Manual download** (fallback):
 
@@ -501,34 +551,85 @@ strategy:
 
 ### Windows
 
-**Option 1: Chocolatey** (if available):
+**✅ WORKING Implementation** (matches `.github/workflows/examples.yml`):
 
-```yaml
-- name: Install ARM cross-compiler
+```bash
+# Uses bash shell (NOT PowerShell) for cross-platform consistency
+- name: Install ARM toolchains (Windows)
+  if: matrix.os == 'windows-latest'
+  shell: bash
   run: |
-    choco install gcc-arm-embedded
+    # Download ARM GNU Toolchain (arm-none-linux-gnueabihf variant works for Linux)
+    echo "Downloading ARM GNU Toolchain for Windows..."
+    curl -L -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
+
+    echo "Extracting toolchain..."
+    unzip -q gcc-arm.zip
+
+    # Find the extracted directory (case-insensitive) and get absolute path
+    TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit | sed 's|^\./||')
+    echo "Found toolchain directory: $TOOLCHAIN_DIR"
+
+    # Create symlinks from arm-linux-gnueabihf-* to arm-none-linux-gnueabihf-*
+    # The toolchain uses "arm-none-linux-gnueabihf" but PlatformIO expects "arm-linux-gnueabihf"
+    echo "Creating symlinks for PlatformIO compatibility..."
+    cd "$TOOLCHAIN_DIR/bin"
+    for file in arm-none-linux-gnueabihf-*; do
+      link_name=$(echo "$file" | sed 's/arm-none-linux-gnueabihf-/arm-linux-gnueabihf-/')
+      if [ ! -e "$link_name" ]; then
+        ln -s "$file" "$link_name"
+        echo "  Created: $link_name -> $file"
+      fi
+    done
+    cd "$GITHUB_WORKSPACE"
+
+    # Get absolute path - convert to Windows path format
+    TOOLCHAIN_BIN="$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin"
+    echo "Toolchain bin path: $TOOLCHAIN_BIN"
+
+    # Convert to Windows path format for GITHUB_PATH
+    TOOLCHAIN_BIN_WINDOWS=$(cygpath -w "$TOOLCHAIN_BIN")
+    echo "Windows path format: $TOOLCHAIN_BIN_WINDOWS"
+
+    # Add to PATH for subsequent steps (Windows format)
+    echo "$TOOLCHAIN_BIN_WINDOWS" >> $GITHUB_PATH
+    echo "Added to GITHUB_PATH: $TOOLCHAIN_BIN_WINDOWS"
+
+    # Verify installation and symlinks
+    echo "Verifying toolchain binaries and symlinks..."
+    ls -la "$TOOLCHAIN_DIR/bin/" | grep -E "(arm-linux-gnueabihf-gcc|arm-none-linux-gnueabihf-gcc)" || true
+
+    # Test if arm-linux-gnueabihf-gcc exists
+    if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ] || [ -L "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
+      echo "✅ arm-linux-gnueabihf-gcc.exe found (symlink or file)"
+    else
+      echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
+    fi
 ```
 
-**Challenge**: `gcc-arm-embedded` is for **bare-metal** (`arm-none-eabi`), not Linux (`arm-linux-gnueabihf`)
+**Why Chocolatey won't work**:
+- `gcc-arm-embedded` package is for **bare-metal** (`arm-none-eabi`), not Linux (`arm-linux-gnueabihf`)
+- No Chocolatey package exists for ARM Linux cross-compilation
 
-**Option 2: Manual download**:
+**Key Implementation Details**:
+- ✅ Uses **bash shell** (not PowerShell) for consistency with Linux/macOS
+- ✅ Uses **13.2.rel1** (tested and working version)
+- ✅ Downloads from official ARM Developer site using `curl`
+- ✅ Extracts using `unzip` (available in GitHub Actions Windows runners)
+- ✅ **Creates symlinks** to solve naming mismatch: `arm-none-linux-gnueabihf-*` → `arm-linux-gnueabihf-*`
+- ✅ Uses `cygpath -w` to convert Unix paths to Windows format for GITHUB_PATH
+- ✅ Includes comprehensive verification and debugging output
+- ✅ **Tested and working** in production (see `.github/workflows/examples.yml`)
 
-```yaml
-- name: Install ARM cross-compiler
-  run: |
-    curl -LO https://developer.arm.com/.../arm-gnu-toolchain-windows.zip
-    unzip arm-gnu-toolchain-windows.zip
-    echo "$(pwd)/arm-gnu-toolchain/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-```
+**Solves the Naming Problem**:
+- ARM provides `arm-none-linux-gnueabihf-gcc.exe`
+- PlatformIO expects `arm-linux-gnueabihf-gcc.exe`
+- Solution: Create symlinks for all `arm-none-linux-gnueabihf-*` → `arm-linux-gnueabihf-*`
+- No platform.py modifications needed!
 
-**Challenges**:
-- No native `arm-linux-gnueabihf` Windows packages
-- Requires manual PATH setup
-- Windows PowerShell vs bash syntax
+**Effort**: ✅ Complete and tested (deployed in `.github/workflows/examples.yml`)
 
-**Effort**: 2-3 hours (complex, error-prone)
-
-**Recommendation**: **Defer Windows to Phase 3** - Focus on Ubuntu + macOS first
+**Status**: **✅ Windows fully supported and working** - Production-ready implementation
 
 ---
 
@@ -817,7 +918,7 @@ This validates:
 |------|-----------|--------|------------|
 | Cross-compilation not fixed yet | Medium | High | Document dependency clearly, implement Priority 1 first |
 | macOS toolchain unavailable | Medium | Medium | Provide manual download fallback, document alternative |
-| Windows toolchain complexity | High | Medium | Defer Windows to Phase 3, focus on Ubuntu + macOS |
+| Windows toolchain naming mismatch | Low | Medium | ARM provides `arm-none-linux-gnueabihf-` prefix; may need platform.py symlinks |
 | GitHub Actions quota exceeded | Low | Low | Free tier includes 2000 min/month for public repos, 11 jobs × 5 min = 55 min/run |
 | Workflow syntax errors | Medium | Low | Test incrementally, use workflow validator |
 | Framework library installation fails | Medium | Medium | Document system dependencies, add installation checks |
