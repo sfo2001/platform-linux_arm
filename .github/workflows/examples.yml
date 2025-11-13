@@ -54,6 +54,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         example:
           - examples/baremetal-hello
+          - examples/baremetal-threads
           - examples/lgpio-blink
           # Note: pigpio-blink not tested (deprecated framework, no CI setup)
           # Note: wiringpi examples not tested (require native Pi hardware)
