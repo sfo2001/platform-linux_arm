@@ -46,11 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Orange Pi GPIO example (`examples/orangepi-lgpio-blink/`)
 - **Additional lgpio framework examples** for hardware communication
   - SPI communication with MCP3008 ADC (`examples/lgpio-spi-adc/`) (#40)
-  - I2C sensor communication with BME280 (`examples/lgpio-i2c-sensor/`)
+  - I2C sensor communication with BME280 (`examples/lgpio-i2c-sensor/`) (#39)
 - **Bare-metal serial communication example** (`examples/baremetal-uart/`) (#41)
   - UART/serial communication using POSIX termios API
   - Bidirectional communication with echo test and interactive modes
   - Comprehensive serial port configuration examples
+- **Multi-threading example** with producer-consumer pattern (`examples/baremetal-threads/`) (#42)
+  - POSIX threads (pthreads) for concurrent execution
+  - Thread-safe circular queue with mutex locks and condition variables
+  - 2 producer threads and 3 consumer threads
+  - Demonstrates proper synchronization and resource cleanup
 - Comprehensive RST documentation (`docs/platforms/linux_arm.rst`) for PlatformIO registry submission
 - Testing matrix documentation (`docs/TESTING.md`) covering all boards, frameworks, and architectures
 - Framework comparison table and migration guide in RST format
