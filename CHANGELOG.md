@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Nothing yet
+
+## [1.7.0] - 2025-11-13 - "The Modernization Release"
+
+**This is a major modernization release forked from the original platformio/platform-linux_arm repository (last updated May 2022, abandoned for 3.5 years).**
+
+**🎉 Highlights:**
+- **First PlatformIO platform with Raspberry Pi 5 support**
+- **Modern lgpio framework** supporting all Raspberry Pi models (1-5)
+- **Remote development workflows** (deployment, debugging, testing)
+- **15 comprehensive examples** (increased from 5)
+- **10 board definitions** (increased from 4)
+- **Professional development tools** with complete documentation
+
+**Modernization Scope:**
+- 110+ commits over 5 days
+- ~15,000 lines of code added/modified
+- ~10,000 lines of documentation added
+- 30+ major features implemented
+- Complete CI/CD infrastructure
+
+---
+
+### Added
 - **Custom upload/deployment protocol support** for automated binary deployment to remote targets (#36)
   - SCP upload protocol (secure copy via SSH)
   - Rsync upload protocol (efficient incremental transfer)
@@ -197,12 +221,13 @@ This is a major modernization release forked from the original platform-linux_ar
 ## Version Comparison Links
 
 For detailed commit history between versions:
-- [Unreleased changes](https://github.com/sfo2001/platform-linux_arm/compare/v1.6.0...HEAD)
+- [Unreleased changes](https://github.com/sfo2001/platform-linux_arm/compare/v1.7.0...HEAD)
+- [1.7.0 changes](https://github.com/sfo2001/platform-linux_arm/compare/v1.6.0...v1.7.0)
 - [1.6.0 changes](https://github.com/sfo2001/platform-linux_arm/compare/v1.5.1...v1.6.0)
 
 ## Migration Guides
 
-### Upgrading to 1.7.0 (Unreleased) from 1.6.0
+### Upgrading to 1.7.0 from 1.6.0
 
 **Framework Changes:**
 - **Recommended**: Migrate to lgpio framework for all new projects
