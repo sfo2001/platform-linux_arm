@@ -383,5 +383,5 @@ For tests that interact with GPIO, I2C, SPI, or other hardware:
 ## Support
 
 For issues or questions:
-- [Platform Issues](https://github.com/platformio/platform-linux_arm/issues)
+- [Platform Issues](https://github.com/sfo2001/platform-linux_arm/issues)
 - [PlatformIO Community](https://community.platformio.org/)

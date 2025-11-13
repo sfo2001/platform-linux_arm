@@ -133,7 +133,7 @@ board = ...
 
 ```ini
 [env:development]
-platform = https://github.com/platformio/platform-linux_arm.git
+platform = https://github.com/sfo2001/platform-linux_arm.git
 board = ...
 ...
 ```
@@ -233,7 +233,9 @@ board = raspberrypi_4b
 ; No framework specified - bare-metal C application
 ```
 
-See `examples/baremetal-hello/` for a complete example.
+**Examples:**
+- `examples/baremetal-hello/` - Basic bare-metal C application
+- `examples/baremetal-uart/` - Serial UART communication using termios API
 
 # Building and Running
 
