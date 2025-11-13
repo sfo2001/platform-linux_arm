@@ -56,29 +56,12 @@ jobs:
           - examples/baremetal-hello
           - examples/baremetal-threads
           - examples/lgpio-blink
-          - examples/wiringpi-blink
-          - examples/wiringpi-serial
-          - examples/pigpio-blink
+          # Note: wiringpi/pigpio examples excluded - require system libraries
+          # that don't support cross-compilation (libraries must be on build host)
         exclude:
           # Exclude lgpio on Windows (complex cross-compile setup)
           - os: windows-latest
             example: examples/lgpio-blink
-
-          # Exclude WiringPi on macOS and Windows (requires Ubuntu system packages)
-          - os: macos-latest
-            example: examples/wiringpi-blink
-          - os: windows-latest
-            example: examples/wiringpi-blink
-          - os: macos-latest
-            example: examples/wiringpi-serial
-          - os: windows-latest
-            example: examples/wiringpi-serial
-
-          # Exclude pigpio on macOS and Windows (requires Ubuntu system packages)
-          - os: macos-latest
-            example: examples/pigpio-blink
-          - os: windows-latest
-            example: examples/pigpio-blink
 
     steps:
       - uses: actions/checkout@v4
@@ -89,15 +72,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      # Ubuntu: Install ARM cross-compilation toolchains and system libraries
-      - name: Install ARM toolchains and system libraries (Ubuntu)
+      # Ubuntu: Install ARM cross-compilation toolchains
+      - name: Install ARM toolchains (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            wiringpi pigpio
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       # macOS: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (macOS)
