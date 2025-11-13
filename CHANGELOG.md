@@ -18,6 +18,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Flexible target specification formats (`user@host:/path`)
   - Complete upload documentation (`docs/UPLOAD.md`)
   - Remote deployment example project (`examples/remote-deployment/`)
+- **Remote debugging support** via GDB over SSH for IDE-integrated debugging (#35)
+  - gdbserver-ssh debug tool (automatic SSH tunnel setup)
+  - gdb-remote debug tool (manual TCP debugging)
+  - Support for remote debugging on Raspberry Pi and ARM SBC targets
+  - VS Code integration with launch configurations
+  - Complete debugging documentation (`docs/DEBUGGING.md`)
+  - Remote debugging example project (`examples/remote-debugging/`)
+- **Remote test execution** via SSH for automated hardware testing (#37)
+  - Cross-compiled test binaries deployed and executed on target hardware
+  - Real-time test output streaming from remote device
+  - Unity test framework integration
+  - CI/CD pipeline support for hardware-in-the-loop testing
+  - Complete testing documentation (`REMOTE_TESTING.md`)
+  - Remote testing example project (`examples/remote-testing/`)
+- **Hardware PWM support** via Linux PWM subsystem (sysfs) for lgpio framework (#34)
+  - Complete PWM HAL library (`framework-lgpio/pwm-hal.c`, `framework-lgpio/pwm-hal.h`)
+  - Core API: `pwm_init()`, `pwm_write()`, `pwm_deinit()`
+  - Extended API: `pwm_set_frequency()`, `pwm_set_polarity()`, `pwm_get_status()`
+  - Automatic Raspberry Pi model detection (Pi 1-4 vs Pi 5)
+  - PWM permission setup scripts and systemd service
+  - Comprehensive PWM setup guide (`docs/PWM_SETUP.md`)
+  - PWM examples: LED fading (`examples/lgpio-pwm-fade/`) and servo control (`examples/lgpio-pwm-servo/`)
+- **Orange Pi Zero board support** (Allwinner H2+/H3 SoC) (#29)
+  - Board definition for Orange Pi Zero with 256MB/512MB RAM variants
+  - Compatible with lgpio, pigpio, and wiringpi frameworks
+  - Orange Pi GPIO example (`examples/orangepi-lgpio-blink/`)
+- **Additional lgpio framework examples** for hardware communication
+  - SPI communication with MCP3008 ADC (`examples/lgpio-spi-adc/`) (#40)
+  - I2C sensor communication with BME280 (`examples/lgpio-i2c-sensor/`)
+- **Bare-metal serial communication example** (`examples/baremetal-uart/`) (#41)
+  - UART/serial communication using POSIX termios API
+  - Bidirectional communication with echo test and interactive modes
+  - Comprehensive serial port configuration examples
 - Comprehensive RST documentation (`docs/platforms/linux_arm.rst`) for PlatformIO registry submission
 - Testing matrix documentation (`docs/TESTING.md`) covering all boards, frameworks, and architectures
 - Framework comparison table and migration guide in RST format
@@ -159,8 +192,8 @@ This is a major modernization release forked from the original platform-linux_ar
 ## Version Comparison Links
 
 For detailed commit history between versions:
-- [Unreleased changes](https://github.com/platformio/platform-linux_arm/compare/v1.6.0...HEAD)
-- [1.6.0 changes](https://github.com/platformio/platform-linux_arm/compare/v1.5.1...v1.6.0)
+- [Unreleased changes](https://github.com/sfo2001/platform-linux_arm/compare/v1.6.0...HEAD)
+- [1.6.0 changes](https://github.com/sfo2001/platform-linux_arm/compare/v1.5.1...v1.6.0)
 
 ## Migration Guides
 
@@ -205,7 +238,7 @@ board_build.arch = aarch64  # Optional: for 64-bit builds
 
 ---
 
-**Note**: Detailed release notes for versions prior to 1.6.0 are limited. For complete history, see the [git commit log](https://github.com/platformio/platform-linux_arm/commits).
+**Note**: Detailed release notes for versions prior to 1.6.0 are limited. For complete history, see the [git commit log](https://github.com/sfo2001/platform-linux_arm/commits).
 
 ## Contributing
 

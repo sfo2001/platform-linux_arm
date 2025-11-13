@@ -42,7 +42,7 @@ The analysis follows an **iterative checkpoint approach** with manageable sessio
 - **`research/00-INDEX.md`**: Master progress tracker, links all rounds and deliverables
 - **`research/REFERENCES.md`**: Centralized repository of all sources, links, and code references
 - **`research/FINDINGS-TEMPLATE.md`**: Standard structure for analysis outputs
-- **`research/ANALYSIS_PROMPT.md`**: Original comprehensive prompt (archived, use round-specific prompts instead)
+- **`research/ANALYSIS_PROMPT_ORIGINAL.md`**: Original comprehensive prompt (archived, use round-specific prompts instead)
 
 ### Usage
 
@@ -85,8 +85,52 @@ pio run --target size
 pio pkg install --global --platform file://.
 
 # Or install from GitHub (development version)
-pio pkg install --global --platform https://github.com/platformio/platform-linux_arm.git
+pio pkg install --global --platform https://github.com/sfo2001/platform-linux_arm.git
 ```
+
+## Remote Development Workflows
+
+The platform supports comprehensive remote development workflows for Raspberry Pi and ARM SBC targets:
+
+### Remote Deployment
+```bash
+# Upload and run program on remote target (e.g., Raspberry Pi)
+pio run --target upload
+
+# Example platformio.ini configuration
+# [env:raspberrypi_4b]
+# upload_protocol = scp
+# upload_port = pi@raspberrypi.local:/home/pi/program
+# upload_run_after = true
+```
+
+See `docs/UPLOAD.md` and `examples/remote-deployment/` for complete documentation.
+
+### Remote Testing
+```bash
+# Run tests on remote hardware via SSH
+pio test
+
+# Example platformio.ini configuration
+# [env:raspberrypi_4b]
+# test_transport = ssh
+# test_port = pi@raspberrypi.local:/tmp/test_program
+```
+
+Cross-compiled test binaries are automatically deployed and executed on target hardware with real-time output streaming. See `REMOTE_TESTING.md` and `examples/remote-testing/` for complete documentation.
+
+### Remote Debugging
+```bash
+# Launch GDB debugging session over SSH
+pio debug
+
+# Example platformio.ini configuration
+# [env:raspberrypi_4b]
+# debug_tool = gdbserver-ssh
+# debug_port = pi@raspberrypi.local
+```
+
+Supports IDE-integrated debugging (VS Code) with breakpoints, variable inspection, and stepping. See `docs/DEBUGGING.md` and `examples/remote-debugging/` for complete documentation.
 
 ## Architecture Overview
 
@@ -152,7 +196,8 @@ Compiled binaries are placed in `.pio/build/<board_name>/program` (note: the exa
 
 ## Version Management
 
-- Current version: 1.7.0 (defined in `platform.json:19`)
+- Development version: 1.7.0 (unreleased, defined in `platform.json:19`)
+- Last released version: 1.6.0 (2025-11-09)
 - Uses conventional commit messages (see git history)
 - Git-flow workflow: `develop` branch for development, `release/*` branches for releases
 - Versions should be bumped in `platform.json` before tagging releases
