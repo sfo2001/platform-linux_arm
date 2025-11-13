@@ -160,11 +160,13 @@ sudo apt install liblgpio-dev liblgpio1
 
 **Features:**
 - Basic GPIO control (digital I/O)
+- I2C communication (sensors and peripherals)
 - SPI communication (high-speed peripherals)
 - **Hardware PWM** (LED fading, servo control, motor control)
 
 **Examples:**
 - `examples/lgpio-blink/` - Basic GPIO control
+- `examples/lgpio-i2c-sensor/` - I2C sensor reading with BME280 (temperature, humidity, pressure)
 - `examples/lgpio-spi-adc/` - SPI communication with MCP3008 ADC
 - `examples/lgpio-pwm-fade/` - Hardware PWM LED fading
 - `examples/lgpio-pwm-servo/` - Servo motor control
@@ -236,6 +238,7 @@ board = raspberrypi_4b
 **Examples:**
 - `examples/baremetal-hello/` - Basic bare-metal C application
 - `examples/baremetal-uart/` - Serial UART communication using termios API
+- `examples/baremetal-threads/` - Multi-threading with POSIX threads (producer-consumer pattern)
 
 # Building and Running
 
