@@ -27,6 +27,8 @@ import subprocess
 import sys
 import time
 
+from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
+
 
 class RemoteTestUploader:
     """
@@ -66,26 +68,19 @@ class RemoteTestUploader:
                 "  upload_port = user@hostname:/path/to/test_binary"
             )
 
-        # Default values
-        self.user = self.env.GetProjectOption("test_username", "pi")
-        self.remote_path = self.env.GetProjectOption("test_path", "/tmp/test_program")
+        # Get defaults from project options
+        default_user = self.env.GetProjectOption("test_username", "pi")
+        default_path = self.env.GetProjectOption("test_path", "/tmp/test_program")
 
-        # Parse user@host:path format
-        upload_port = self.upload_port
-
-        # Extract user if specified
-        if "@" in upload_port:
-            user_part, host_part = upload_port.split("@", 1)
-            self.user = user_part
-        else:
-            host_part = upload_port
-
-        # Extract host and path
-        if ":" in host_part:
-            self.host, path_part = host_part.split(":", 1)
-            self.remote_path = path_part
-        else:
-            self.host = host_part
+        # Use shared parser
+        try:
+            self.user, self.host, self.remote_path = parse_upload_port(
+                self.upload_port,
+                default_user=default_user,
+                default_path=default_path
+            )
+        except ValueError as e:
+            raise Exception(str(e))
 
         # Get SSH configuration
         self.ssh_port = self.env.GetProjectOption("test_ssh_port", "22")
@@ -113,46 +108,39 @@ class RemoteTestUploader:
 
     def build_ssh_command(self, remote_command=None):
         """Build SSH command with proper authentication."""
-        cmd = ["ssh"]
-        cmd.extend(["-p", str(self.ssh_port)])
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=self.user,
+                host=self.host,
+                port=self.ssh_port,
+                key=self.ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise Exception(str(e))
 
-        if self.ssh_key:
-            key_path = os.path.expanduser(self.ssh_key)
-            if not os.path.exists(key_path):
-                raise Exception(f"SSH key file not found: {key_path}")
-            cmd.extend(["-i", key_path])
-
-        # Disable strict host key checking for automated testing
-        # (can be overridden with custom SSH config)
-        cmd.extend(["-o", "StrictHostKeyChecking=no"])
-        cmd.extend(["-o", "UserKnownHostsFile=/dev/null"])
-        cmd.extend(["-o", "LogLevel=ERROR"])
-
-        cmd.append(f"{self.user}@{self.host}")
-
-        if remote_command:
-            cmd.append(remote_command)
-
-        return cmd
+        # Build SSH command using shared builder
+        builder = SSHCommandBuilder(config)
+        return builder.build_ssh_command(remote_command)
 
     def build_scp_command(self, local_file, remote_file):
         """Build SCP command for file upload."""
-        cmd = ["scp"]
-        cmd.extend(["-P", str(self.ssh_port)])
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=self.user,
+                host=self.host,
+                port=self.ssh_port,
+                key=self.ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise Exception(str(e))
 
-        if self.ssh_key:
-            key_path = os.path.expanduser(self.ssh_key)
-            cmd.extend(["-i", key_path])
-
-        # Disable strict host key checking
-        cmd.extend(["-o", "StrictHostKeyChecking=no"])
-        cmd.extend(["-o", "UserKnownHostsFile=/dev/null"])
-        cmd.extend(["-o", "LogLevel=ERROR"])
-
-        cmd.append(local_file)
-        cmd.append(f"{self.user}@{self.host}:{remote_file}")
-
-        return cmd
+        # Build SCP command using shared builder
+        builder = SSHCommandBuilder(config)
+        return builder.build_scp_command(local_file, remote_file)
 
     def upload_test_binary(self):
         """Upload test binary to remote target via SCP."""
