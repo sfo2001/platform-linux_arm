@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -171,8 +172,15 @@ class Linux_armPlatform(PlatformBase):
             print(f"SSH Key:     {ssh_key}")
         print("="*60 + "\n")
 
-        # Execute SCP command
-        result = subprocess.run(cmd, capture_output=False, text=True)
+        # Execute SCP command with timeout protection
+        upload_timeout = env.GetProjectOption("upload_timeout", 300)
+        try:
+            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
+        except subprocess.TimeoutExpired:
+            raise exception.PlatformioException(
+                f"SCP upload timeout after {upload_timeout} seconds. "
+                "Increase timeout with 'upload_timeout' option in platformio.ini"
+            )
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -207,17 +215,17 @@ class Linux_armPlatform(PlatformBase):
         if upload_flags:
             cmd.extend(upload_flags.split())
 
-        # Add SSH options
-        ssh_opts = f"-p {ssh_port}"
+        # Add SSH options (build as list to avoid shell injection)
+        ssh_cmd_parts = ["ssh", "-p", str(ssh_port)]
         if ssh_key:
             key_path = os.path.expanduser(ssh_key)
             if not os.path.exists(key_path):
                 raise exception.PlatformioException(
                     f"SSH key file not found: {key_path}"
                 )
-            ssh_opts += f" -i {key_path}"
+            ssh_cmd_parts.extend(["-i", key_path])
 
-        cmd.extend(["-e", f"ssh {ssh_opts}"])
+        cmd.extend(["-e", " ".join(shlex.quote(part) for part in ssh_cmd_parts)])
 
         # Add source and destination
         cmd.append(str(source[0]))
@@ -234,8 +242,15 @@ class Linux_armPlatform(PlatformBase):
         print(f"Flags:       {upload_flags}")
         print("="*60 + "\n")
 
-        # Execute rsync command
-        result = subprocess.run(cmd, capture_output=False, text=True)
+        # Execute rsync command with timeout protection
+        upload_timeout = env.GetProjectOption("upload_timeout", 300)
+        try:
+            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
+        except subprocess.TimeoutExpired:
+            raise exception.PlatformioException(
+                f"Rsync upload timeout after {upload_timeout} seconds. "
+                "Increase timeout with 'upload_timeout' option in platformio.ini"
+            )
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -278,7 +293,8 @@ class Linux_armPlatform(PlatformBase):
             cmd.extend(["-i", key_path])
 
         cmd.append(f"{user}@{host}")
-        cmd.append(f"cat > {path} && chmod +x {path}")
+        # Use shlex.quote to prevent command injection via path
+        cmd.append(f"cat > {shlex.quote(path)} && chmod +x {shlex.quote(path)}")
 
         print("\n" + "="*60)
         print("UPLOADING VIA SSH")
@@ -290,9 +306,16 @@ class Linux_armPlatform(PlatformBase):
             print(f"SSH Key:     {ssh_key}")
         print("="*60 + "\n")
 
-        # Execute SSH command with file as stdin
-        with open(str(source[0]), "rb") as f:
-            result = subprocess.run(cmd, stdin=f, capture_output=False, text=False)
+        # Execute SSH command with file as stdin and timeout protection
+        upload_timeout = env.GetProjectOption("upload_timeout", 300)
+        try:
+            with open(str(source[0]), "rb") as f:
+                result = subprocess.run(cmd, stdin=f, capture_output=False, text=False, timeout=upload_timeout)
+        except subprocess.TimeoutExpired:
+            raise exception.PlatformioException(
+                f"SSH upload timeout after {upload_timeout} seconds. "
+                "Increase timeout with 'upload_timeout' option in platformio.ini"
+            )
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -320,11 +343,14 @@ class Linux_armPlatform(PlatformBase):
         cmd.append(f"{user}@{host}")
 
         # Get custom run command or use default
+        # Use shlex.quote to prevent command injection
         run_command = env.GetProjectOption("upload_run_command", None)
         if run_command:
+            # For custom commands, quote the entire command string
             cmd.append(run_command)
         else:
-            cmd.append(remote_path)
+            # For simple path execution, quote the path
+            cmd.append(shlex.quote(remote_path))
 
         print("\n" + "="*60)
         print("RUNNING REMOTE PROGRAM")
@@ -333,8 +359,15 @@ class Linux_armPlatform(PlatformBase):
         print(f"Command: {run_command if run_command else remote_path}")
         print("="*60 + "\n")
 
-        # Execute remote command (interactive - shows output directly)
-        result = subprocess.run(cmd)
+        # Execute remote command with timeout protection (interactive - shows output directly)
+        run_timeout = env.GetProjectOption("upload_run_timeout", 300)
+        try:
+            result = subprocess.run(cmd, timeout=run_timeout)
+        except subprocess.TimeoutExpired:
+            raise exception.PlatformioException(
+                f"Remote command execution timeout after {run_timeout} seconds. "
+                "Increase timeout with 'upload_run_timeout' option in platformio.ini"
+            )
 
         return result.returncode
 
@@ -403,9 +436,10 @@ class Linux_armPlatform(PlatformBase):
             if ssh_key:
                 ssh_cmd_parts.extend(["-i", os.path.expanduser(ssh_key)])
             ssh_cmd_parts.append(ssh_target)
-            ssh_cmd_parts.append("gdbserver - " + prog_path)
+            # Use shlex.quote to prevent command injection via prog_path
+            ssh_cmd_parts.append("gdbserver - " + shlex.quote(prog_path))
 
-            ssh_cmd = " ".join(ssh_cmd_parts)
+            ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
 
             debug_config["server_executable"] = None
             debug_config["server_arguments"] = []
