@@ -20,7 +20,6 @@ import sys
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
-from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
 
 
 class Linux_armPlatform(PlatformBase):
@@ -103,6 +102,9 @@ class Linux_armPlatform(PlatformBase):
           - host
         Returns: (user, host, path)
         """
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import parse_upload_port
+
         if not upload_port:
             raise exception.PlatformioException(
                 "upload_port is not configured. Add to platformio.ini:\n"
@@ -121,6 +123,9 @@ class Linux_armPlatform(PlatformBase):
 
     def _upload_scp(self, target, source, env):
         """Upload binary using SCP (Secure Copy Protocol)."""
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+
         self._check_upload_tool("scp")
 
         upload_port = env.GetProjectOption("upload_port", None)
@@ -184,6 +189,9 @@ class Linux_armPlatform(PlatformBase):
 
     def _upload_rsync(self, target, source, env):
         """Upload binary using rsync (efficient incremental transfer)."""
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+
         self._check_upload_tool("rsync")
 
         upload_port = env.GetProjectOption("upload_port", None)
@@ -250,6 +258,9 @@ class Linux_armPlatform(PlatformBase):
         Upload binary using SSH with piped input.
         This method uses SSH with cat to transfer the file.
         """
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+
         self._check_upload_tool("ssh")
 
         upload_port = env.GetProjectOption("upload_port", None)
@@ -314,6 +325,9 @@ class Linux_armPlatform(PlatformBase):
 
     def _run_remote_command(self, user, host, ssh_port, ssh_key, remote_path, env):
         """Run the uploaded program on the remote target."""
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+
         # Create SSH config
         try:
             config = SSHConnectionConfig(
@@ -364,6 +378,9 @@ class Linux_armPlatform(PlatformBase):
         Configure remote debugging session for ARM Linux targets.
         Supports GDB/gdbserver over SSH for remote debugging.
         """
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
+
         # Get board configuration
         board_config = self.board_config(debug_config.get("env_name"))
         target_arch = board_config.get("build.arch", "armv7")
