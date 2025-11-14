@@ -4,26 +4,23 @@ This directory contains internal project artifacts that are not intended for end
 
 ## Contents
 
-### `research/`
+### ~~`research/`~~ → **Moved to GitHub Wiki**
 **Modernization research and planning artifacts**
 
-Contains the comprehensive research and planning documentation created during the platform modernization effort:
+All research documentation has been published to the **GitHub Wiki**:
+- **Wiki URL**: https://github.com/sfo2001/platform-linux_arm/wiki
 
-- `00-INDEX.md` - Master progress tracker for all research rounds
-- `01-ROUND-1-PROMPT.md` - Initial assessment prompt
-- `01-initial-assessment.md` - Initial platform analysis findings
-- `02-ROUND-2-PROMPT.md` - Deep-dive analysis prompts
-- `02-priority-*.md` - Detailed analysis of priority areas (boards, CI/CD, cross-compilation, frameworks)
-- `03-ROUND-3-PROMPT.md` - Implementation roadmap prompt
-- `03-implementation-roadmap.md` - Comprehensive implementation plan
-- `FORK-*.md` - Fork analysis, issue mapping, and roadmap cross-reference
-- `IMPLEMENTATION_STATUS.md` - Current implementation status tracking
-- `REFERENCES.md` - Centralized repository of sources and references
-- Additional analysis and planning documents
+**Wiki Pages**:
+- Modernization Overview (master progress tracker)
+- Implementation Status (current state)
+- Round 1: Initial Assessment
+- Round 2: Boards, CI/CD, Cross-compilation, Frameworks analyses
+- Round 3: Implementation Roadmap
+- Fork Analysis Summary
+- References (centralized sources)
+- Python Codebase Analysis (security audit)
 
-**Value**: Documents the thought process and decision-making behind platform modernization. Useful for understanding why certain architectural choices were made.
-
-**Recommended Action**: Move to GitHub Wiki for better discoverability. See `MANUAL_STEPS.md` in repository root.
+**Value**: Documents the thought process and decision-making behind platform modernization. Now publicly discoverable via wiki.
 
 ---
 
@@ -54,30 +51,11 @@ Contains documentation snapshots from reference PlatformIO platforms used during
 
 During the transition from "modernized fork with comprehensive internal docs" to "clean PlatformIO-standard platform," we needed to:
 
-1. **Preserve valuable research** - The research directory contains months of analysis that shouldn't be lost
-2. **Match PlatformIO standards** - Reference platforms don't have research/issues directories in their repos
-3. **Maintain transparency** - All project artifacts should remain accessible, just better organized
+1. **Preserve valuable research** - ✅ Published to GitHub Wiki (https://github.com/sfo2001/platform-linux_arm/wiki)
+2. **Match PlatformIO standards** - ✅ Reference platforms don't have research directories
+3. **Maintain transparency** - ✅ All research publicly accessible via wiki
 
-This `.archive/` directory is a **temporary holding area** committed to git. See `MANUAL_STEPS.md` for the recommended final disposition of this content.
-
----
-
-## Next Steps
-
-**Option 1: Move to GitHub Wiki (Recommended)**
-- Create wiki pages from `research/*.md` files
-- Provides better discoverability for interested contributors
-- See `MANUAL_STEPS.md` section "Creating GitHub Wiki"
-
-**Option 2: Keep in Repository**
-- Leave `.archive/` committed in git
-- Clearly labeled as internal/historical
-- Takes up repo space but fully version-controlled
-
-**Option 3: Delete After Wiki Creation**
-- After moving to wiki, delete `.archive/` directory
-- Add to `.gitignore` if you want local copy
-- Cleanest repo, but loses git history tracking
+This `.archive/` directory contains historical reference materials and documentation snapshots.
 
 ---
 
@@ -85,13 +63,14 @@ This `.archive/` directory is a **temporary holding area** committed to git. See
 
 If submitting this platform to the official PlatformIO registry:
 
-- **Before submission**: Move `research/` to wiki or delete this directory
-- **Rationale**: Reference platforms (espressif32, ststm32, raspberrypi) don't include internal planning docs
+- ✅ **Research moved to wiki** - Published at https://github.com/sfo2001/platform-linux_arm/wiki
+- ✅ **Clean repository structure** - Matches reference platform standards
+- **Remaining**: Reference documentation (can be deleted or kept for historical purposes)
 
-The research artifacts are extremely valuable for this fork's transparency and decision documentation, but should be organized separately from the production platform code.
+The research artifacts provide transparency and decision documentation, now properly organized via the GitHub Wiki.
 
 ---
 
 **Created**: 2025-11-13
-**Last Updated**: 2025-11-13
-**See Also**: `MANUAL_STEPS.md` in repository root
+**Last Updated**: 2025-11-14
+**Research Wiki**: https://github.com/sfo2001/platform-linux_arm/wiki
