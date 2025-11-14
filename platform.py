@@ -48,39 +48,79 @@ class Linux_armPlatform(PlatformBase):
                 "Raspberry Pi")
         return super().configure_default_packages(variables, targets)
 
+    def _get_upload_protocol(self, env) -> str:
+        """
+        Get and validate upload protocol from environment.
+
+        Args:
+            env: PlatformIO environment
+
+        Returns:
+            Upload protocol name
+
+        Raises:
+            PlatformioException: If protocol is not supported
+        """
+        protocol = env.GetProjectOption("upload_protocol", "manual")
+        valid_protocols = ["scp", "rsync", "ssh", "manual"]
+
+        if protocol not in valid_protocols:
+            raise exception.PlatformioException(
+                f"Unknown upload protocol '{protocol}'. "
+                f"Supported protocols: {', '.join(valid_protocols)}"
+            )
+
+        return protocol
+
+    def _show_manual_upload_instructions(self, source) -> int:
+        """
+        Display manual upload instructions to user.
+
+        Args:
+            source: List of source files (binary path)
+
+        Returns:
+            Exit code (0 for success)
+        """
+        print("\n" + "="*60)
+        print("MANUAL UPLOAD REQUIRED")
+        print("="*60)
+        print("\nCompiled binary location:")
+        print(f"  {source[0]}")
+        print("\nTo deploy to your target device, use one of:")
+        print(f"  scp {source[0]} user@host:/path/to/destination")
+        print(f"  rsync -avz {source[0]} user@host:/path/to/destination")
+        print("\nTo configure automatic upload, add to platformio.ini:")
+        print("  upload_protocol = scp")
+        print("  upload_port = user@hostname:/path/to/destination")
+        print("\nSee documentation for more upload options.")
+        print("="*60 + "\n")
+        return 0
+
     def on_upload(self, target, source, env):
         """
         Custom upload handler for Linux ARM platform.
-        Supports multiple upload protocols: scp, rsync, ssh
-        """
-        upload_protocol = env.GetProjectOption("upload_protocol", "manual")
+        Supports multiple upload protocols: scp, rsync, ssh, manual.
 
-        if upload_protocol == "scp":
-            return self._upload_scp(target, source, env)
-        elif upload_protocol == "rsync":
-            return self._upload_rsync(target, source, env)
-        elif upload_protocol == "ssh":
-            return self._upload_ssh(target, source, env)
-        elif upload_protocol == "manual":
-            print("\n" + "="*60)
-            print("MANUAL UPLOAD REQUIRED")
-            print("="*60)
-            print("\nCompiled binary location:")
-            print(f"  {source[0]}")
-            print("\nTo deploy to your target device, use one of:")
-            print(f"  scp {source[0]} user@host:/path/to/destination")
-            print(f"  rsync -avz {source[0]} user@host:/path/to/destination")
-            print("\nTo configure automatic upload, add to platformio.ini:")
-            print("  upload_protocol = scp")
-            print("  upload_port = user@hostname:/path/to/destination")
-            print("\nSee documentation for more upload options.")
-            print("="*60 + "\n")
-            return 0
-        else:
-            raise exception.PlatformioException(
-                f"Unknown upload protocol '{upload_protocol}'. "
-                "Supported protocols: scp, rsync, ssh, manual"
-            )
+        Args:
+            target: Build target
+            source: List of source files (binary path)
+            env: PlatformIO environment
+
+        Returns:
+            Exit code (0 for success, non-zero for failure)
+        """
+        upload_protocol = self._get_upload_protocol(env)
+
+        upload_handlers = {
+            "scp": self._upload_scp,
+            "rsync": self._upload_rsync,
+            "ssh": self._upload_ssh,
+            "manual": lambda t, s, e: self._show_manual_upload_instructions(s)
+        }
+
+        handler = upload_handlers[upload_protocol]
+        return handler(target, source, env)
 
     def _check_upload_tool(self, tool_name):
         """Check if required upload tool is available."""
@@ -373,43 +413,48 @@ class Linux_armPlatform(PlatformBase):
 
         return result.returncode
 
-    def configure_debug_session(self, debug_config):
+    def _determine_gdb_executable(self, target_arch: str) -> str:
         """
-        Configure remote debugging session for ARM Linux targets.
-        Supports GDB/gdbserver over SSH for remote debugging.
+        Determine GDB executable path based on target architecture.
+
+        Args:
+            target_arch: Target architecture (e.g., 'aarch64', 'armv7')
+
+        Returns:
+            Path to appropriate GDB executable
+        """
+        if self._is_native():
+            return "gdb"
+
+        if target_arch == "aarch64":
+            return "aarch64-linux-gnu-gdb"
+
+        return "arm-linux-gnueabihf-gdb"
+
+    def _parse_debug_connection_info(self, debug_config: dict) -> tuple:
+        """
+        Parse debug connection information from configuration.
+
+        Args:
+            debug_config: Debug configuration dictionary
+
+        Returns:
+            Tuple of (user, host, prog_path, ssh_port, ssh_key)
+
+        Raises:
+            PlatformioException: If connection info cannot be parsed
         """
         # Lazy import to avoid breaking platform loading
-        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
+        from ssh_utils import parse_upload_port
 
-        # Get board configuration
-        board_config = self.board_config(debug_config.get("env_name"))
-        target_arch = board_config.get("build.arch", "armv7")
-
-        # Determine GDB executable based on architecture
-        if target_arch == "aarch64":
-            gdb_path = "aarch64-linux-gnu-gdb"
-        else:
-            gdb_path = "arm-linux-gnueabihf-gdb"
-
-        # On native ARM, use system GDB
-        if self._is_native():
-            gdb_path = "gdb"
-
-        # Get debug tool (default to gdbserver-ssh for remote debugging)
-        debug_tool = debug_config.get("tool", "gdbserver-ssh")
-
-        # Get upload configuration for SSH connection
         upload_port = debug_config.get("upload_port")
         ssh_port = debug_config.get("ssh_port", "22")
         ssh_key = debug_config.get("ssh_key")
-
-        # Get remote program path
         prog_path = debug_config.get("prog_path", "/tmp/program")
-        user = "pi"  # default user
+        user = "pi"
         host = None
 
         if upload_port:
-            # Parse upload_port to extract user, host, and path
             try:
                 user, host, prog_path = parse_upload_port(
                     upload_port,
@@ -417,71 +462,107 @@ class Linux_armPlatform(PlatformBase):
                     default_path=prog_path
                 )
             except ValueError:
-                # If parsing fails, try simple extraction
+                # Fallback: simple extraction
                 if "@" in upload_port:
                     user_host = upload_port.split(":")[0]
                     user, host = user_host.split("@", 1)
                 else:
                     host = upload_port.split(":")[0]
 
-        # Configure debug server based on tool
-        if debug_tool == "gdbserver-ssh":
-            # SSH-tunneled gdbserver
-            if not host:
-                raise exception.PlatformioException(
-                    "debug_port or upload_port must be configured for SSH debugging.\n"
-                    "Add to platformio.ini:\n"
-                    "  debug_port = user@hostname\n"
-                    "  or use existing upload_port configuration"
-                )
+        return user, host, prog_path, ssh_port, ssh_key
 
-            # Create SSH config and build command using shared builder
-            try:
-                config = SSHConnectionConfig(
-                    user=user,
-                    host=host,
-                    port=ssh_port,
-                    key=ssh_key,
-                    strict_host_check=False
-                )
-            except (ValueError, FileNotFoundError) as e:
-                raise exception.PlatformioException(str(e))
+    def _configure_gdbserver_ssh(
+        self,
+        debug_config: dict,
+        user: str,
+        host: str,
+        ssh_port: str,
+        ssh_key: str,
+        prog_path: str
+    ) -> None:
+        """
+        Configure SSH-tunneled gdbserver.
 
-            # Build SSH command for GDB remote target
-            # Use shlex.quote to prevent command injection via prog_path
-            remote_command = "gdbserver - " + shlex.quote(prog_path)
-            builder = SSHCommandBuilder(config)
-            ssh_cmd_parts = builder.build_ssh_command(remote_command, extra_opts=["-T"])
+        Args:
+            debug_config: Debug configuration dictionary (modified in place)
+            user: SSH username
+            host: SSH hostname
+            ssh_port: SSH port number
+            ssh_key: Path to SSH key file (optional)
+            prog_path: Remote program path
 
-            ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
+        Raises:
+            PlatformioException: If SSH configuration is invalid
+        """
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
 
-            debug_config["server_executable"] = None
-            debug_config["server_arguments"] = []
-            debug_config["port"] = f"| {ssh_cmd}"
+        if not host:
+            raise exception.PlatformioException(
+                "debug_port or upload_port must be configured for SSH debugging.\n"
+                "Add to platformio.ini:\n"
+                "  debug_port = user@hostname\n"
+                "  or use existing upload_port configuration"
+            )
 
-        elif debug_tool == "gdb-remote":
-            # Direct TCP connection to gdbserver (manual setup required)
-            debug_port = debug_config.get("port", "localhost:2345")
-            debug_config["port"] = debug_port
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=user,
+                host=host,
+                port=ssh_port,
+                key=ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise exception.PlatformioException(str(e))
 
-        # Set GDB executable
-        debug_config["executable"] = gdb_path
+        # Build SSH command for GDB remote target
+        remote_command = "gdbserver - " + shlex.quote(prog_path)
+        builder = SSHCommandBuilder(config)
+        ssh_cmd_parts = builder.build_ssh_command(remote_command, extra_opts=["-T"])
+        ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
 
-        # Set program path for symbol loading
-        debug_config["prog_path"] = prog_path
+        debug_config["server_executable"] = None
+        debug_config["server_arguments"] = []
+        debug_config["port"] = f"| {ssh_cmd}"
 
-        # Add init commands
+    def _configure_gdb_remote(self, debug_config: dict) -> None:
+        """
+        Configure direct TCP connection to gdbserver.
+
+        Args:
+            debug_config: Debug configuration dictionary (modified in place)
+        """
+        debug_port = debug_config.get("port", "localhost:2345")
+        debug_config["port"] = debug_port
+
+    def _build_debug_init_commands(
+        self,
+        debug_tool: str,
+        debug_config: dict,
+        prog_path: str
+    ) -> list:
+        """
+        Build GDB initialization commands.
+
+        Args:
+            debug_tool: Debug tool name ('gdbserver-ssh' or 'gdb-remote')
+            debug_config: Debug configuration dictionary
+            prog_path: Remote program path
+
+        Returns:
+            List of GDB initialization commands
+        """
         init_cmds = []
 
         if debug_tool == "gdbserver-ssh":
-            # For SSH tunneling, use extended-remote with pipe
             init_cmds.extend([
                 f"target extended-remote {debug_config['port']}",
                 f"set remote exec-file {prog_path}",
                 "set sysroot /",
             ])
         else:
-            # For direct TCP connection
             init_cmds.append(f"target extended-remote {debug_config['port']}")
 
         # Add custom init commands from config
@@ -489,7 +570,40 @@ class Linux_armPlatform(PlatformBase):
         if custom_init:
             init_cmds.extend(custom_init)
 
-        debug_config["init_cmds"] = init_cmds
+        return init_cmds
+
+    def configure_debug_session(self, debug_config: dict) -> dict:
+        """
+        Configure remote debugging session for ARM Linux targets.
+        Supports GDB/gdbserver over SSH for remote debugging.
+
+        Args:
+            debug_config: Debug configuration dictionary
+
+        Returns:
+            Updated debug configuration dictionary
+        """
+        # Get board configuration and determine GDB executable
+        board_config = self.board_config(debug_config.get("env_name"))
+        target_arch = board_config.get("build.arch", "armv7")
+        gdb_path = self._determine_gdb_executable(target_arch)
+
+        # Parse connection information
+        user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(debug_config)
+
+        # Get debug tool
+        debug_tool = debug_config.get("tool", "gdbserver-ssh")
+
+        # Configure debug server based on tool
+        if debug_tool == "gdbserver-ssh":
+            self._configure_gdbserver_ssh(debug_config, user, host, ssh_port, ssh_key, prog_path)
+        elif debug_tool == "gdb-remote":
+            self._configure_gdb_remote(debug_config)
+
+        # Set GDB configuration
+        debug_config["executable"] = gdb_path
+        debug_config["prog_path"] = prog_path
+        debug_config["init_cmds"] = self._build_debug_init_commands(debug_tool, debug_config, prog_path)
 
         return debug_config
 

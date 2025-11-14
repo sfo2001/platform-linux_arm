@@ -181,36 +181,31 @@ class RemoteTestUploader:
 
         print(f"Upload successful: {self.remote_path}")
 
-    def execute_test_binary(self):
+    def _build_test_command(self) -> str:
         """
-        Execute test binary on remote target and stream output.
-        Returns the exit code of the test execution.
-        """
-        print(f"\nExecuting tests on {self.user}@{self.host}...")
-        print("=" * 80)
+        Build remote test execution command with exit code capture.
 
-        # Build command to execute the test
-        # We want to capture both stdout and stderr, and get the exit code
+        Returns:
+            Remote shell command string
+        """
         # Use shlex.quote to prevent command injection via remote_path
-        test_command = f"{shlex.quote(self.remote_path)}; echo \"__EXIT_CODE__:$?\""
+        return f"{shlex.quote(self.remote_path)}; echo \"__EXIT_CODE__:$?\""
 
-        cmd = self.build_ssh_command(test_command)
+    def _stream_test_output(self, process, test_timeout: int) -> int:
+        """
+        Stream test output from remote process and extract exit code.
 
-        # Get test execution timeout
-        test_timeout = self.env.GetProjectOption("test_timeout", 600)
+        Args:
+            process: subprocess.Popen instance
+            test_timeout: Timeout in seconds
 
-        # Execute and stream output in real-time with timeout protection
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-            universal_newlines=True
-        )
+        Returns:
+            Exit code from test execution
 
+        Raises:
+            Exception: If test execution times out
+        """
         exit_code = 0
-        output_lines = []
 
         try:
             # Stream output line by line
@@ -220,25 +215,66 @@ class RemoteTestUploader:
 
                 # Check for exit code marker
                 if "__EXIT_CODE__:" in line:
-                    try:
-                        exit_code = int(line.split("__EXIT_CODE__:")[1].strip())
-                    except (IndexError, ValueError):
-                        pass
+                    exit_code = self._extract_exit_code(line)
                 else:
                     # Print to console (PlatformIO captures this)
                     print(line, end="")
-                    output_lines.append(line)
 
             # Wait for process to complete with timeout
             process.wait(timeout=test_timeout)
         except subprocess.TimeoutExpired:
-            # Kill the process if it times out
             process.kill()
             process.wait()
             raise Exception(
                 f"Test execution timeout after {test_timeout} seconds. "
                 "Increase timeout with 'test_timeout' option in platformio.ini"
             )
+
+        return exit_code
+
+    def _extract_exit_code(self, line: str) -> int:
+        """
+        Extract exit code from marker line.
+
+        Args:
+            line: Output line containing exit code marker
+
+        Returns:
+            Extracted exit code, or 0 if extraction fails
+        """
+        try:
+            return int(line.split("__EXIT_CODE__:")[1].strip())
+        except (IndexError, ValueError):
+            return 0
+
+    def execute_test_binary(self) -> int:
+        """
+        Execute test binary on remote target and stream output.
+
+        Returns:
+            Exit code from test execution
+        """
+        print(f"\nExecuting tests on {self.user}@{self.host}...")
+        print("=" * 80)
+
+        # Build and execute test command
+        test_command = self._build_test_command()
+        cmd = self.build_ssh_command(test_command)
+        test_timeout = self.env.GetProjectOption("test_timeout", 600)
+
+        # Start process
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            universal_newlines=True
+        )
+
+        # Stream output and get exit code
+        try:
+            exit_code = self._stream_test_output(process, test_timeout)
         finally:
             print("=" * 80)
 
