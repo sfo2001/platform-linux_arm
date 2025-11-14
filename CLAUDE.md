@@ -13,48 +13,44 @@ This is a PlatformIO development platform for Linux ARM (including Raspberry Pi 
 
 ## Modernization Research Workflow
 
-This repository includes a structured research and analysis workflow in the `research/` directory for planning and executing the modernization effort.
+This repository underwent a structured research and analysis workflow to guide the modernization effort.
+
+**Research Documentation**: The complete research artifacts are available in:
+- **GitHub Wiki**: https://github.com/sfo2001/platform-linux_arm/wiki (when available)
+- **Offline Access**: `.archive/research/` directory (preserved for offline reference)
 
 ### Research Structure
 
-The analysis follows an **iterative checkpoint approach** with manageable sessions:
+The analysis followed an **iterative checkpoint approach** with manageable sessions:
 
-1. **Round 1: Initial Assessment** (`research/01-ROUND-1-PROMPT.md`)
+1. **Round 1: Initial Assessment** (`.archive/research/01-initial-assessment.md`)
    - High-level comparison with reference platforms
    - Critical blocker identification
    - Priority area ranking for deep-dive
    - Estimated time: 2-3 hours
 
-2. **Round 2: Priority Deep-Dive** (`research/02-ROUND-2-PROMPT.md`)
-   - Detailed analysis of top 3-5 priority areas from Round 1
+2. **Round 2: Priority Deep-Dive** (multiple focused analyses)
+   - Detailed analysis of top priority areas from Round 1
    - Technical solutions and code patterns
    - Effort estimates and dependencies
-   - Customized based on Round 1 findings
+   - See `.archive/research/02-priority-*.md` files
 
-3. **Round 3: Implementation Roadmap** (`research/03-ROUND-3-PROMPT.md`)
-   - Synthesize findings into phased implementation plan
+3. **Round 3: Implementation Roadmap** (`.archive/research/03-implementation-roadmap.md`)
+   - Synthesized findings into phased implementation plan
    - Prioritized task list with dependencies
    - Timeline and effort estimates
    - Quick-start action plan
 
-### Key Files
+### Key Research Files
 
-- **`research/00-INDEX.md`**: Master progress tracker, links all rounds and deliverables
-- **`research/REFERENCES.md`**: Centralized repository of all sources, links, and code references
-- **`research/FINDINGS-TEMPLATE.md`**: Standard structure for analysis outputs
-- **`research/ANALYSIS_PROMPT_ORIGINAL.md`**: Original comprehensive prompt (archived, use round-specific prompts instead)
-
-### Usage
-
-To conduct or continue research:
-1. Review `research/00-INDEX.md` for current status
-2. Execute the appropriate round prompt in a fresh Claude Code session
-3. Update tracking files (`00-INDEX.md`, `REFERENCES.md`) after each round
-4. Use findings to guide implementation work
+- **`.archive/research/00-INDEX.md`**: Master progress tracker, links all rounds and deliverables
+- **`.archive/research/REFERENCES.md`**: Centralized repository of all sources, links, and code references
+- **`.archive/research/IMPLEMENTATION_STATUS.md`**: Current modernization status
+- **`.archive/research/PYTHON_CODEBASE_ANALYSIS.md`**: Python code security and quality audit
 
 ### Benefits of This Approach
-- Each round fits in single Claude session (avoids context overflow)
-- Can pause/resume between checkpoints
+- Each round fit in single Claude session (avoided context overflow)
+- Pause/resume capability between checkpoints
 - High-level patterns with references (detailed sources available for deep-dive)
 - Pivot based on discoveries
 - Clear decision trail and rationale
