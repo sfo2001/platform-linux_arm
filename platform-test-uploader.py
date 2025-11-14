@@ -21,6 +21,7 @@ executes them, and streams the output back to PlatformIO's test framework.
 """
 
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -159,9 +160,16 @@ class RemoteTestUploader:
 
         print(f"\nUploading test binary to {self.user}@{self.host}:{self.remote_path}")
 
-        # Upload the binary
+        # Upload the binary with timeout protection
+        upload_timeout = self.env.GetProjectOption("test_upload_timeout", 300)
         cmd = self.build_scp_command(source_file, self.remote_path)
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=upload_timeout)
+        except subprocess.TimeoutExpired:
+            raise Exception(
+                f"Test upload timeout after {upload_timeout} seconds. "
+                "Increase timeout with 'test_upload_timeout' option in platformio.ini"
+            )
 
         if result.returncode != 0:
             raise Exception(
@@ -170,9 +178,12 @@ class RemoteTestUploader:
                 f"Error: {result.stderr}"
             )
 
-        # Make it executable
-        chmod_cmd = self.build_ssh_command(f"chmod +x {self.remote_path}")
-        result = subprocess.run(chmod_cmd, capture_output=True, text=True)
+        # Make it executable (use shlex.quote to prevent command injection)
+        chmod_cmd = self.build_ssh_command(f"chmod +x {shlex.quote(self.remote_path)}")
+        try:
+            result = subprocess.run(chmod_cmd, capture_output=True, text=True, timeout=30)
+        except subprocess.TimeoutExpired:
+            raise Exception("Timeout while setting executable permission on remote test binary")
 
         if result.returncode != 0:
             raise Exception(
@@ -192,11 +203,15 @@ class RemoteTestUploader:
 
         # Build command to execute the test
         # We want to capture both stdout and stderr, and get the exit code
-        test_command = f"{self.remote_path}; echo \"__EXIT_CODE__:$?\""
+        # Use shlex.quote to prevent command injection via remote_path
+        test_command = f"{shlex.quote(self.remote_path)}; echo \"__EXIT_CODE__:$?\""
 
         cmd = self.build_ssh_command(test_command)
 
-        # Execute and stream output in real-time
+        # Get test execution timeout
+        test_timeout = self.env.GetProjectOption("test_timeout", 600)
+
+        # Execute and stream output in real-time with timeout protection
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -209,24 +224,35 @@ class RemoteTestUploader:
         exit_code = 0
         output_lines = []
 
-        # Stream output line by line
-        for line in iter(process.stdout.readline, ""):
-            if not line:
-                break
+        try:
+            # Stream output line by line
+            for line in iter(process.stdout.readline, ""):
+                if not line:
+                    break
 
-            # Check for exit code marker
-            if "__EXIT_CODE__:" in line:
-                try:
-                    exit_code = int(line.split("__EXIT_CODE__:")[1].strip())
-                except (IndexError, ValueError):
-                    pass
-            else:
-                # Print to console (PlatformIO captures this)
-                print(line, end="")
-                output_lines.append(line)
+                # Check for exit code marker
+                if "__EXIT_CODE__:" in line:
+                    try:
+                        exit_code = int(line.split("__EXIT_CODE__:")[1].strip())
+                    except (IndexError, ValueError):
+                        pass
+                else:
+                    # Print to console (PlatformIO captures this)
+                    print(line, end="")
+                    output_lines.append(line)
 
-        process.wait()
-        print("=" * 80)
+            # Wait for process to complete with timeout
+            process.wait(timeout=test_timeout)
+        except subprocess.TimeoutExpired:
+            # Kill the process if it times out
+            process.kill()
+            process.wait()
+            raise Exception(
+                f"Test execution timeout after {test_timeout} seconds. "
+                "Increase timeout with 'test_timeout' option in platformio.ini"
+            )
+        finally:
+            print("=" * 80)
 
         return exit_code
 
