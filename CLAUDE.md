@@ -15,38 +15,37 @@ This is a PlatformIO development platform for Linux ARM (including Raspberry Pi 
 
 This repository underwent a structured research and analysis workflow to guide the modernization effort.
 
-**Research Documentation**: The complete research artifacts are available in:
-- **GitHub Wiki**: https://github.com/sfo2001/platform-linux_arm/wiki (when available)
-- **Offline Access**: `.archive/research/` directory (preserved for offline reference)
+**Research Documentation**: The complete research artifacts are available on the **GitHub Wiki**:
+- **Wiki**: https://github.com/sfo2001/platform-linux_arm/wiki
 
 ### Research Structure
 
 The analysis followed an **iterative checkpoint approach** with manageable sessions:
 
-1. **Round 1: Initial Assessment** (`.archive/research/01-initial-assessment.md`)
+1. **Round 1: Initial Assessment**
    - High-level comparison with reference platforms
    - Critical blocker identification
    - Priority area ranking for deep-dive
-   - Estimated time: 2-3 hours
+   - Wiki: [[Round 1 Initial Assessment]](https://github.com/sfo2001/platform-linux_arm/wiki/Round-1-Initial-Assessment)
 
 2. **Round 2: Priority Deep-Dive** (multiple focused analyses)
    - Detailed analysis of top priority areas from Round 1
    - Technical solutions and code patterns
    - Effort estimates and dependencies
-   - See `.archive/research/02-priority-*.md` files
+   - Wiki: [[Round 2 Analyses]](https://github.com/sfo2001/platform-linux_arm/wiki)
 
-3. **Round 3: Implementation Roadmap** (`.archive/research/03-implementation-roadmap.md`)
+3. **Round 3: Implementation Roadmap**
    - Synthesized findings into phased implementation plan
    - Prioritized task list with dependencies
    - Timeline and effort estimates
-   - Quick-start action plan
+   - Wiki: [[Round 3 Implementation Roadmap]](https://github.com/sfo2001/platform-linux_arm/wiki/Round-3-Implementation-Roadmap)
 
-### Key Research Files
+### Key Research Pages
 
-- **`.archive/research/00-INDEX.md`**: Master progress tracker, links all rounds and deliverables
-- **`.archive/research/REFERENCES.md`**: Centralized repository of all sources, links, and code references
-- **`.archive/research/IMPLEMENTATION_STATUS.md`**: Current modernization status
-- **`.archive/research/PYTHON_CODEBASE_ANALYSIS.md`**: Python code security and quality audit
+- **[Modernization Overview](https://github.com/sfo2001/platform-linux_arm/wiki/Modernization-Overview)**: Master progress tracker
+- **[References](https://github.com/sfo2001/platform-linux_arm/wiki/References)**: Centralized repository of sources and links
+- **[Implementation Status](https://github.com/sfo2001/platform-linux_arm/wiki/Implementation-Status)**: Current modernization status
+- **[Python Codebase Analysis](https://github.com/sfo2001/platform-linux_arm/wiki/Python-Codebase-Analysis)**: Security and quality audit
 
 ### Benefits of This Approach
 - Each round fit in single Claude session (avoided context overflow)
