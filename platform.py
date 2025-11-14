@@ -21,6 +21,13 @@ import sys
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
 
+# Add platform directory to sys.path for platform_constants import
+# This is necessary because during platform installation via symlink://,
+# the platform directory is not yet in Python's path
+_PLATFORM_DIR = os.path.dirname(os.path.realpath(__file__))
+if _PLATFORM_DIR not in sys.path:
+    sys.path.insert(0, _PLATFORM_DIR)
+
 
 class Linux_armPlatform(PlatformBase):
 
