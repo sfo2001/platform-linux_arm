@@ -39,6 +39,8 @@ jobs:
         run: |
           echo "Checking Python syntax..."
           python -m py_compile platform.py
+          python -m py_compile ssh_utils.py
+          python -m py_compile platform-test-uploader.py
           python -m py_compile builder/main.py
           python -m py_compile builder/frameworks/*.py
           echo "✅ All Python files have valid syntax"
@@ -56,12 +58,28 @@ jobs:
           - examples/baremetal-hello
           - examples/baremetal-threads
           - examples/lgpio-blink
+          - examples/libgpiod-blink
+          - examples/libgpiod-blink-v2
+          - examples/libgpiod-button
           # Note: wiringpi/pigpio examples excluded - require system libraries
           # that don't support cross-compilation (libraries must be on build host)
         exclude:
           # Exclude lgpio on Windows (complex cross-compile setup)
           - os: windows-latest
             example: examples/lgpio-blink
+          # Exclude libgpiod on Windows and macOS (requires multiarch setup)
+          - os: windows-latest
+            example: examples/libgpiod-blink
+          - os: windows-latest
+            example: examples/libgpiod-blink-v2
+          - os: windows-latest
+            example: examples/libgpiod-button
+          - os: macos-latest
+            example: examples/libgpiod-blink
+          - os: macos-latest
+            example: examples/libgpiod-blink-v2
+          - os: macos-latest
+            example: examples/libgpiod-button
 
     steps:
       - uses: actions/checkout@v4
@@ -80,6 +98,17 @@ jobs:
           sudo apt-get install -y \
             gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      # Ubuntu: Install libgpiod for cross-compilation (both architectures)
+      - name: Install libgpiod cross-compile libraries (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        run: |
+          sudo dpkg --add-architecture armhf
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgpiod-dev:armhf \
+            libgpiod-dev:arm64
 
       # macOS: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (macOS)
