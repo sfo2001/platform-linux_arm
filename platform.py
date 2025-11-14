@@ -20,22 +20,23 @@ import sys
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
-from platform_constants import (
-    SSHDefaults, UploadProtocol, TestTransport, Timeouts,
-    DebugTools, GDBExecutable, Architecture, SystemType,
-    PackageName, Framework, UIConstants, RsyncDefaults
-)
 
 
 class Linux_armPlatform(PlatformBase):
 
     @staticmethod
     def _is_native():
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SystemType
+
         systype = get_systype()
         return SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systype
 
     @property
     def packages(self):
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SystemType, PackageName
+
         packages = PlatformBase.packages.fget(self)
         systype = get_systype()
         # PlatformIO's toolchain package only works on macOS x86_64
@@ -45,6 +46,9 @@ class Linux_armPlatform(PlatformBase):
         return packages
 
     def configure_default_packages(self, variables, targets):
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import Framework
+
         if not self._is_native() and Framework.WIRINGPI in variables.get(
                 "pioframework", []):
             raise exception.PlatformioException(
@@ -66,6 +70,9 @@ class Linux_armPlatform(PlatformBase):
         Raises:
             PlatformioException: If protocol is not supported
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import UploadProtocol
+
         protocol = env.GetProjectOption("upload_protocol", UploadProtocol.MANUAL)
         valid_protocols = UploadProtocol.ALL
 
@@ -87,6 +94,9 @@ class Linux_armPlatform(PlatformBase):
         Returns:
             Exit code (0 for success)
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import UIConstants
+
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
         print("\n" + separator)
         print("MANUAL UPLOAD REQUIRED")
@@ -116,6 +126,9 @@ class Linux_armPlatform(PlatformBase):
         Returns:
             Exit code (0 for success, non-zero for failure)
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import UploadProtocol
+
         upload_protocol = self._get_upload_protocol(env)
 
         upload_handlers = {
@@ -150,6 +163,7 @@ class Linux_armPlatform(PlatformBase):
         """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import parse_upload_port
+        from platform_constants import SSHDefaults
 
         if not upload_port:
             raise exception.PlatformioException(
@@ -171,6 +185,7 @@ class Linux_armPlatform(PlatformBase):
         """Upload binary using SCP (Secure Copy Protocol)."""
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+        from platform_constants import SSHDefaults, Timeouts, UIConstants
 
         self._check_upload_tool("scp")
 
@@ -239,6 +254,7 @@ class Linux_armPlatform(PlatformBase):
         """Upload binary using rsync (efficient incremental transfer)."""
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+        from platform_constants import SSHDefaults, RsyncDefaults, UIConstants
 
         self._check_upload_tool("rsync")
 
@@ -310,6 +326,7 @@ class Linux_armPlatform(PlatformBase):
         """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+        from platform_constants import SSHDefaults, UIConstants
 
         self._check_upload_tool("ssh")
 
@@ -379,6 +396,7 @@ class Linux_armPlatform(PlatformBase):
         """Run the uploaded program on the remote target."""
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+        from platform_constants import UIConstants, Timeouts
 
         # Create SSH config
         try:
@@ -436,6 +454,9 @@ class Linux_armPlatform(PlatformBase):
         Returns:
             Path to appropriate GDB executable
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import GDBExecutable, Architecture
+
         if self._is_native():
             return GDBExecutable.NATIVE
 
@@ -459,6 +480,7 @@ class Linux_armPlatform(PlatformBase):
         """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import parse_upload_port
+        from platform_constants import SSHDefaults
 
         upload_port = debug_config.get("upload_port")
         ssh_port = debug_config.get("ssh_port", SSHDefaults.PORT)
@@ -547,6 +569,9 @@ class Linux_armPlatform(PlatformBase):
         Args:
             debug_config: Debug configuration dictionary (modified in place)
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import DebugTools
+
         debug_port = debug_config.get("port", DebugTools.DEFAULT_PORT)
         debug_config["port"] = debug_port
 
@@ -567,6 +592,9 @@ class Linux_armPlatform(PlatformBase):
         Returns:
             List of GDB initialization commands
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import DebugTools
+
         init_cmds = []
 
         if debug_tool == DebugTools.GDBSERVER_SSH:
@@ -596,6 +624,9 @@ class Linux_armPlatform(PlatformBase):
         Returns:
             Updated debug configuration dictionary
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import DebugTools
+
         # Get board configuration and determine GDB executable
         board_config = self.board_config(debug_config.get("env_name"))
         target_arch = board_config.get("build.arch", "armv7")
@@ -640,6 +671,9 @@ class Linux_armPlatform(PlatformBase):
 
     def _add_debug_to_board(self, board):
         """Add debug configuration to a board definition."""
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import DebugTools
+
         debug = board.manifest.get("debug", {})
 
         # Set default debug tools
@@ -688,6 +722,9 @@ class Linux_armPlatform(PlatformBase):
         Custom test upload handler for Linux ARM platform.
         Uploads test binaries to remote target via SSH and executes them.
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestTransport, UIConstants
+
         test_transport = env.GetProjectOption("test_transport", TestTransport.SSH)
 
         if test_transport == TestTransport.SSH:

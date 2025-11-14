@@ -25,7 +25,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from SCons.Script import AlwaysBuild, Default, DefaultEnvironment
 
 from platformio.util import get_systype
-from platform_constants import Architecture, SystemType, ToolchainPrefix
 
 env = DefaultEnvironment()
 
@@ -42,6 +41,10 @@ env.Replace(
 
     SIZEPRINTCMD='$SIZETOOL $SOURCES'
 )
+
+# Lazy import to avoid breaking platform loading
+# Import after sys.path is set up (line 23) and when actually needed
+from platform_constants import Architecture, SystemType, ToolchainPrefix
 
 # Detect if we're cross-compiling (not native ARM Linux)
 systype = get_systype()

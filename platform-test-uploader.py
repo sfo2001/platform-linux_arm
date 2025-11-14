@@ -28,7 +28,6 @@ import sys
 import time
 
 from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
-from platform_constants import SSHDefaults, Timeouts, TestConstants
 
 
 class RemoteTestUploader:
@@ -37,6 +36,9 @@ class RemoteTestUploader:
     """
 
     def __init__(self, target, source, env):
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHDefaults
+
         self.target = target
         self.source = source
         self.env = env
@@ -56,6 +58,9 @@ class RemoteTestUploader:
           - host:/path
           - host
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHDefaults
+
         # Get test_port (preferred) or fallback to upload_port
         self.upload_port = self.env.GetProjectOption("test_port", None)
         if not self.upload_port:
@@ -145,6 +150,9 @@ class RemoteTestUploader:
 
     def upload_test_binary(self):
         """Upload test binary to remote target via SCP."""
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import Timeouts
+
         source_file = str(self.source[0])
 
         print(f"\nUploading test binary to {self.user}@{self.host}:{self.remote_path}")
@@ -189,6 +197,9 @@ class RemoteTestUploader:
         Returns:
             Remote shell command string
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestConstants
+
         # Use shlex.quote to prevent command injection via remote_path
         return f"{shlex.quote(self.remote_path)}; echo \"{TestConstants.EXIT_CODE_MARKER}$?\""
 
@@ -206,6 +217,9 @@ class RemoteTestUploader:
         Raises:
             Exception: If test execution times out
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestConstants
+
         exit_code = 0
 
         try:
@@ -243,6 +257,9 @@ class RemoteTestUploader:
         Returns:
             Extracted exit code, or 0 if extraction fails
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestConstants
+
         try:
             return int(line.split(TestConstants.EXIT_CODE_MARKER)[1].strip())
         except (IndexError, ValueError):
@@ -255,6 +272,9 @@ class RemoteTestUploader:
         Returns:
             Exit code from test execution
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import Timeouts
+
         print(f"\nExecuting tests on {self.user}@{self.host}...")
         print("=" * 80)
 
