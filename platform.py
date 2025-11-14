@@ -20,6 +20,7 @@ import sys
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
+from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
 
 
 class Linux_armPlatform(PlatformBase):
@@ -108,25 +109,15 @@ class Linux_armPlatform(PlatformBase):
                 "  upload_port = user@hostname:/path/to/destination"
             )
 
-        # Parse user@host:path format
-        user = env.GetProjectOption("upload_user", "pi")
-        path = env.GetProjectOption("upload_path", "/tmp/program")
+        # Get defaults from project options
+        default_user = env.GetProjectOption("upload_user", "pi")
+        default_path = env.GetProjectOption("upload_path", "/tmp/program")
 
-        # Extract user if specified in upload_port
-        if "@" in upload_port:
-            user_part, host_part = upload_port.split("@", 1)
-            user = user_part
-        else:
-            host_part = upload_port
-
-        # Extract host and path
-        if ":" in host_part:
-            host, path_part = host_part.split(":", 1)
-            path = path_part
-        else:
-            host = host_part
-
-        return user, host, path
+        # Use shared parser
+        try:
+            return parse_upload_port(upload_port, default_user, default_path)
+        except ValueError as e:
+            raise exception.PlatformioException(str(e))
 
     def _upload_scp(self, target, source, env):
         """Upload binary using SCP (Secure Copy Protocol)."""
@@ -139,28 +130,22 @@ class Linux_armPlatform(PlatformBase):
         ssh_key = env.GetProjectOption("upload_ssh_key", None)
         upload_flags = env.GetProjectOption("upload_flags", "")
 
-        # Build SCP command
-        cmd = ["scp"]
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=user,
+                host=host,
+                port=ssh_port,
+                key=ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise exception.PlatformioException(str(e))
 
-        # Add SSH port
-        cmd.extend(["-P", str(ssh_port)])
-
-        # Add SSH key if specified
-        if ssh_key:
-            key_path = os.path.expanduser(ssh_key)
-            if not os.path.exists(key_path):
-                raise exception.PlatformioException(
-                    f"SSH key file not found: {key_path}"
-                )
-            cmd.extend(["-i", key_path])
-
-        # Add custom flags
-        if upload_flags:
-            cmd.extend(upload_flags.split())
-
-        # Add source and destination
-        cmd.append(str(source[0]))
-        cmd.append(f"{user}@{host}:{path}")
+        # Build SCP command using shared builder
+        builder = SSHCommandBuilder(config)
+        extra_flags = upload_flags.split() if upload_flags else None
+        cmd = builder.build_scp_command(str(source[0]), path, extra_flags=extra_flags)
 
         print("\n" + "="*60)
         print("UPLOADING VIA SCP")
@@ -208,28 +193,21 @@ class Linux_armPlatform(PlatformBase):
         ssh_key = env.GetProjectOption("upload_ssh_key", None)
         upload_flags = env.GetProjectOption("upload_flags", "-avz")
 
-        # Build rsync command
-        cmd = ["rsync"]
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=user,
+                host=host,
+                port=ssh_port,
+                key=ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise exception.PlatformioException(str(e))
 
-        # Add flags (default: -avz for archive, verbose, compress)
-        if upload_flags:
-            cmd.extend(upload_flags.split())
-
-        # Add SSH options (build as list to avoid shell injection)
-        ssh_cmd_parts = ["ssh", "-p", str(ssh_port)]
-        if ssh_key:
-            key_path = os.path.expanduser(ssh_key)
-            if not os.path.exists(key_path):
-                raise exception.PlatformioException(
-                    f"SSH key file not found: {key_path}"
-                )
-            ssh_cmd_parts.extend(["-i", key_path])
-
-        cmd.extend(["-e", " ".join(shlex.quote(part) for part in ssh_cmd_parts)])
-
-        # Add source and destination
-        cmd.append(str(source[0]))
-        cmd.append(f"{user}@{host}:{path}")
+        # Build rsync command using shared builder
+        builder = SSHCommandBuilder(config)
+        cmd = builder.build_rsync_command(str(source[0]), path, flags=upload_flags)
 
         print("\n" + "="*60)
         print("UPLOADING VIA RSYNC")
@@ -280,21 +258,23 @@ class Linux_armPlatform(PlatformBase):
         ssh_port = env.GetProjectOption("upload_ssh_port", "22")
         ssh_key = env.GetProjectOption("upload_ssh_key", None)
 
-        # Build SSH command to receive file via stdin
-        cmd = ["ssh"]
-        cmd.extend(["-p", str(ssh_port)])
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=user,
+                host=host,
+                port=ssh_port,
+                key=ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise exception.PlatformioException(str(e))
 
-        if ssh_key:
-            key_path = os.path.expanduser(ssh_key)
-            if not os.path.exists(key_path):
-                raise exception.PlatformioException(
-                    f"SSH key file not found: {key_path}"
-                )
-            cmd.extend(["-i", key_path])
-
-        cmd.append(f"{user}@{host}")
+        # Build SSH command using shared builder
         # Use shlex.quote to prevent command injection via path
-        cmd.append(f"cat > {shlex.quote(path)} && chmod +x {shlex.quote(path)}")
+        remote_command = f"cat > {shlex.quote(path)} && chmod +x {shlex.quote(path)}"
+        builder = SSHCommandBuilder(config)
+        cmd = builder.build_ssh_command(remote_command)
 
         print("\n" + "="*60)
         print("UPLOADING VIA SSH")
@@ -334,23 +314,31 @@ class Linux_armPlatform(PlatformBase):
 
     def _run_remote_command(self, user, host, ssh_port, ssh_key, remote_path, env):
         """Run the uploaded program on the remote target."""
-        cmd = ["ssh"]
-        cmd.extend(["-p", str(ssh_port)])
-
-        if ssh_key:
-            cmd.extend(["-i", os.path.expanduser(ssh_key)])
-
-        cmd.append(f"{user}@{host}")
+        # Create SSH config
+        try:
+            config = SSHConnectionConfig(
+                user=user,
+                host=host,
+                port=ssh_port,
+                key=ssh_key,
+                strict_host_check=False
+            )
+        except (ValueError, FileNotFoundError) as e:
+            raise exception.PlatformioException(str(e))
 
         # Get custom run command or use default
         # Use shlex.quote to prevent command injection
         run_command = env.GetProjectOption("upload_run_command", None)
         if run_command:
-            # For custom commands, quote the entire command string
-            cmd.append(run_command)
+            # For custom commands, use as-is
+            remote_command = run_command
         else:
             # For simple path execution, quote the path
-            cmd.append(shlex.quote(remote_path))
+            remote_command = shlex.quote(remote_path)
+
+        # Build SSH command using shared builder
+        builder = SSHCommandBuilder(config)
+        cmd = builder.build_ssh_command(remote_command)
 
         print("\n" + "="*60)
         print("RUNNING REMOTE PROGRAM")
@@ -400,28 +388,29 @@ class Linux_armPlatform(PlatformBase):
 
         # Get remote program path
         prog_path = debug_config.get("prog_path", "/tmp/program")
-        if upload_port and ":" in upload_port:
-            # Extract path from upload_port if specified
-            if "@" in upload_port:
-                _, host_part = upload_port.split("@", 1)
-            else:
-                host_part = upload_port
-            if ":" in host_part:
-                _, prog_path = host_part.split(":", 1)
+        user = "pi"  # default user
+        host = None
 
-        # Build SSH connection string
-        ssh_target = None
         if upload_port:
-            if "@" in upload_port:
-                user_host = upload_port.split(":")[0]
-                ssh_target = user_host
-            else:
-                ssh_target = upload_port.split(":")[0]
+            # Parse upload_port to extract user, host, and path
+            try:
+                user, host, prog_path = parse_upload_port(
+                    upload_port,
+                    default_user="pi",
+                    default_path=prog_path
+                )
+            except ValueError:
+                # If parsing fails, try simple extraction
+                if "@" in upload_port:
+                    user_host = upload_port.split(":")[0]
+                    user, host = user_host.split("@", 1)
+                else:
+                    host = upload_port.split(":")[0]
 
         # Configure debug server based on tool
         if debug_tool == "gdbserver-ssh":
             # SSH-tunneled gdbserver
-            if not ssh_target:
+            if not host:
                 raise exception.PlatformioException(
                     "debug_port or upload_port must be configured for SSH debugging.\n"
                     "Add to platformio.ini:\n"
@@ -429,15 +418,23 @@ class Linux_armPlatform(PlatformBase):
                     "  or use existing upload_port configuration"
                 )
 
+            # Create SSH config and build command using shared builder
+            try:
+                config = SSHConnectionConfig(
+                    user=user,
+                    host=host,
+                    port=ssh_port,
+                    key=ssh_key,
+                    strict_host_check=False
+                )
+            except (ValueError, FileNotFoundError) as e:
+                raise exception.PlatformioException(str(e))
+
             # Build SSH command for GDB remote target
-            ssh_cmd_parts = ["ssh", "-T"]
-            if ssh_port and ssh_port != "22":
-                ssh_cmd_parts.extend(["-p", str(ssh_port)])
-            if ssh_key:
-                ssh_cmd_parts.extend(["-i", os.path.expanduser(ssh_key)])
-            ssh_cmd_parts.append(ssh_target)
             # Use shlex.quote to prevent command injection via prog_path
-            ssh_cmd_parts.append("gdbserver - " + shlex.quote(prog_path))
+            remote_command = "gdbserver - " + shlex.quote(prog_path)
+            builder = SSHCommandBuilder(config)
+            ssh_cmd_parts = builder.build_ssh_command(remote_command, extra_opts=["-T"])
 
             ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
 
