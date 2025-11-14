@@ -20,6 +20,11 @@ import sys
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
+from platform_constants import (
+    SSHDefaults, UploadProtocol, TestTransport, Timeouts,
+    DebugTools, GDBExecutable, Architecture, SystemType,
+    PackageName, Framework, UIConstants, RsyncDefaults
+)
 
 
 class Linux_armPlatform(PlatformBase):
@@ -27,7 +32,7 @@ class Linux_armPlatform(PlatformBase):
     @staticmethod
     def _is_native():
         systype = get_systype()
-        return "linux_arm" in systype or "linux_aarch64" in systype
+        return SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systype
 
     @property
     def packages(self):
@@ -35,12 +40,12 @@ class Linux_armPlatform(PlatformBase):
         systype = get_systype()
         # PlatformIO's toolchain package only works on macOS x86_64
         # All other platforms use system-installed toolchains
-        if systype != "darwin_x86_64" and "toolchain-gccarmlinuxgnueabi" in packages:
-            del packages['toolchain-gccarmlinuxgnueabi']
+        if systype != SystemType.DARWIN_X86_64 and PackageName.TOOLCHAIN_GCC_ARM in packages:
+            del packages[PackageName.TOOLCHAIN_GCC_ARM]
         return packages
 
     def configure_default_packages(self, variables, targets):
-        if not self._is_native() and "wiringpi" in variables.get(
+        if not self._is_native() and Framework.WIRINGPI in variables.get(
                 "pioframework", []):
             raise exception.PlatformioException(
                 "PlatformIO temporary does not support cross-compilation "
@@ -61,8 +66,8 @@ class Linux_armPlatform(PlatformBase):
         Raises:
             PlatformioException: If protocol is not supported
         """
-        protocol = env.GetProjectOption("upload_protocol", "manual")
-        valid_protocols = ["scp", "rsync", "ssh", "manual"]
+        protocol = env.GetProjectOption("upload_protocol", UploadProtocol.MANUAL)
+        valid_protocols = UploadProtocol.ALL
 
         if protocol not in valid_protocols:
             raise exception.PlatformioException(
@@ -82,9 +87,10 @@ class Linux_armPlatform(PlatformBase):
         Returns:
             Exit code (0 for success)
         """
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("MANUAL UPLOAD REQUIRED")
-        print("="*60)
+        print(separator)
         print("\nCompiled binary location:")
         print(f"  {source[0]}")
         print("\nTo deploy to your target device, use one of:")
@@ -94,7 +100,7 @@ class Linux_armPlatform(PlatformBase):
         print("  upload_protocol = scp")
         print("  upload_port = user@hostname:/path/to/destination")
         print("\nSee documentation for more upload options.")
-        print("="*60 + "\n")
+        print(separator + "\n")
         return 0
 
     def on_upload(self, target, source, env):
@@ -113,10 +119,10 @@ class Linux_armPlatform(PlatformBase):
         upload_protocol = self._get_upload_protocol(env)
 
         upload_handlers = {
-            "scp": self._upload_scp,
-            "rsync": self._upload_rsync,
-            "ssh": self._upload_ssh,
-            "manual": lambda t, s, e: self._show_manual_upload_instructions(s)
+            UploadProtocol.SCP: self._upload_scp,
+            UploadProtocol.RSYNC: self._upload_rsync,
+            UploadProtocol.SSH: self._upload_ssh,
+            UploadProtocol.MANUAL: lambda t, s, e: self._show_manual_upload_instructions(s)
         }
 
         handler = upload_handlers[upload_protocol]
@@ -152,8 +158,8 @@ class Linux_armPlatform(PlatformBase):
             )
 
         # Get defaults from project options
-        default_user = env.GetProjectOption("upload_user", "pi")
-        default_path = env.GetProjectOption("upload_path", "/tmp/program")
+        default_user = env.GetProjectOption("upload_user", SSHDefaults.USER)
+        default_path = env.GetProjectOption("upload_path", SSHDefaults.UPLOAD_PATH)
 
         # Use shared parser
         try:
@@ -171,7 +177,7 @@ class Linux_armPlatform(PlatformBase):
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", "22")
+        ssh_port = env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
         ssh_key = env.GetProjectOption("upload_ssh_key", None)
         upload_flags = env.GetProjectOption("upload_flags", "")
 
@@ -192,18 +198,19 @@ class Linux_armPlatform(PlatformBase):
         extra_flags = upload_flags.split() if upload_flags else None
         cmd = builder.build_scp_command(str(source[0]), path, extra_flags=extra_flags)
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("UPLOADING VIA SCP")
-        print("="*60)
+        print(separator)
         print(f"Source:      {source[0]}")
         print(f"Destination: {user}@{host}:{path}")
         print(f"SSH Port:    {ssh_port}")
         if ssh_key:
             print(f"SSH Key:     {ssh_key}")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Execute SCP command with timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", 300)
+        upload_timeout = env.GetProjectOption("upload_timeout", Timeouts.UPLOAD)
         try:
             result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
         except subprocess.TimeoutExpired:
@@ -217,9 +224,10 @@ class Linux_armPlatform(PlatformBase):
                 f"SCP upload failed with exit code {result.returncode}"
             )
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("UPLOAD SUCCESSFUL")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Post-upload execution if configured
         if env.GetProjectOption("upload_run_after", False):
@@ -237,9 +245,9 @@ class Linux_armPlatform(PlatformBase):
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", "22")
+        ssh_port = env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
         ssh_key = env.GetProjectOption("upload_ssh_key", None)
-        upload_flags = env.GetProjectOption("upload_flags", "-avz")
+        upload_flags = env.GetProjectOption("upload_flags", RsyncDefaults.FLAGS)
 
         # Create SSH config
         try:
@@ -257,7 +265,8 @@ class Linux_armPlatform(PlatformBase):
         builder = SSHCommandBuilder(config)
         cmd = builder.build_rsync_command(str(source[0]), path, flags=upload_flags)
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("UPLOADING VIA RSYNC")
         print("="*60)
         print(f"Source:      {source[0]}")
@@ -266,7 +275,7 @@ class Linux_armPlatform(PlatformBase):
         if ssh_key:
             print(f"SSH Key:     {ssh_key}")
         print(f"Flags:       {upload_flags}")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Execute rsync command with timeout protection
         upload_timeout = env.GetProjectOption("upload_timeout", 300)
@@ -283,9 +292,10 @@ class Linux_armPlatform(PlatformBase):
                 f"Rsync upload failed with exit code {result.returncode}"
             )
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("UPLOAD SUCCESSFUL")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Post-upload execution if configured
         if env.GetProjectOption("upload_run_after", False):
@@ -306,7 +316,7 @@ class Linux_armPlatform(PlatformBase):
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", "22")
+        ssh_port = env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
         ssh_key = env.GetProjectOption("upload_ssh_key", None)
 
         # Create SSH config
@@ -327,7 +337,8 @@ class Linux_armPlatform(PlatformBase):
         builder = SSHCommandBuilder(config)
         cmd = builder.build_ssh_command(remote_command)
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("UPLOADING VIA SSH")
         print("="*60)
         print(f"Source:      {source[0]}")
@@ -335,7 +346,7 @@ class Linux_armPlatform(PlatformBase):
         print(f"SSH Port:    {ssh_port}")
         if ssh_key:
             print(f"SSH Key:     {ssh_key}")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Execute SSH command with file as stdin and timeout protection
         upload_timeout = env.GetProjectOption("upload_timeout", 300)
@@ -353,9 +364,10 @@ class Linux_armPlatform(PlatformBase):
                 f"SSH upload failed with exit code {result.returncode}"
             )
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("UPLOAD SUCCESSFUL")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Post-upload execution if configured
         if env.GetProjectOption("upload_run_after", False):
@@ -394,15 +406,16 @@ class Linux_armPlatform(PlatformBase):
         builder = SSHCommandBuilder(config)
         cmd = builder.build_ssh_command(remote_command)
 
-        print("\n" + "="*60)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("RUNNING REMOTE PROGRAM")
         print("="*60)
         print(f"Target: {user}@{host}")
         print(f"Command: {run_command if run_command else remote_path}")
-        print("="*60 + "\n")
+        print(separator + "\n")
 
         # Execute remote command with timeout protection (interactive - shows output directly)
-        run_timeout = env.GetProjectOption("upload_run_timeout", 300)
+        run_timeout = env.GetProjectOption("upload_run_timeout", Timeouts.UPLOAD_RUN)
         try:
             result = subprocess.run(cmd, timeout=run_timeout)
         except subprocess.TimeoutExpired:
@@ -424,12 +437,12 @@ class Linux_armPlatform(PlatformBase):
             Path to appropriate GDB executable
         """
         if self._is_native():
-            return "gdb"
+            return GDBExecutable.NATIVE
 
-        if target_arch == "aarch64":
-            return "aarch64-linux-gnu-gdb"
+        if target_arch == Architecture.AARCH64:
+            return GDBExecutable.AARCH64
 
-        return "arm-linux-gnueabihf-gdb"
+        return GDBExecutable.ARMV7
 
     def _parse_debug_connection_info(self, debug_config: dict) -> tuple:
         """
@@ -448,17 +461,17 @@ class Linux_armPlatform(PlatformBase):
         from ssh_utils import parse_upload_port
 
         upload_port = debug_config.get("upload_port")
-        ssh_port = debug_config.get("ssh_port", "22")
+        ssh_port = debug_config.get("ssh_port", SSHDefaults.PORT)
         ssh_key = debug_config.get("ssh_key")
-        prog_path = debug_config.get("prog_path", "/tmp/program")
-        user = "pi"
+        prog_path = debug_config.get("prog_path", SSHDefaults.UPLOAD_PATH)
+        user = SSHDefaults.USER
         host = None
 
         if upload_port:
             try:
                 user, host, prog_path = parse_upload_port(
                     upload_port,
-                    default_user="pi",
+                    default_user=SSHDefaults.USER,
                     default_path=prog_path
                 )
             except ValueError:
@@ -534,7 +547,7 @@ class Linux_armPlatform(PlatformBase):
         Args:
             debug_config: Debug configuration dictionary (modified in place)
         """
-        debug_port = debug_config.get("port", "localhost:2345")
+        debug_port = debug_config.get("port", DebugTools.DEFAULT_PORT)
         debug_config["port"] = debug_port
 
     def _build_debug_init_commands(
@@ -556,7 +569,7 @@ class Linux_armPlatform(PlatformBase):
         """
         init_cmds = []
 
-        if debug_tool == "gdbserver-ssh":
+        if debug_tool == DebugTools.GDBSERVER_SSH:
             init_cmds.extend([
                 f"target extended-remote {debug_config['port']}",
                 f"set remote exec-file {prog_path}",
@@ -592,12 +605,12 @@ class Linux_armPlatform(PlatformBase):
         user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(debug_config)
 
         # Get debug tool
-        debug_tool = debug_config.get("tool", "gdbserver-ssh")
+        debug_tool = debug_config.get("tool", DebugTools.GDBSERVER_SSH)
 
         # Configure debug server based on tool
-        if debug_tool == "gdbserver-ssh":
+        if debug_tool == DebugTools.GDBSERVER_SSH:
             self._configure_gdbserver_ssh(debug_config, user, host, ssh_port, ssh_key, prog_path)
-        elif debug_tool == "gdb-remote":
+        elif debug_tool == DebugTools.GDB_REMOTE:
             self._configure_gdb_remote(debug_config)
 
         # Set GDB configuration
@@ -665,7 +678,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Set default debug tool
         if "default" not in debug:
-            debug["default"] = "gdbserver-ssh"
+            debug["default"] = DebugTools.DEFAULT
 
         board.manifest["debug"] = debug
         return board
@@ -675,9 +688,9 @@ class Linux_armPlatform(PlatformBase):
         Custom test upload handler for Linux ARM platform.
         Uploads test binaries to remote target via SSH and executes them.
         """
-        test_transport = env.GetProjectOption("test_transport", "ssh")
+        test_transport = env.GetProjectOption("test_transport", TestTransport.SSH)
 
-        if test_transport == "ssh":
+        if test_transport == TestTransport.SSH:
             # Load and execute the SSH test uploader
             uploader_path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -693,10 +706,11 @@ class Linux_armPlatform(PlatformBase):
             # Execute the upload_test function
             return uploader_module.upload_test(target, source, env)
 
-        elif test_transport == "manual":
-            print("\n" + "="*60)
+        elif test_transport == TestTransport.MANUAL:
+            separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+            print("\n" + separator)
             print("MANUAL TEST EXECUTION REQUIRED")
-            print("="*60)
+            print(separator)
             print("\nCompiled test binary location:")
             print(f"  {source[0]}")
             print("\nTo run tests on your target device:")
@@ -706,11 +720,11 @@ class Linux_armPlatform(PlatformBase):
             print("\nTo configure automatic test execution, add to platformio.ini:")
             print("  test_transport = ssh")
             print("  test_port = user@hostname:/path/to/test")
-            print("="*60 + "\n")
+            print(separator + "\n")
             return 0
 
         else:
             raise exception.PlatformioException(
                 f"Unknown test_transport '{test_transport}'. "
-                "Supported transports: ssh, manual"
+                f"Supported transports: {', '.join(TestTransport.ALL)}"
             )
