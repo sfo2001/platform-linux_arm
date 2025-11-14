@@ -23,7 +23,6 @@ with proper shell escaping and error handling.
 import os
 import shlex
 from typing import List, Optional, Tuple
-from platform_constants import SSHDefaults, SSHOptions, RsyncDefaults
 
 
 class SSHConnectionConfig:
@@ -33,7 +32,7 @@ class SSHConnectionConfig:
         self,
         user: str,
         host: str,
-        port: str = SSHDefaults.PORT,
+        port: Optional[str] = None,
         key: Optional[str] = None,
         strict_host_check: bool = False
     ):
@@ -47,9 +46,12 @@ class SSHConnectionConfig:
             key: Path to SSH private key file (optional)
             strict_host_check: Enable strict host key checking (default: False)
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHDefaults
+
         self.user = user
         self.host = host
-        self.port = port
+        self.port = port if port is not None else SSHDefaults.PORT
         self.key = key
         self.strict_host_check = strict_host_check
 
@@ -102,6 +104,9 @@ class SSHCommandBuilder:
         Returns:
             Command as list of arguments suitable for subprocess
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHOptions
+
         cmd = ["ssh"]
 
         # Port
@@ -148,6 +153,9 @@ class SSHCommandBuilder:
         Returns:
             Command as list of arguments suitable for subprocess
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHOptions
+
         cmd = ["scp"]
 
         # Port (note: SCP uses -P, SSH uses -p)
@@ -180,7 +188,7 @@ class SSHCommandBuilder:
         self,
         local_path: str,
         remote_path: str,
-        flags: str = RsyncDefaults.FLAGS
+        flags: Optional[str] = None
     ) -> List[str]:
         """
         Build rsync command with SSH transport.
@@ -193,9 +201,13 @@ class SSHCommandBuilder:
         Returns:
             Command as list of arguments suitable for subprocess
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import RsyncDefaults
+
         cmd = ["rsync"]
 
         # Flags
+        flags = flags if flags is not None else RsyncDefaults.FLAGS
         if flags:
             cmd.extend(flags.split())
 
@@ -218,8 +230,8 @@ class SSHCommandBuilder:
 
 def parse_upload_port(
     upload_port: str,
-    default_user: str = SSHDefaults.USER,
-    default_path: str = SSHDefaults.UPLOAD_PATH
+    default_user: Optional[str] = None,
+    default_path: Optional[str] = None
 ) -> Tuple[str, str, str]:
     """
     Parse upload_port into components.
@@ -241,11 +253,14 @@ def parse_upload_port(
     Raises:
         ValueError: If upload_port is invalid or empty
     """
+    # Lazy import to avoid breaking platform loading
+    from platform_constants import SSHDefaults
+
     if not upload_port:
         raise ValueError("upload_port is required")
 
-    user = default_user
-    path = default_path
+    user = default_user if default_user is not None else SSHDefaults.USER
+    path = default_path if default_path is not None else SSHDefaults.UPLOAD_PATH
 
     # Parse user@host:path format
     if "@" in upload_port:
