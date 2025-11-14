@@ -23,6 +23,7 @@ with proper shell escaping and error handling.
 import os
 import shlex
 from typing import List, Optional, Tuple
+from platform_constants import SSHDefaults, SSHOptions, RsyncDefaults
 
 
 class SSHConnectionConfig:
@@ -32,7 +33,7 @@ class SSHConnectionConfig:
         self,
         user: str,
         host: str,
-        port: str = "22",
+        port: str = SSHDefaults.PORT,
         key: Optional[str] = None,
         strict_host_check: bool = False
     ):
@@ -113,9 +114,9 @@ class SSHCommandBuilder:
 
         # Host key verification
         if not self.config.strict_host_check:
-            cmd.extend(["-o", "StrictHostKeyChecking=no"])
-            cmd.extend(["-o", "UserKnownHostsFile=/dev/null"])
-            cmd.extend(["-o", "LogLevel=ERROR"])
+            cmd.extend(["-o", SSHOptions.STRICT_HOST_KEY_CHECKING_NO])
+            cmd.extend(["-o", SSHOptions.USER_KNOWN_HOSTS_FILE_NULL])
+            cmd.extend(["-o", SSHOptions.LOG_LEVEL_ERROR])
 
         # Extra options
         if extra_opts:
@@ -159,9 +160,9 @@ class SSHCommandBuilder:
 
         # Host key verification
         if not self.config.strict_host_check:
-            cmd.extend(["-o", "StrictHostKeyChecking=no"])
-            cmd.extend(["-o", "UserKnownHostsFile=/dev/null"])
-            cmd.extend(["-o", "LogLevel=ERROR"])
+            cmd.extend(["-o", SSHOptions.STRICT_HOST_KEY_CHECKING_NO])
+            cmd.extend(["-o", SSHOptions.USER_KNOWN_HOSTS_FILE_NULL])
+            cmd.extend(["-o", SSHOptions.LOG_LEVEL_ERROR])
 
         # Extra flags
         if extra_flags:
@@ -179,7 +180,7 @@ class SSHCommandBuilder:
         self,
         local_path: str,
         remote_path: str,
-        flags: str = "-avz"
+        flags: str = RsyncDefaults.FLAGS
     ) -> List[str]:
         """
         Build rsync command with SSH transport.
@@ -217,8 +218,8 @@ class SSHCommandBuilder:
 
 def parse_upload_port(
     upload_port: str,
-    default_user: str = "pi",
-    default_path: str = "/tmp/program"
+    default_user: str = SSHDefaults.USER,
+    default_path: str = SSHDefaults.UPLOAD_PATH
 ) -> Tuple[str, str, str]:
     """
     Parse upload_port into components.
