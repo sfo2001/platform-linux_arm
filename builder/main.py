@@ -16,11 +16,24 @@
     Builder for Linux ARM
 """
 
+import sys
+import os
+
 from SCons.Script import AlwaysBuild, Default, DefaultEnvironment
 
 from platformio.util import get_systype
 
 env = DefaultEnvironment()
+
+# Add platform directory to sys.path for importing platform_constants
+# Use env.PioPlatform().get_dir() instead of __file__ because __file__
+# is not defined in SCons execution context (scripts are executed via exec())
+platform_dir = env.PioPlatform().get_dir()
+if platform_dir not in sys.path:
+    sys.path.insert(0, platform_dir)
+
+# Import platform_constants after sys.path is configured
+from platform_constants import Architecture, SystemType, ToolchainPrefix
 
 env.Replace(
     _BINPREFIX="",
@@ -38,12 +51,12 @@ env.Replace(
 
 # Detect if we're cross-compiling (not native ARM Linux)
 systype = get_systype()
-is_native = "linux_arm" in systype or "linux_aarch64" in systype
+is_native = SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systype
 
 if not is_native:
     # Detect target architecture from board configuration
     board = env.BoardConfig()
-    target_arch = board.get("build.arch", "armv7")  # Default to 32-bit for backward compatibility
+    target_arch = board.get("build.arch", Architecture.ARMV7)  # Default to 32-bit for backward compatibility
 
     # Check if user explicitly set architecture via board_build.arch in platformio.ini
     # This takes precedence over board definition
@@ -51,8 +64,8 @@ if not is_native:
         target_arch = env.GetProjectOption("board_build.arch")
 
     # Pi 4/5 with 64-bit OS use aarch64 architecture
-    if target_arch == "aarch64":
-        env.Replace(_BINPREFIX="aarch64-linux-gnu-")
+    if target_arch == Architecture.AARCH64:
+        env.Replace(_BINPREFIX=ToolchainPrefix.AARCH64)
         print("Cross-compiling for ARM Linux (AArch64/ARMv8 64-bit)")
         print("Using toolchain prefix: aarch64-linux-gnu-")
         print("Ensure toolchain is installed:")
@@ -61,7 +74,7 @@ if not is_native:
         print("           brew install aarch64-unknown-linux-gnu")
     else:
         # Default: 32-bit ARMv7 (backward compatible)
-        env.Replace(_BINPREFIX="arm-linux-gnueabihf-")
+        env.Replace(_BINPREFIX=ToolchainPrefix.ARMV7)
         print("Cross-compiling for ARM Linux (ARMv7 32-bit)")
         print("Using toolchain prefix: arm-linux-gnueabihf-")
         print("Ensure toolchain is installed:")
