@@ -232,9 +232,11 @@ jobs:
             exit 1
           fi
 
-          # Build libgpiod
+          # Build libgpiod - install to workspace so Python can find it
+          # Convert GITHUB_WORKSPACE to MSYS2 path
+          WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
           CROSS_PREFIX=arm-linux-gnueabihf- \
-          INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-linux-gnueabihf" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
       # Windows: Download ARM64 toolchain for libgpiod cross-compilation
@@ -300,9 +302,11 @@ jobs:
             exit 1
           fi
 
-          # Build libgpiod
+          # Build libgpiod - install to workspace so Python can find it
+          # Convert GITHUB_WORKSPACE to MSYS2 path
+          WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
           CROSS_PREFIX=aarch64-linux-gnu- \
-          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-linux-gnu" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
       # macOS: Install ARM cross-compilation toolchains
