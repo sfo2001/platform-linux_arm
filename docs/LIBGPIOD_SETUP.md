@@ -54,9 +54,44 @@ libgpiod uses the Linux GPIO character device interface:
 
 ## Installation
 
-### Option 1: System Package (Multiarch)
+### Recommended: Build from Source (Automated Script)
 
-For cross-compilation using distribution packages:
+**⚠️ Ubuntu 24.04 (Noble) Multiarch Issue**: Ubuntu 24.04 no longer provides ARM packages on the main security repositories for cross-architecture installation (multiarch). This causes 404 errors when trying to install `libgpiod-dev:armhf` or `libgpiod-dev:arm64`. The build-from-source approach is now the recommended method for all Ubuntu versions.
+
+The easiest way to set up libgpiod for cross-compilation is using the provided setup script:
+
+```bash
+# Install build dependencies
+sudo apt-get install -y \
+  autoconf autoconf-archive automake libtool pkg-config \
+  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
+  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+# Build and install for 32-bit ARM (armhf)
+./scripts/setup-libgpiod-cross.sh
+
+# Build and install for 64-bit ARM (aarch64)
+CROSS_PREFIX=aarch64-linux-gnu- \
+INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+./scripts/setup-libgpiod-cross.sh
+```
+
+**Important**: The script builds **libgpiod v1.x** by default (see "API Versions" section below for rationale).
+
+The script will:
+- Clone libgpiod from the official kernel.org repository
+- Check out the latest stable v1.x version (e.g., v1.6.4)
+- Cross-compile using autotools
+- Install headers, libraries, and tools to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
+
+**To build v2.x instead**: Modify the script to check out a v2.x tag before building (see "Building v2.x" below).
+
+### Option 1: System Package (Multiarch) - Deprecated
+
+**⚠️ Warning**: This method fails on Ubuntu 24.04 (Noble) due to missing ARM packages on security repositories. Use the build-from-source approach instead.
+
+<details>
+<summary>Click to expand legacy multiarch instructions (Ubuntu 22.04 and earlier only)</summary>
 
 #### 32-bit ARM (armhf)
 
@@ -86,7 +121,9 @@ sudo apt install libgpiod-dev:arm64 libgpiod2:arm64
 sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 ```
 
-### Option 2: Build from Source
+</details>
+
+### Option 2: Manual Build from Source
 
 For more control or custom install location:
 
@@ -189,6 +226,38 @@ Check your SBC's documentation for equivalent device tree parameters or kernel o
 ## API Versions
 
 libgpiod has two major API versions with different design philosophies.
+
+### Framework Support
+
+**Important**: The `libgpiod` framework in this platform **supports both v1.x and v2.x APIs**. The framework automatically:
+
+1. **Auto-detects** which version is installed (by checking headers)
+2. **Sets compiler defines** for conditional compilation:
+   - `LIBGPIOD_V1` - defined when v1.x is detected
+   - `LIBGPIOD_V2` - defined when v2.x is detected
+3. **Links** the appropriate library version
+
+**This is a single framework, not two separate frameworks** - it adapts to whichever version you have installed.
+
+### Which Version to Choose?
+
+**The automated setup script builds v1.x by default** for these reasons:
+
+1. **Example Compatibility**: 2 out of 3 included examples use v1 API
+   - ✅ `examples/libgpiod-blink` - uses v1 API
+   - ✅ `examples/libgpiod-button` - uses v1 API
+   - ⚠️ `examples/libgpiod-blink-v2` - uses v2 API (requires manual v2 build)
+
+2. **Wider Deployment**: v1.x is available on older distributions (Ubuntu 20.04, Debian Bullseye)
+
+3. **Backward Compatibility**: Most existing libgpiod projects use v1 API
+
+4. **CI Testing**: The CI workflow builds v1 to test the majority of examples
+
+**Choose v2.x if:**
+- You're starting a new project and want the modern API
+- You need bulk GPIO operations or advanced configuration
+- You're targeting newer distributions only (Ubuntu 22.04+, Debian Bookworm+)
 
 ### Version 1.x (Legacy API)
 
@@ -335,6 +404,48 @@ You can use conditional compilation:
 #endif
 ```
 
+### Building v2.x
+
+If you need libgpiod v2.x instead of v1.x, manually build it from source:
+
+```bash
+# Install build dependencies
+sudo apt-get install -y \
+  autoconf autoconf-archive automake libtool pkg-config \
+  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+# Clone libgpiod repository
+git clone https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
+cd libgpiod
+
+# Check out latest v2.x tag
+LATEST_V2=$(git tag -l 'v2.*' | sort -V | tail -1)
+echo "Building $LATEST_V2"
+git checkout "$LATEST_V2"
+
+# Configure for ARM cross-compilation
+./autogen.sh \
+    --enable-tools=yes \
+    --enable-bindings-cxx \
+    --prefix=$HOME/.local/arm-linux-gnueabihf \
+    --host=arm-linux-gnueabihf \
+    CC=arm-linux-gnueabihf-gcc \
+    CXX=arm-linux-gnueabihf-g++
+
+# Build and install
+make -j$(nproc)
+make install
+
+echo "✅ libgpiod v2.x installed to $HOME/.local/arm-linux-gnueabihf"
+```
+
+For 64-bit (aarch64), replace `arm-linux-gnueabihf` with `aarch64-linux-gnu` in the commands above.
+
+**After building v2.x:**
+- The framework will auto-detect v2 and set `LIBGPIOD_V2` define
+- `examples/libgpiod-blink-v2` will build successfully
+- `examples/libgpiod-blink` and `examples/libgpiod-button` will **not** build (they require v1 API)
+
 ## GPIO Pin Numbering
 
 ### Raspberry Pi
@@ -459,7 +570,45 @@ if (ret > 0) {
 
 **Recommendation**: Migrate from WiringPi to **libgpiod** for maintained, portable code.
 
+## CI/CD Integration
+
+The platform's CI workflow automatically builds libgpiod from source for both ARM architectures. This ensures consistent, reliable builds across all Ubuntu versions without dependency on external package repositories.
+
+### Workflow Steps
+
+1. Install autotools and cross-compilers
+2. Run `setup-libgpiod-cross.sh` for armhf (32-bit)
+3. Run `setup-libgpiod-cross.sh` for aarch64 (64-bit)
+4. Build examples with PlatformIO
+
+This approach:
+- ✅ Works on Ubuntu 22.04, 24.04, and future versions
+- ✅ Uses official kernel.org source code
+- ✅ No external package repository dependencies
+- ✅ Consistent with lgpio build pattern
+- ✅ Provides latest stable libgpiod version (v2.x)
+
 ## Troubleshooting
+
+### Error: Ubuntu 24.04 multiarch 404 errors
+
+**Symptom**:
+```
+E: Failed to fetch https://security.ubuntu.com/ubuntu/dists/noble/main/binary-armhf/Packages  404  Not Found
+```
+
+**Cause**: Ubuntu 24.04 (Noble) no longer provides ARM packages on the main security repositories for cross-architecture installation.
+
+**Solution**: Use the build-from-source approach instead of multiarch:
+```bash
+# Install build dependencies
+sudo apt-get install -y \
+  autoconf autoconf-archive automake libtool pkg-config \
+  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+# Build and install
+./scripts/setup-libgpiod-cross.sh
+```
 
 ### Error: "Permission denied" when opening `/dev/gpiochip0`
 

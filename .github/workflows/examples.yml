@@ -67,17 +67,24 @@ jobs:
           # Exclude lgpio on Windows (complex cross-compile setup)
           - os: windows-latest
             example: examples/lgpio-blink
-          # Exclude libgpiod on Windows and macOS (requires multiarch setup)
-          - os: windows-latest
-            example: examples/libgpiod-blink
+
+          # Exclude libgpiod-blink-v2 on ALL platforms (requires v2 API, CI builds v1)
+          # Note: CI builds libgpiod v1.x to support majority of examples (blink + button)
+          # Users can manually build v2 to use the blink-v2 example (see docs/LIBGPIOD_SETUP.md)
+          - os: ubuntu-latest
+            example: examples/libgpiod-blink-v2
+          - os: macos-latest
+            example: examples/libgpiod-blink-v2
           - os: windows-latest
             example: examples/libgpiod-blink-v2
+
+          # Exclude other libgpiod examples on Windows and macOS (no automated setup script)
+          - os: windows-latest
+            example: examples/libgpiod-blink
           - os: windows-latest
             example: examples/libgpiod-button
           - os: macos-latest
             example: examples/libgpiod-blink
-          - os: macos-latest
-            example: examples/libgpiod-blink-v2
           - os: macos-latest
             example: examples/libgpiod-button
 
@@ -99,16 +106,31 @@ jobs:
             gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Ubuntu: Install libgpiod for cross-compilation (both architectures)
-      - name: Install libgpiod cross-compile libraries (Ubuntu)
+      # Ubuntu: Install autotools for libgpiod cross-compilation
+      - name: Install autotools for libgpiod (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
         run: |
-          sudo dpkg --add-architecture armhf
-          sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y \
-            libgpiod-dev:armhf \
-            libgpiod-dev:arm64
+            autoconf autoconf-archive automake libtool pkg-config
+
+      # Build libgpiod for ARM cross-compilation (32-bit) - Ubuntu only
+      - name: Build libgpiod for ARM cross-compilation (32-bit)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
+          echo "Building libgpiod library for ARM 32-bit..."
+          ./scripts/setup-libgpiod-cross.sh
+
+      # Build libgpiod for ARM cross-compilation (64-bit) - Ubuntu only
+      - name: Build libgpiod for ARM cross-compilation (64-bit)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
+          echo "Building libgpiod library for ARM 64-bit..."
+          CROSS_PREFIX=aarch64-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          ./scripts/setup-libgpiod-cross.sh
 
       # macOS: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (macOS)
