@@ -71,6 +71,9 @@ _PLATFORM_DIR = os.path.dirname(os.path.realpath(__file__))
 if _PLATFORM_DIR not in sys.path:
     sys.path.insert(0, _PLATFORM_DIR)
 
+# Import platform configuration support
+from platform_config import get_platform_config
+
 
 class Linux_armPlatform(PlatformBase):
     """
@@ -83,6 +86,7 @@ class Linux_armPlatform(PlatformBase):
         - Remote test execution
         - Remote debugging via GDB + gdbserver
         - Framework integration (WiringPi, lgpio, pigpio)
+        - Configuration file support for global defaults
 
     The platform automatically detects whether it's running on native ARM
     Linux or needs cross-compilation toolchain, and configures the build
@@ -90,6 +94,7 @@ class Linux_armPlatform(PlatformBase):
 
     Attributes:
         packages: Platform package dependencies (toolchain, frameworks)
+        _config: Platform configuration loader (for .platform-linux_arm.ini)
 
     Examples:
         Configured via platformio.ini:
@@ -104,10 +109,58 @@ class Linux_armPlatform(PlatformBase):
         >>> upload_protocol = scp
         >>> upload_port = pi@raspberrypi.local:/home/pi/program
 
+    Configuration Files:
+        Global: ~/.platformio/.platform-linux_arm.ini
+        Project-local: ./.platform-linux_arm.ini
+
+        Example config:
+        >>> [defaults]
+        >>> upload_timeout = 300
+        >>> upload_user = pi
+        >>> upload_ssh_port = 22
+
     See Also:
         - PlatformBase: Parent class from PlatformIO
         - docs/UPLOAD.md: Remote deployment documentation
+        - platform_config.py: Configuration file support
     """
+
+    def __init__(self, manifest_path):
+        """
+        Initialize Linux ARM platform.
+
+        Args:
+            manifest_path: Path to platform.json manifest file
+
+        Note:
+            Loads platform configuration from .platform-linux_arm.ini files
+            during initialization.
+        """
+        super().__init__(manifest_path)
+        # Load platform configuration (global and project-local)
+        self._config = get_platform_config()
+
+    def _get_config_default(self, key: str, fallback_default):
+        """
+        Get configuration default value from config files.
+
+        This method provides a centralized way to retrieve configuration values
+        with proper priority handling:
+            1. Config file value (if exists)
+            2. Fallback default (hard-coded)
+
+        Args:
+            key: Configuration key (e.g., 'upload_timeout')
+            fallback_default: Fallback value if not in config files
+
+        Returns:
+            Configuration value from config file, or fallback_default
+
+        Note:
+            This is an internal helper for integrating config file support
+            with env.GetProjectOption() calls.
+        """
+        return self._config.get(key, fallback_default)
 
     @staticmethod
     def _is_native():
@@ -340,9 +393,9 @@ class Linux_armPlatform(PlatformBase):
                 "  upload_port = user@hostname:/path/to/destination"
             )
 
-        # Get defaults from project options
-        default_user = env.GetProjectOption("upload_user", SSHDefaults.USER)
-        default_path = env.GetProjectOption("upload_path", SSHDefaults.UPLOAD_PATH)
+        # Get defaults from project options (with config file fallback)
+        default_user = env.GetProjectOption("upload_user", self._get_config_default("upload_user", SSHDefaults.USER))
+        default_path = env.GetProjectOption("upload_path", self._get_config_default("upload_path", SSHDefaults.UPLOAD_PATH))
 
         # Use shared parser
         try:
@@ -378,9 +431,9 @@ class Linux_armPlatform(PlatformBase):
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
-        ssh_key = env.GetProjectOption("upload_ssh_key", None)
-        upload_flags = env.GetProjectOption("upload_flags", "")
+        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
+        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
+        upload_flags = env.GetProjectOption("upload_flags", self._get_config_default("upload_flags", ""))
 
         # Create SSH config
         try:
@@ -411,7 +464,7 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute SCP command with timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", Timeouts.UPLOAD)
+        upload_timeout = env.GetProjectOption("upload_timeout", self._get_config_default("upload_timeout", Timeouts.UPLOAD))
         try:
             result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
         except subprocess.TimeoutExpired:
@@ -465,9 +518,9 @@ class Linux_armPlatform(PlatformBase):
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
-        ssh_key = env.GetProjectOption("upload_ssh_key", None)
-        upload_flags = env.GetProjectOption("upload_flags", RsyncDefaults.FLAGS)
+        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
+        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
+        upload_flags = env.GetProjectOption("upload_flags", self._get_config_default("upload_flags", RsyncDefaults.FLAGS))
 
         # Create SSH config
         try:
@@ -498,7 +551,7 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute rsync command with timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", 300)
+        upload_timeout = env.GetProjectOption("upload_timeout", self._get_config_default("upload_timeout", Timeouts.UPLOAD))
         try:
             result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
         except subprocess.TimeoutExpired:
@@ -555,8 +608,8 @@ class Linux_armPlatform(PlatformBase):
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
-        ssh_key = env.GetProjectOption("upload_ssh_key", None)
+        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
+        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
 
         # Create SSH config
         try:
@@ -588,7 +641,7 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute SSH command with file as stdin and timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", 300)
+        upload_timeout = env.GetProjectOption("upload_timeout", self._get_config_default("upload_timeout", Timeouts.UPLOAD))
         try:
             with open(str(source[0]), "rb") as f:
                 result = subprocess.run(cmd, stdin=f, capture_output=False, text=False, timeout=upload_timeout)
@@ -675,7 +728,7 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute remote command with timeout protection (interactive - shows output directly)
-        run_timeout = env.GetProjectOption("upload_run_timeout", Timeouts.UPLOAD_RUN)
+        run_timeout = env.GetProjectOption("upload_run_timeout", self._get_config_default("upload_run_timeout", Timeouts.UPLOAD_RUN))
         try:
             result = subprocess.run(cmd, timeout=run_timeout)
         except subprocess.TimeoutExpired:

@@ -19,6 +19,7 @@ Linux ARM platform enables building native applications for ARM-based Linux syst
 
 - **[Platform Documentation](docs/platforms/linux_arm.rst)** - Complete platform reference
 - **[Installation & Setup](#installation)** - Quick start guide (below)
+- **[Configuration Files](docs/CONFIGURATION.md)** - Global defaults and project overrides
 - **[Remote Deployment](docs/UPLOAD.md)** - Upload programs via SCP/rsync/SSH
 - **[Remote Debugging](docs/DEBUGGING.md)** - GDB debugging over SSH
 - **[Testing Guide](docs/TESTING.md)** - Automated remote test execution
