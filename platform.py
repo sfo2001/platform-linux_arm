@@ -763,6 +763,69 @@ class Linux_armPlatform(PlatformBase):
 
         return result.returncode
 
+    def on_monitor(self, target, source, env) -> int:
+        """
+        Handle remote program monitoring via SSH.
+
+        Connects to the remote target via SSH and runs the program,
+        streaming output in real-time. Similar to serial monitor for microcontrollers,
+        but for remote Linux targets.
+
+        Args:
+            target: Build target.
+            source: List of source files (binary path).
+            env: PlatformIO environment object.
+
+        Returns:
+            int: Exit code from remote program execution.
+
+        Raises:
+            PlatformioException: If SSH connection fails or configuration is invalid.
+
+        Note:
+            Requires upload_port to be configured in platformio.ini.
+            Optionally supports upload_run_command for custom execution.
+            Uses upload_run_timeout for timeout protection (default: 60 seconds).
+
+        Example:
+            Configure in platformio.ini:
+            >>> upload_protocol = scp
+            >>> upload_port = pi@raspberrypi.local:/home/pi/program
+            >>> upload_run_command = sudo ./program  # optional
+
+            Then run:
+            >>> pio run --target upload --target monitor
+            >>> # or separately:
+            >>> pio run --target monitor
+        """
+        # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
+        from platform_constants import UIConstants, SSHDefaults
+
+        upload_port = env.GetProjectOption("upload_port", None)
+        if not upload_port:
+            separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+            print("\n" + separator)
+            print("REMOTE MONITORING NOT CONFIGURED")
+            print(separator)
+            print("\nTo enable remote monitoring, add to platformio.ini:")
+            print("  upload_port = user@hostname:/path/to/program")
+            print("\nThen run:")
+            print("  pio run --target monitor")
+            print("\nOr combine upload and monitor:")
+            print("  pio run --target upload --target monitor")
+            print(separator + "\n")
+            return 0
+
+        # Parse upload port to get connection info
+        user, host, path = self._parse_upload_port(upload_port, env)
+        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
+        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
+
+        # Run the remote command and stream output
+        return self._run_remote_command(user, host, ssh_port, ssh_key, path, env)
+
     def _determine_gdb_executable(self, target_arch: str) -> str:
         """
         Determine GDB executable path based on target architecture.
