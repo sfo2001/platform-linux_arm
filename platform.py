@@ -176,6 +176,8 @@ class Linux_armPlatform(PlatformBase):
             Returns True for both linux_arm (32-bit) and linux_aarch64 (64-bit).
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import SystemType
 
         systype = get_systype()
@@ -199,6 +201,8 @@ class Linux_armPlatform(PlatformBase):
             installed toolchain is used instead (e.g., gcc-arm-linux-gnueabihf).
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import SystemType, PackageName
 
         packages = PlatformBase.packages.fget(self)
@@ -229,6 +233,8 @@ class Linux_armPlatform(PlatformBase):
             supported for WiringPi.
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import Framework
 
         if not self._is_native() and Framework.WIRINGPI in variables.get(
@@ -253,6 +259,8 @@ class Linux_armPlatform(PlatformBase):
             PlatformioException: If protocol is not supported
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import UploadProtocol
 
         protocol = env.GetProjectOption("upload_protocol", UploadProtocol.MANUAL)
@@ -277,6 +285,8 @@ class Linux_armPlatform(PlatformBase):
             Exit code (0 for success)
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import UIConstants
 
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
@@ -313,6 +323,8 @@ class Linux_armPlatform(PlatformBase):
             PlatformioException: If upload fails or protocol is not supported
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import UploadProtocol
 
         upload_protocol = self._get_upload_protocol(env)
@@ -385,6 +397,8 @@ class Linux_armPlatform(PlatformBase):
             via upload_user and upload_path options in platformio.ini.
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import parse_upload_port
         from platform_constants import SSHDefaults
 
@@ -424,6 +438,9 @@ class Linux_armPlatform(PlatformBase):
             Timeout can be configured via upload_timeout option.
         """
         # Lazy import to avoid breaking platform loading
+        # Ensure platform directory is in sys.path for imports
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import SSHDefaults, Timeouts, UIConstants
 
@@ -511,6 +528,8 @@ class Linux_armPlatform(PlatformBase):
             Default flags: '-avz' (archive, verbose, compress).
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import SSHDefaults, RsyncDefaults, UIConstants
 
@@ -601,6 +620,8 @@ class Linux_armPlatform(PlatformBase):
             Command injection protection via shlex.quote.
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import SSHDefaults, UIConstants
 
@@ -692,6 +713,8 @@ class Linux_armPlatform(PlatformBase):
             Output is streamed directly to console (interactive mode).
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import UIConstants, Timeouts
 
@@ -751,6 +774,8 @@ class Linux_armPlatform(PlatformBase):
             Path to appropriate GDB executable
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import GDBExecutable, Architecture
 
         if self._is_native():
@@ -775,6 +800,8 @@ class Linux_armPlatform(PlatformBase):
             PlatformioException: If connection info cannot be parsed
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import parse_upload_port
         from platform_constants import SSHDefaults
 
@@ -826,6 +853,8 @@ class Linux_armPlatform(PlatformBase):
             PlatformioException: If SSH configuration is invalid
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
 
         if not host:
@@ -867,6 +896,8 @@ class Linux_armPlatform(PlatformBase):
             debug_config: Debug configuration dictionary (modified in place)
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import DebugTools
 
         debug_port = debug_config.get("port", DebugTools.DEFAULT_PORT)
@@ -890,6 +921,8 @@ class Linux_armPlatform(PlatformBase):
             List of GDB initialization commands
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import DebugTools
 
         init_cmds = []
@@ -923,6 +956,8 @@ class Linux_armPlatform(PlatformBase):
             Updated debug configuration dictionary
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import DebugTools
 
         # Get board configuration and determine GDB executable
@@ -998,6 +1033,8 @@ class Linux_armPlatform(PlatformBase):
             Default tool is gdbserver-ssh.
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import DebugTools
 
         debug = board.manifest.get("debug", {})
@@ -1068,6 +1105,8 @@ class Linux_armPlatform(PlatformBase):
             Configured via test_transport option in platformio.ini.
         """
         # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import TestTransport, UIConstants
 
         test_transport = env.GetProjectOption("test_transport", TestTransport.SSH)
