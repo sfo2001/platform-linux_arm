@@ -53,6 +53,7 @@ import sys
 import time
 
 from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
+from platform_config import get_platform_config
 
 
 class RemoteTestUploader:
@@ -109,6 +110,22 @@ class RemoteTestUploader:
         self.ssh_port = SSHDefaults.PORT
         self.ssh_key = None
 
+        # Load platform configuration for defaults
+        self._config = get_platform_config()
+
+    def _get_config_default(self, key: str, fallback_default):
+        """
+        Get configuration default value from config files.
+
+        Args:
+            key: Configuration key
+            fallback_default: Fallback value if not in config files
+
+        Returns:
+            Configuration value from config file, or fallback_default
+        """
+        return self._config.get(key, fallback_default)
+
     def parse_test_port(self):
         """
         Parse test_port configuration into connection components.
@@ -142,9 +159,9 @@ class RemoteTestUploader:
                 "  upload_port = user@hostname:/path/to/test_binary"
             )
 
-        # Get defaults from project options
-        default_user = self.env.GetProjectOption("test_username", SSHDefaults.USER)
-        default_path = self.env.GetProjectOption("test_path", SSHDefaults.TEST_PATH)
+        # Get defaults from project options (with config file fallback)
+        default_user = self.env.GetProjectOption("test_username", self._get_config_default("test_username", SSHDefaults.USER))
+        default_path = self.env.GetProjectOption("test_path", self._get_config_default("test_path", SSHDefaults.TEST_PATH))
 
         # Use shared parser
         try:
@@ -156,14 +173,18 @@ class RemoteTestUploader:
         except ValueError as e:
             raise Exception(str(e))
 
-        # Get SSH configuration
-        self.ssh_port = self.env.GetProjectOption("test_ssh_port", SSHDefaults.PORT)
+        # Get SSH configuration (with config file fallback)
+        self.ssh_port = self.env.GetProjectOption("test_ssh_port",
+            self._get_config_default("test_ssh_port", SSHDefaults.PORT))
         if not self.ssh_port:
-            self.ssh_port = self.env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
+            self.ssh_port = self.env.GetProjectOption("upload_ssh_port",
+                self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
 
-        self.ssh_key = self.env.GetProjectOption("test_ssh_key", None)
+        self.ssh_key = self.env.GetProjectOption("test_ssh_key",
+            self._get_config_default("test_ssh_key", None))
         if not self.ssh_key:
-            self.ssh_key = self.env.GetProjectOption("upload_ssh_key", None)
+            self.ssh_key = self.env.GetProjectOption("upload_ssh_key",
+                self._get_config_default("upload_ssh_key", None))
 
     def check_ssh_available(self):
         """
@@ -277,7 +298,8 @@ class RemoteTestUploader:
         print(f"\nUploading test binary to {self.user}@{self.host}:{self.remote_path}")
 
         # Upload the binary with timeout protection
-        upload_timeout = self.env.GetProjectOption("test_upload_timeout", Timeouts.TEST_UPLOAD)
+        upload_timeout = self.env.GetProjectOption("test_upload_timeout",
+            self._get_config_default("test_upload_timeout", Timeouts.TEST_UPLOAD))
         cmd = self.build_scp_command(source_file, self.remote_path)
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=upload_timeout)
@@ -401,7 +423,8 @@ class RemoteTestUploader:
         # Build and execute test command
         test_command = self._build_test_command()
         cmd = self.build_ssh_command(test_command)
-        test_timeout = self.env.GetProjectOption("test_timeout", Timeouts.TEST_EXECUTION)
+        test_timeout = self.env.GetProjectOption("test_timeout",
+            self._get_config_default("test_timeout", Timeouts.TEST_EXECUTION))
 
         # Start process
         process = subprocess.Popen(
