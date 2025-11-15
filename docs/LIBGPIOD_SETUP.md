@@ -54,9 +54,40 @@ libgpiod uses the Linux GPIO character device interface:
 
 ## Installation
 
-### Option 1: System Package (Multiarch)
+### Recommended: Build from Source (Automated Script)
 
-For cross-compilation using distribution packages:
+**⚠️ Ubuntu 24.04 (Noble) Multiarch Issue**: Ubuntu 24.04 no longer provides ARM packages on the main security repositories for cross-architecture installation (multiarch). This causes 404 errors when trying to install `libgpiod-dev:armhf` or `libgpiod-dev:arm64`. The build-from-source approach is now the recommended method for all Ubuntu versions.
+
+The easiest way to set up libgpiod for cross-compilation is using the provided setup script:
+
+```bash
+# Install build dependencies
+sudo apt-get install -y \
+  autoconf autoconf-archive automake libtool pkg-config \
+  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
+  gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+# Build and install for 32-bit ARM (armhf)
+./scripts/setup-libgpiod-cross.sh
+
+# Build and install for 64-bit ARM (aarch64)
+CROSS_PREFIX=aarch64-linux-gnu- \
+INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+./scripts/setup-libgpiod-cross.sh
+```
+
+The script will:
+- Clone libgpiod from the official kernel.org repository
+- Check out the latest stable version (v2.x)
+- Cross-compile using autotools
+- Install headers, libraries, and tools to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
+
+### Option 1: System Package (Multiarch) - Deprecated
+
+**⚠️ Warning**: This method fails on Ubuntu 24.04 (Noble) due to missing ARM packages on security repositories. Use the build-from-source approach instead.
+
+<details>
+<summary>Click to expand legacy multiarch instructions (Ubuntu 22.04 and earlier only)</summary>
 
 #### 32-bit ARM (armhf)
 
@@ -86,7 +117,9 @@ sudo apt install libgpiod-dev:arm64 libgpiod2:arm64
 sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 ```
 
-### Option 2: Build from Source
+</details>
+
+### Option 2: Manual Build from Source
 
 For more control or custom install location:
 
@@ -459,7 +492,45 @@ if (ret > 0) {
 
 **Recommendation**: Migrate from WiringPi to **libgpiod** for maintained, portable code.
 
+## CI/CD Integration
+
+The platform's CI workflow automatically builds libgpiod from source for both ARM architectures. This ensures consistent, reliable builds across all Ubuntu versions without dependency on external package repositories.
+
+### Workflow Steps
+
+1. Install autotools and cross-compilers
+2. Run `setup-libgpiod-cross.sh` for armhf (32-bit)
+3. Run `setup-libgpiod-cross.sh` for aarch64 (64-bit)
+4. Build examples with PlatformIO
+
+This approach:
+- ✅ Works on Ubuntu 22.04, 24.04, and future versions
+- ✅ Uses official kernel.org source code
+- ✅ No external package repository dependencies
+- ✅ Consistent with lgpio build pattern
+- ✅ Provides latest stable libgpiod version (v2.x)
+
 ## Troubleshooting
+
+### Error: Ubuntu 24.04 multiarch 404 errors
+
+**Symptom**:
+```
+E: Failed to fetch https://security.ubuntu.com/ubuntu/dists/noble/main/binary-armhf/Packages  404  Not Found
+```
+
+**Cause**: Ubuntu 24.04 (Noble) no longer provides ARM packages on the main security repositories for cross-architecture installation.
+
+**Solution**: Use the build-from-source approach instead of multiarch:
+```bash
+# Install build dependencies
+sudo apt-get install -y \
+  autoconf autoconf-archive automake libtool pkg-config \
+  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+# Build and install
+./scripts/setup-libgpiod-cross.sh
+```
 
 ### Error: "Permission denied" when opening `/dev/gpiochip0`
 

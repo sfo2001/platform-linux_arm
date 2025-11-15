@@ -99,16 +99,31 @@ jobs:
             gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Ubuntu: Install libgpiod for cross-compilation (both architectures)
-      - name: Install libgpiod cross-compile libraries (Ubuntu)
+      # Ubuntu: Install autotools for libgpiod cross-compilation
+      - name: Install autotools for libgpiod (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
         run: |
-          sudo dpkg --add-architecture armhf
-          sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y \
-            libgpiod-dev:armhf \
-            libgpiod-dev:arm64
+            autoconf autoconf-archive automake libtool pkg-config
+
+      # Build libgpiod for ARM cross-compilation (32-bit) - Ubuntu only
+      - name: Build libgpiod for ARM cross-compilation (32-bit)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
+          echo "Building libgpiod library for ARM 32-bit..."
+          ./scripts/setup-libgpiod-cross.sh
+
+      # Build libgpiod for ARM cross-compilation (64-bit) - Ubuntu only
+      - name: Build libgpiod for ARM cross-compilation (64-bit)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
+          echo "Building libgpiod library for ARM 64-bit..."
+          CROSS_PREFIX=aarch64-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          ./scripts/setup-libgpiod-cross.sh
 
       # macOS: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (macOS)
