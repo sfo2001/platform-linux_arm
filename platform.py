@@ -1094,6 +1094,9 @@ class Linux_armPlatform(PlatformBase):
                 - gdbserver-ssh: Remote debugging via SSH tunnel to gdbserver
                 - gdb-remote: Direct TCP connection to gdbserver
             Default tool is gdbserver-ssh.
+
+            Also configures monitor settings to use custom SSH-based monitoring
+            instead of default serial port monitoring.
         """
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
@@ -1141,6 +1144,17 @@ class Linux_armPlatform(PlatformBase):
             debug["default"] = DebugTools.DEFAULT
 
         board.manifest["debug"] = debug
+
+        # Configure monitor to use custom SSH-based monitoring (not serial ports)
+        # This prevents PlatformIO from trying to use default serial monitor
+        # Users configure monitor via upload_port instead of monitor_port
+        # Setting monitor_port to "rfc2217://localhost:0" creates a valid but
+        # non-functional RFC2217 socket that won't block or error
+        if "monitor" not in board.manifest:
+            board.manifest["monitor"] = {}
+        if "port" not in board.manifest["monitor"]:
+            board.manifest["monitor"]["port"] = "rfc2217://localhost:0"
+
         return board
 
     def on_test_upload(self, target, source, env) -> int:
