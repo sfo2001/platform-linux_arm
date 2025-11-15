@@ -58,7 +58,9 @@ libgpiod uses the Linux GPIO character device interface:
 
 **⚠️ Ubuntu 24.04 (Noble) Multiarch Issue**: Ubuntu 24.04 no longer provides ARM packages on the main security repositories for cross-architecture installation (multiarch). This causes 404 errors when trying to install `libgpiod-dev:armhf` or `libgpiod-dev:arm64`. The build-from-source approach is now the recommended method for all Ubuntu versions.
 
-The easiest way to set up libgpiod for cross-compilation is using the provided setup script:
+The easiest way to set up libgpiod for cross-compilation is using the provided setup scripts:
+
+#### Linux (Ubuntu/Debian)
 
 ```bash
 # Install build dependencies
@@ -85,6 +87,66 @@ The script will:
 - Install headers, libraries, and tools to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
 
 **To build v2.x instead**: Modify the script to check out a v2.x tag before building (see "Building v2.x" below).
+
+#### Windows (MSYS2 + ARM GNU Toolchain)
+
+On Windows, libgpiod cross-compilation uses a hybrid approach combining MSYS2 build tools with ARM's official cross-compilation toolchains:
+
+**Prerequisites:**
+
+1. **Install MSYS2** from https://www.msys2.org/
+2. **Install build tools** in MSYS2 MINGW64 shell:
+   ```bash
+   pacman -S base-devel git autoconf autoconf-archive automake libtool pkgconf
+   ```
+
+3. **Download ARM GNU Toolchain** from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+   - For 32-bit ARM: `arm-gnu-toolchain-*-mingw-w64-i686-arm-none-linux-gnueabihf.zip`
+   - For 64-bit ARM: `arm-gnu-toolchain-*-mingw-w64-i686-aarch64-none-linux-gnu.zip`
+   - Extract to a known location (e.g., `C:\arm-toolchain\`)
+
+4. **Add toolchain to PATH** in MSYS2 shell:
+   ```bash
+   # For 32-bit ARM
+   export PATH="/c/arm-toolchain/arm-gnu-toolchain-*/bin:$PATH"
+
+   # For 64-bit ARM
+   export PATH="/c/arm-toolchain-aarch64/arm-gnu-toolchain-*/bin:$PATH"
+   ```
+
+**Build libgpiod:**
+
+```bash
+# Navigate to repository in MSYS2 MINGW64 shell
+cd /path/to/platform-linux_arm
+
+# Build and install for 32-bit ARM (armhf)
+# Note: Toolchain uses "arm-none-linux-gnueabihf" prefix, create symlinks if needed
+CROSS_PREFIX=arm-linux-gnueabihf- \
+INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
+./scripts/setup-libgpiod-cross-windows.sh
+
+# Build and install for 64-bit ARM (aarch64)
+CROSS_PREFIX=aarch64-linux-gnu- \
+INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+./scripts/setup-libgpiod-cross-windows.sh
+```
+
+**What the script does**:
+- Verifies MSYS2 build tools are available
+- Verifies ARM cross-compiler is in PATH
+- Clones libgpiod from official kernel.org repository
+- Builds libgpiod from source using autotools
+- Installs to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
+
+**Requirements**:
+- Windows 10/11 (64-bit)
+- MSYS2 installed with build tools
+- ARM GNU Toolchain (download ~500MB per architecture)
+- At least 2GB free disk space for toolchains and build artifacts
+
+**Why the hybrid approach?**
+MSYS2 doesn't provide ARM Linux cross-compilation toolchains in its package repository (only bare-metal ARM toolchains). Using ARM's official toolchains ensures compatibility and provides the latest compiler versions.
 
 ### Option 1: System Package (Multiarch) - Deprecated
 
@@ -572,21 +634,31 @@ if (ret > 0) {
 
 ## CI/CD Integration
 
-The platform's CI workflow automatically builds libgpiod from source for both ARM architectures. This ensures consistent, reliable builds across all Ubuntu versions without dependency on external package repositories.
+The platform's CI workflow automatically builds libgpiod from source for both ARM architectures on Ubuntu and Windows. This ensures consistent, reliable builds across all platforms without dependency on external package repositories.
 
 ### Workflow Steps
 
+**Ubuntu:**
 1. Install autotools and cross-compilers
 2. Run `setup-libgpiod-cross.sh` for armhf (32-bit)
 3. Run `setup-libgpiod-cross.sh` for aarch64 (64-bit)
 4. Build examples with PlatformIO
 
+**Windows:**
+1. Download ARM GNU Toolchains from ARM's official website
+2. Setup MSYS2 environment with build tools
+3. Add downloaded toolchains to PATH
+4. Run `setup-libgpiod-cross-windows.sh` for armhf (32-bit)
+5. Run `setup-libgpiod-cross-windows.sh` for aarch64 (64-bit)
+6. Build examples with PlatformIO
+
 This approach:
-- ✅ Works on Ubuntu 22.04, 24.04, and future versions
+- ✅ Works on Ubuntu 22.04, 24.04, Windows 10/11, and future versions
 - ✅ Uses official kernel.org source code
 - ✅ No external package repository dependencies
 - ✅ Consistent with lgpio build pattern
-- ✅ Provides latest stable libgpiod version (v2.x)
+- ✅ Provides latest stable libgpiod version (v1.x by default)
+- ✅ Enables Windows developers to verify builds locally
 
 ## Troubleshooting
 
@@ -658,6 +730,41 @@ dpkg -l | grep libgpiod
 ```
 
 If missing, install multiarch packages as described in "Installation" section.
+
+### Windows: MSYS2 build tools not found
+
+**Symptom**:
+```
+❌ ERROR: MSYS2 build tools not found.
+```
+
+**Solution**: Install MSYS2 from https://www.msys2.org/ and install build tools:
+```bash
+pacman -S base-devel git autoconf autoconf-archive automake libtool pkgconf
+```
+Run the script from an "MSYS2 MINGW64" shell.
+
+### Windows: Cross-compiler not found
+
+**Symptom**:
+```
+❌ ERROR: Cross-compiler not found: arm-linux-gnueabihf-gcc
+```
+
+**Solution**:
+1. Download the ARM GNU Toolchain from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+2. Extract the toolchain to a known location
+3. Add the toolchain's `bin` directory to your PATH before running the script:
+   ```bash
+   export PATH="/c/path/to/arm-gnu-toolchain-*/bin:$PATH"
+   ```
+4. Verify the compiler is available: `which arm-linux-gnueabihf-gcc`
+
+### Windows: Build time exceeds 10 minutes
+
+**Cause**: First-time setup includes downloading ARM toolchains (~500MB each) and MSYS2 build tools. The libgpiod build itself takes 3-5 minutes.
+
+**Solution**: This is normal for first-time setup. Subsequent builds reuse cached toolchains and are much faster. The ARM toolchain download is a one-time operation per architecture.
 
 ## Command-Line Tools
 

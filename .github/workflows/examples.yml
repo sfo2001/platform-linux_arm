@@ -78,11 +78,7 @@ jobs:
           - os: windows-latest
             example: examples/libgpiod-blink-v2
 
-          # Exclude other libgpiod examples on Windows and macOS (no automated setup script)
-          - os: windows-latest
-            example: examples/libgpiod-blink
-          - os: windows-latest
-            example: examples/libgpiod-button
+          # Exclude libgpiod examples on macOS (no automated setup script)
           - os: macos-latest
             example: examples/libgpiod-blink
           - os: macos-latest
@@ -131,13 +127,6 @@ jobs:
           CROSS_PREFIX=aarch64-linux-gnu- \
           INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
           ./scripts/setup-libgpiod-cross.sh
-
-      # macOS: Install ARM cross-compilation toolchains
-      - name: Install ARM toolchains (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew tap messense/macos-cross-toolchains
-          brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 
       # Windows: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (Windows)
@@ -190,6 +179,142 @@ jobs:
           else
             echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
           fi
+
+          # Export toolchain directory for use in MSYS2 build steps
+          echo "ARM_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
+          echo "Exported ARM_TOOLCHAIN_DIR for MSYS2 steps"
+
+      # Windows: Setup MSYS2 environment for libgpiod cross-compilation
+      - name: Setup MSYS2 (Windows)
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            git
+            autoconf
+            autoconf-archive
+            automake
+            libtool
+            pkgconf
+
+      # Windows: Build libgpiod for ARM cross-compilation (32-bit)
+      - name: Build libgpiod for ARM cross-compilation (32-bit) - Windows
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        shell: msys2 {0}
+        run: |
+          echo "Building libgpiod library for ARM 32-bit..."
+
+          # Convert Windows path to MSYS2 Unix-style path
+          if [ -z "$ARM_TOOLCHAIN_DIR" ]; then
+            echo "❌ ERROR: ARM_TOOLCHAIN_DIR not set. Make sure the 'Install ARM toolchains (Windows)' step ran successfully."
+            exit 1
+          fi
+
+          echo "ARM_TOOLCHAIN_DIR (Windows path): $ARM_TOOLCHAIN_DIR"
+          TOOLCHAIN_DIR=$(cygpath "$ARM_TOOLCHAIN_DIR")
+          echo "Converted to MSYS2 path: $TOOLCHAIN_DIR"
+
+          # Add toolchain to PATH
+          TOOLCHAIN_BIN="$TOOLCHAIN_DIR/bin"
+          export PATH="$TOOLCHAIN_BIN:$PATH"
+          echo "Added to PATH: $TOOLCHAIN_BIN"
+
+          # Verify cross-compiler is available
+          if command -v arm-linux-gnueabihf-gcc &> /dev/null; then
+            echo "✓ Cross-compiler found: $(arm-linux-gnueabihf-gcc --version | head -1)"
+          else
+            echo "❌ ERROR: arm-linux-gnueabihf-gcc not found in PATH"
+            echo "PATH: $PATH"
+            ls -la "$TOOLCHAIN_BIN" | grep gcc || true
+            exit 1
+          fi
+
+          # Build libgpiod - install to workspace so Python can find it
+          # Convert GITHUB_WORKSPACE to MSYS2 path
+          WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
+          CROSS_PREFIX=arm-linux-gnueabihf- \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-linux-gnueabihf" \
+          ./scripts/setup-libgpiod-cross-windows.sh
+
+      # Windows: Download ARM64 toolchain for libgpiod cross-compilation
+      - name: Download ARM64 toolchain (Windows)
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
+          echo "Downloading ARM64 GNU Toolchain for Windows..."
+          curl -L -o gcc-arm64.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-aarch64-none-linux-gnu.zip"
+
+          echo "Extracting ARM64 toolchain..."
+          unzip -q gcc-arm64.zip
+
+          # Find the extracted directory
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*aarch64*" -print -quit | sed 's|^\./||')
+          echo "Found ARM64 toolchain directory: $TOOLCHAIN_DIR"
+
+          # Create symlinks from aarch64-linux-gnu-* to aarch64-none-linux-gnu-*
+          echo "Creating symlinks for PlatformIO compatibility..."
+          cd "$TOOLCHAIN_DIR/bin"
+          for file in aarch64-none-linux-gnu-*; do
+            link_name=$(echo "$file" | sed 's/aarch64-none-linux-gnu-/aarch64-linux-gnu-/')
+            if [ ! -e "$link_name" ]; then
+              ln -s "$file" "$link_name"
+              echo "  Created: $link_name -> $file"
+            fi
+          done
+          cd "$GITHUB_WORKSPACE"
+
+          # Export ARM64 toolchain directory for use in MSYS2 build steps
+          echo "ARM64_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
+          echo "Exported ARM64_TOOLCHAIN_DIR for MSYS2 steps"
+
+      # Windows: Build libgpiod for ARM cross-compilation (64-bit)
+      - name: Build libgpiod for ARM cross-compilation (64-bit) - Windows
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        shell: msys2 {0}
+        run: |
+          echo "Building libgpiod library for ARM 64-bit..."
+
+          # Convert Windows path to MSYS2 Unix-style path
+          if [ -z "$ARM64_TOOLCHAIN_DIR" ]; then
+            echo "❌ ERROR: ARM64_TOOLCHAIN_DIR not set. Make sure the 'Download ARM64 toolchain (Windows)' step ran successfully."
+            exit 1
+          fi
+
+          echo "ARM64_TOOLCHAIN_DIR (Windows path): $ARM64_TOOLCHAIN_DIR"
+          TOOLCHAIN_DIR=$(cygpath "$ARM64_TOOLCHAIN_DIR")
+          echo "Converted to MSYS2 path: $TOOLCHAIN_DIR"
+
+          # Add toolchain to PATH
+          TOOLCHAIN_BIN="$TOOLCHAIN_DIR/bin"
+          export PATH="$TOOLCHAIN_BIN:$PATH"
+          echo "Added to PATH: $TOOLCHAIN_BIN"
+
+          # Verify cross-compiler is available
+          if command -v aarch64-linux-gnu-gcc &> /dev/null; then
+            echo "✓ Cross-compiler found: $(aarch64-linux-gnu-gcc --version | head -1)"
+          else
+            echo "❌ ERROR: aarch64-linux-gnu-gcc not found in PATH"
+            echo "PATH: $PATH"
+            ls -la "$TOOLCHAIN_BIN" | grep gcc || true
+            exit 1
+          fi
+
+          # Build libgpiod - install to workspace so Python can find it
+          # Convert GITHUB_WORKSPACE to MSYS2 path
+          WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
+          CROSS_PREFIX=aarch64-linux-gnu- \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-linux-gnu" \
+          ./scripts/setup-libgpiod-cross-windows.sh
+
+      # macOS: Install ARM cross-compilation toolchains
+      - name: Install ARM toolchains (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew tap messense/macos-cross-toolchains
+          brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 
       # Debug: Verify PATH (Windows only)
       - name: Debug PATH (Windows)
