@@ -30,11 +30,12 @@ else
 fi
 
 echo "Checking MSYS2 environment..."
-if ! command -v pacman &> /dev/null; then
-    echo "❌ ERROR: MSYS2 not found. This script requires MSYS2 environment."
+if ! command -v autoconf &> /dev/null; then
+    echo "❌ ERROR: MSYS2 build tools not found."
     echo ""
+    echo "This script requires MSYS2 with build tools installed."
     echo "Please install MSYS2 from https://www.msys2.org/"
-    echo "Or run this script from an MSYS2 shell (MSYS2 MINGW64)"
+    echo "Then install build tools: pacman -S base-devel git autoconf autoconf-archive automake libtool pkgconf"
     echo ""
     exit 1
 fi
@@ -42,52 +43,18 @@ fi
 echo "✓ MSYS2 environment detected"
 echo ""
 
-# Install build dependencies via pacman (MSYS2 package manager)
-echo "Installing build dependencies via pacman..."
-echo "This may take a few minutes on first run..."
-echo ""
-
-# Update package database
-pacman -Sy --noconfirm
-
-# Install base development tools
-pacman -S --needed --noconfirm \
-    base-devel \
-    git \
-    autoconf \
-    autoconf-archive \
-    automake \
-    libtool \
-    pkg-config
-
-# Install ARM cross-compilation toolchains
-if [[ "$CROSS_PREFIX" == "aarch64-"* ]]; then
-    echo "Installing AArch64 cross-compilation toolchain..."
-    pacman -S --needed --noconfirm mingw-w64-x86_64-aarch64-none-linux-gnu-toolchain
-else
-    echo "Installing ARM cross-compilation toolchain..."
-    pacman -S --needed --noconfirm mingw-w64-x86_64-arm-none-linux-gnueabihf-toolchain
-fi
-
-echo ""
-echo "✓ Build dependencies installed"
-echo ""
-
-# Verify cross-compiler
+# Verify cross-compiler is available (should be in PATH from CI workflow)
 CROSS_GCC="${CROSS_PREFIX}gcc"
 if ! command -v "$CROSS_GCC" &> /dev/null; then
-    # Try with MINGW prefix
-    CROSS_GCC="${MINGW_ARCH}gcc"
-    if ! command -v "$CROSS_GCC" &> /dev/null; then
-        echo "❌ ERROR: Cross-compiler not found: ${CROSS_PREFIX}gcc"
-        echo ""
-        echo "Available compilers:"
-        compgen -c | grep -E "(arm|aarch64).*gcc" || true
-        echo ""
-        exit 1
-    fi
-    # Update CROSS_PREFIX to match MINGW naming
-    CROSS_PREFIX="$MINGW_ARCH"
+    echo "❌ ERROR: Cross-compiler not found: ${CROSS_PREFIX}gcc"
+    echo ""
+    echo "Please ensure the ARM cross-compilation toolchain is in your PATH."
+    echo "For Windows, download from: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads"
+    echo ""
+    echo "Available compilers:"
+    compgen -c | grep -E "(arm|aarch64).*gcc" || true
+    echo ""
+    exit 1
 fi
 
 echo "✓ Cross-compiler found: $($CROSS_GCC --version | head -1)"
