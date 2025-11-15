@@ -13,7 +13,41 @@
 # limitations under the License.
 
 """
-    Builder for Linux ARM
+SCons Build Script for Linux ARM Platform.
+
+This module configures the build environment for ARM Linux targets,
+supporting both native compilation on ARM Linux and cross-compilation
+from x86_64 hosts.
+
+Features:
+    - Automatic toolchain detection (native vs cross-compilation)
+    - Architecture-specific toolchain selection (ARMv7 vs AArch64)
+    - Build targets: program binary, size calculation, upload, test upload
+    - Integration with PlatformIO platform class for uploads and testing
+
+Build Targets:
+    - Default: Build program binary
+    - size: Calculate and display binary size
+    - upload: Upload binary to remote target (delegates to platform.on_upload)
+    - test upload: Upload and execute tests (delegates to platform.on_test_upload)
+
+Toolchain Selection:
+    - Native ARM Linux: Uses system toolchain (no prefix)
+    - Cross-compilation ARMv7: Uses arm-linux-gnueabihf- prefix
+    - Cross-compilation AArch64: Uses aarch64-linux-gnu- prefix
+
+Examples:
+    Build program:
+        $ pio run
+
+    Build and display size:
+        $ pio run --target size
+
+    Build and upload:
+        $ pio run --target upload
+
+Author: PlatformIO
+License: Apache 2.0
 """
 
 import sys
@@ -101,7 +135,23 @@ AlwaysBuild(target_size)
 #
 
 def _upload_handler(target, source, env):
-    """Handler for upload target - delegates to platform.on_upload()"""
+    """
+    Handle upload target.
+
+    Delegates to platform.on_upload() for protocol-specific upload logic
+    (SCP, rsync, SSH, or manual).
+
+    Args:
+        target: Build target.
+        source: List of source files (binary path).
+        env: SCons environment object.
+
+    Returns:
+        int: Exit code from upload operation.
+
+    See Also:
+        - Linux_armPlatform.on_upload: Platform upload implementation
+    """
     platform = env.PioPlatform()
     return platform.on_upload(target, source, env)
 
@@ -113,7 +163,24 @@ AlwaysBuild(target_upload)
 #
 
 def _test_upload_handler(target, source, env):
-    """Handler for test upload target - delegates to platform.on_test_upload()"""
+    """
+    Handle test upload target.
+
+    Delegates to platform.on_test_upload() for remote test execution
+    via SSH, or falls back to regular upload if test upload is not implemented.
+
+    Args:
+        target: Build target.
+        source: List of source files (test binary path).
+        env: SCons environment object.
+
+    Returns:
+        int: Exit code from test execution.
+
+    See Also:
+        - Linux_armPlatform.on_test_upload: Platform test upload implementation
+        - RemoteTestUploader: SSH test uploader implementation
+    """
     platform = env.PioPlatform()
     # Check if platform has on_test_upload method
     if hasattr(platform, 'on_test_upload'):
