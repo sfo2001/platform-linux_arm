@@ -1,9 +1,18 @@
 *.pyc
+__pycache__/
 
 # Python virtual environments
 venv/
 env/
 .venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+*.cover
 
 # PlatformIO
 .pio/
