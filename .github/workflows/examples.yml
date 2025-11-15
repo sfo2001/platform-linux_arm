@@ -93,9 +93,20 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Ubuntu: Cache ARM cross-compilation toolchains
+      - name: Cache ARM toolchains (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/cache@v4
+        id: cache-ubuntu-toolchains
+        with:
+          path: |
+            /usr/bin/arm-linux-gnueabihf-*
+            /usr/bin/aarch64-linux-gnu-*
+          key: ${{ runner.os }}-arm-toolchains-apt
+
       # Ubuntu: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && steps.cache-ubuntu-toolchains.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -110,9 +121,20 @@ jobs:
           sudo apt-get install -y \
             autoconf autoconf-archive automake libtool pkg-config
 
+      # Ubuntu: Cache built libgpiod libraries
+      - name: Cache libgpiod libraries (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        uses: actions/cache@v4
+        id: cache-ubuntu-libgpiod
+        with:
+          path: |
+            ~/.local/arm-linux-gnueabihf
+            ~/.local/aarch64-linux-gnu
+          key: ${{ runner.os }}-libgpiod-${{ hashFiles('scripts/setup-libgpiod-cross.sh') }}
+
       # Build libgpiod for ARM cross-compilation (32-bit) - Ubuntu only
       - name: Build libgpiod for ARM cross-compilation (32-bit)
-        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod') && steps.cache-ubuntu-libgpiod.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building libgpiod library for ARM 32-bit..."
@@ -120,7 +142,7 @@ jobs:
 
       # Build libgpiod for ARM cross-compilation (64-bit) - Ubuntu only
       - name: Build libgpiod for ARM cross-compilation (64-bit)
-        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod') && steps.cache-ubuntu-libgpiod.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building libgpiod library for ARM 64-bit..."
@@ -128,9 +150,18 @@ jobs:
           INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
           ./scripts/setup-libgpiod-cross.sh
 
+      # Windows: Cache ARM32 toolchain
+      - name: Cache ARM32 toolchain (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/cache@v4
+        id: cache-windows-arm32-toolchain
+        with:
+          path: arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-arm-none-linux-gnueabihf
+          key: ${{ runner.os }}-arm32-toolchain-13.2.rel1
+
       # Windows: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && steps.cache-windows-arm32-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
           # Download ARM GNU Toolchain (arm-none-linux-gnueabihf variant works for Linux)
@@ -140,8 +171,13 @@ jobs:
           echo "Extracting toolchain..."
           unzip -q gcc-arm.zip
 
+      # Windows: Setup ARM32 toolchain PATH
+      - name: Setup ARM32 toolchain PATH (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
           # Find the extracted directory (case-insensitive) and get absolute path
-          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit | sed 's|^\./||')
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*arm-none-linux-gnueabihf*" -print -quit | sed 's|^\./||')
           echo "Found toolchain directory: $TOOLCHAIN_DIR"
 
           # Create symlinks from arm-linux-gnueabihf-* to arm-none-linux-gnueabihf-*
@@ -184,9 +220,20 @@ jobs:
           echo "ARM_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
           echo "Exported ARM_TOOLCHAIN_DIR for MSYS2 steps"
 
+      # Windows: Cache built libgpiod libraries
+      - name: Cache libgpiod libraries (Windows)
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        uses: actions/cache@v4
+        id: cache-windows-libgpiod
+        with:
+          path: |
+            .local/arm-linux-gnueabihf
+            .local/aarch64-linux-gnu
+          key: ${{ runner.os }}-libgpiod-${{ hashFiles('scripts/setup-libgpiod-cross-windows.sh') }}
+
       # Windows: Setup MSYS2 environment for libgpiod cross-compilation
       - name: Setup MSYS2 (Windows)
-        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod') && steps.cache-windows-libgpiod.outputs.cache-hit != 'true'
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
@@ -202,7 +249,7 @@ jobs:
 
       # Windows: Build libgpiod for ARM cross-compilation (32-bit)
       - name: Build libgpiod for ARM cross-compilation (32-bit) - Windows
-        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod') && steps.cache-windows-libgpiod.outputs.cache-hit != 'true'
         shell: msys2 {0}
         run: |
           echo "Building libgpiod library for ARM 32-bit..."
@@ -239,9 +286,18 @@ jobs:
           INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-linux-gnueabihf" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
+      # Windows: Cache ARM64 toolchain
+      - name: Cache ARM64 toolchain (Windows)
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        uses: actions/cache@v4
+        id: cache-windows-arm64-toolchain
+        with:
+          path: arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-aarch64-none-linux-gnu
+          key: ${{ runner.os }}-arm64-toolchain-13.2.rel1
+
       # Windows: Download ARM64 toolchain for libgpiod cross-compilation
       - name: Download ARM64 toolchain (Windows)
-        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod') && steps.cache-windows-arm64-toolchain.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Downloading ARM64 GNU Toolchain for Windows..."
@@ -250,6 +306,11 @@ jobs:
           echo "Extracting ARM64 toolchain..."
           unzip -q gcc-arm64.zip
 
+      # Windows: Setup ARM64 toolchain PATH
+      - name: Setup ARM64 toolchain PATH (Windows)
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
           # Find the extracted directory
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*aarch64*" -print -quit | sed 's|^\./||')
           echo "Found ARM64 toolchain directory: $TOOLCHAIN_DIR"
@@ -272,7 +333,7 @@ jobs:
 
       # Windows: Build libgpiod for ARM cross-compilation (64-bit)
       - name: Build libgpiod for ARM cross-compilation (64-bit) - Windows
-        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod') && steps.cache-windows-libgpiod.outputs.cache-hit != 'true'
         shell: msys2 {0}
         run: |
           echo "Building libgpiod library for ARM 64-bit..."
@@ -309,9 +370,22 @@ jobs:
           INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-linux-gnu" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
+      # macOS: Cache Homebrew ARM toolchains
+      - name: Cache Homebrew ARM toolchains (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/cache@v4
+        id: cache-macos-toolchains
+        with:
+          path: |
+            /usr/local/Cellar/arm-unknown-linux-gnueabihf
+            /usr/local/Cellar/aarch64-unknown-linux-gnu
+            /opt/homebrew/Cellar/arm-unknown-linux-gnueabihf
+            /opt/homebrew/Cellar/aarch64-unknown-linux-gnu
+          key: ${{ runner.os }}-homebrew-arm-toolchains
+
       # macOS: Install ARM cross-compilation toolchains
       - name: Install ARM toolchains (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-latest' && steps.cache-macos-toolchains.outputs.cache-hit != 'true'
         run: |
           brew tap messense/macos-cross-toolchains
           brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
@@ -330,9 +404,22 @@ jobs:
           echo "=== All executables in PATH matching 'arm' ==="
           find $(echo "$PATH" | tr ':' '\n') -maxdepth 1 -iname "*arm*" 2>/dev/null | head -20 || true
 
+      # Cache built lgpio libraries (Ubuntu/macOS)
+      - name: Cache lgpio libraries (Ubuntu/macOS)
+        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        uses: actions/cache@v4
+        id: cache-lgpio
+        with:
+          path: |
+            ~/.local/arm-linux-gnueabihf
+            ~/.local/arm-unknown-linux-gnueabihf
+            ~/.local/aarch64-linux-gnu
+            ~/.local/aarch64-unknown-linux-gnu
+          key: ${{ runner.os }}-lgpio-${{ hashFiles('scripts/setup-lgpio-cross.sh') }}
+
       # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (32-bit)
-        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 32-bit..."
@@ -340,7 +427,7 @@ jobs:
 
       # Build lgpio for ARM cross-compilation (64-bit) - Ubuntu/macOS only
       - name: Build lgpio for ARM cross-compilation (64-bit)
-        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 64-bit..."
