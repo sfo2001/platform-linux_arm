@@ -253,11 +253,14 @@ class RemoteTestUploader:
         builder = SSHCommandBuilder(config)
         return builder.build_scp_command(local_file, remote_file)
 
-    def upload_test_binary(self):
+    def upload_test_binary(self) -> int:
         """
         Upload test binary to remote target via SCP.
 
         Uploads the test binary and makes it executable on the remote host.
+
+        Returns:
+            int: Exit code (0 for success).
 
         Raises:
             Exception: If upload fails, timeout occurs, or chmod fails.
@@ -305,6 +308,7 @@ class RemoteTestUploader:
             )
 
         print(f"Upload successful: {self.remote_path}")
+        return 0
 
     def _build_test_command(self) -> str:
         """
@@ -417,7 +421,7 @@ class RemoteTestUploader:
 
         return exit_code
 
-    def run(self):
+    def run(self) -> int:
         """
         Run the complete remote testing workflow.
 
@@ -481,7 +485,7 @@ class RemoteTestUploader:
             return 1
 
 
-def upload_test(target, source, env):
+def upload_test(target, source, env) -> int:
     """
     Entry point called by PlatformIO test framework.
 
