@@ -8,6 +8,7 @@
   "frameworks": [
     "wiringpi",
     "lgpio",
+    "libgpiod",
     "pigpio"
   ],
   "name": "Raspberry Pi Compute Module 4",
