@@ -13,17 +13,18 @@ echo ""
 # Resolve script and repo directories BEFORE any cd commands
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-BUILD_DIR="${BUILD_DIR:-/tmp/libgpiod-build}"
 CROSS_PREFIX="${CROSS_PREFIX:-arm-linux-gnueabihf-}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/arm-linux-gnueabihf}"
 
-# Detect architecture from cross-compiler prefix
+# Detect architecture from cross-compiler prefix and set arch-specific build dir
 if [[ "$CROSS_PREFIX" == "aarch64-"* ]]; then
     ARCH_NAME="ARM 64-bit (AArch64)"
     HOST_TRIPLE="aarch64-linux-gnu"
+    BUILD_DIR="${BUILD_DIR:-/tmp/libgpiod-build-aarch64}"
 else
     ARCH_NAME="ARM 32-bit (ARMv7)"
     HOST_TRIPLE="arm-linux-gnueabihf"
+    BUILD_DIR="${BUILD_DIR:-/tmp/libgpiod-build-armhf}"
 fi
 
 # Check if cross-compiler is installed
@@ -45,9 +46,9 @@ echo "✓ Cross-compiler found: $($CROSS_GCC --version | head -1)"
 echo "  Architecture: $ARCH_NAME"
 echo ""
 
-# Check for required build tools
+# Check for required build tools (libtool removed - autogen.sh will check)
 MISSING_TOOLS=()
-for tool in autoconf automake libtool pkg-config; do
+for tool in autoconf automake pkg-config; do
     if ! command -v "$tool" &> /dev/null; then
         MISSING_TOOLS+=("$tool")
     fi
@@ -62,7 +63,7 @@ if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
     exit 1
 fi
 
-echo "✓ Build tools found: autoconf, automake, libtool, pkg-config"
+echo "✓ Build tools found: autoconf, automake, pkg-config"
 echo ""
 
 echo "Build directory: $BUILD_DIR"
@@ -79,16 +80,19 @@ cd "$BUILD_DIR"
 if [ -d "libgpiod/.git" ]; then
     echo "Updating existing libgpiod repository..."
     cd libgpiod
+
+    # Clean aggressively to avoid contamination between armhf/aarch64 builds
+    echo "Cleaning previous build artifacts..."
+    git clean -fdx  # Remove all untracked files and build artifacts
+    git reset --hard  # Reset any modifications
     git fetch
+
     # Check if we're on a detached HEAD (tag checkout)
     if git symbolic-ref -q HEAD > /dev/null; then
         git pull
     else
         echo "  (on detached HEAD, skipping pull)"
     fi
-    echo "Cleaning previous build artifacts..."
-    make clean 2>/dev/null || true
-    make distclean 2>/dev/null || true
 else
     echo "Cloning libgpiod repository..."
     git clone https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
@@ -111,6 +115,7 @@ echo "  This may take a few minutes..."
 echo ""
 
 # Run autogen.sh to generate configure script
+# Note: autogen.sh will check for libtool and fail with clear error if missing
 # --enable-tools=yes: Build command-line tools (gpiodetect, gpioinfo, etc.)
 # --enable-bindings-cxx: Build C++ bindings (optional, but often useful)
 # --prefix: Installation directory
