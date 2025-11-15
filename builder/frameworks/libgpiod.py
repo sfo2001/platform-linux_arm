@@ -82,6 +82,7 @@ https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/
 
 from SCons.Script import DefaultEnvironment
 from os.path import isfile, join, expanduser
+from os import environ
 import sys
 
 env = DefaultEnvironment()
