@@ -19,14 +19,21 @@
 import sys
 import os
 
-# Add parent directory to path for importing platform_constants
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from SCons.Script import AlwaysBuild, Default, DefaultEnvironment
 
 from platformio.util import get_systype
 
 env = DefaultEnvironment()
+
+# Add platform directory to sys.path for importing platform_constants
+# Use env.PioPlatform().get_dir() instead of __file__ because __file__
+# is not defined in SCons execution context (scripts are executed via exec())
+platform_dir = env.PioPlatform().get_dir()
+if platform_dir not in sys.path:
+    sys.path.insert(0, platform_dir)
+
+# Import platform_constants after sys.path is configured
+from platform_constants import Architecture, SystemType, ToolchainPrefix
 
 env.Replace(
     _BINPREFIX="",
@@ -41,10 +48,6 @@ env.Replace(
 
     SIZEPRINTCMD='$SIZETOOL $SOURCES'
 )
-
-# Lazy import to avoid breaking platform loading
-# Import after sys.path is set up (line 23) and when actually needed
-from platform_constants import Architecture, SystemType, ToolchainPrefix
 
 # Detect if we're cross-compiling (not native ARM Linux)
 systype = get_systype()
