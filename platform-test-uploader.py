@@ -302,8 +302,29 @@ class RemoteTestUploader:
 
             return exit_code
 
+        except subprocess.TimeoutExpired as e:
+            print(f"\nERROR: Operation timed out after {e.timeout} seconds", file=sys.stderr)
+            print("Increase timeout with 'test_timeout' or 'test_upload_timeout' option in platformio.ini", file=sys.stderr)
+            return 1
+        except subprocess.CalledProcessError as e:
+            print(f"\nERROR: Remote command failed: {e}", file=sys.stderr)
+            print(f"Exit code: {e.returncode}", file=sys.stderr)
+            if e.stderr:
+                print(f"Error output: {e.stderr}", file=sys.stderr)
+            return e.returncode
+        except (OSError, FileNotFoundError) as e:
+            print(f"\nERROR: File operation failed: {e}", file=sys.stderr)
+            return 1
+        except ValueError as e:
+            print(f"\nERROR: Configuration error: {e}", file=sys.stderr)
+            return 1
+        except KeyboardInterrupt:
+            print("\nERROR: Operation cancelled by user", file=sys.stderr)
+            return 130
         except Exception as e:
-            print(f"\nERROR: {str(e)}", file=sys.stderr)
+            print(f"\nERROR: Unexpected error: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
             return 1
 
 
