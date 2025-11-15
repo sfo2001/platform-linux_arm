@@ -335,10 +335,12 @@ upload_port = pi@raspberrypi.local:/home/pi/myapp
 ```
 
 **Notes:**
-- The `monitor` target runs the program at `upload_port` location
+- The `monitor` target runs the program at `upload_port` location via SSH
 - Output is streamed in real-time from the remote target
 - Press Ctrl+C to stop monitoring
 - Unlike serial monitors, this requires a network connection to the target
+- The platform automatically configures a dummy `monitor_port` to prevent PlatformIO's
+  default serial monitor from interfering with SSH-based monitoring
 
 **Comparison with upload_run_after:**
 - `upload_run_after = true`: Runs once after each upload

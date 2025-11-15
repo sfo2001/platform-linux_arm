@@ -229,8 +229,15 @@ def _monitor_handler(target, source, env) -> int:
         print("="*60 + "\n")
         return 0
 
-target_monitor = env.Alias("monitor", target_bin, _monitor_handler)
-AlwaysBuild(target_monitor)
+# Use AddCustomTarget to properly override PlatformIO's built-in monitor
+env.AddCustomTarget(
+    name="monitor",
+    dependencies=None,
+    actions=_monitor_handler,
+    title="Monitor",
+    description="Monitor remote program via SSH",
+    always_build=True
+)
 
 #
 # Default targets

@@ -89,6 +89,10 @@ test_transport = ssh
 test_build_src = yes  ; Include src/ files in test builds
 ```
 
+**Note:** You may see a warning: `Warning! Ignore unknown configuration option 'test_transport'`.
+This is expected and harmless - PlatformIO's core schema doesn't include platform-specific
+options, but the platform correctly handles the configuration.
+
 ### 2. Set Up SSH Access
 
 ```bash
