@@ -12,6 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+PlatformIO Linux ARM Platform Implementation.
+
+This module implements the Linux ARM development platform for PlatformIO,
+providing support for:
+- Native compilation on ARM Linux systems
+- Cross-compilation from macOS/Linux x86_64
+- Remote deployment via SSH/SCP/rsync
+- Remote testing via SSH
+- Remote debugging via SSH + GDB
+
+The platform automatically detects the host environment and configures
+the appropriate toolchain (native or cross-compilation).
+
+Supported Devices:
+    - Raspberry Pi (all models: 1, 2, 3, 4, 5, Zero, CM4, 400)
+    - Orange Pi (Zero and other Allwinner H2+/H3 boards)
+    - Generic ARM Linux SBCs
+
+Architecture Support:
+    - ARMv7 (32-bit) - Raspberry Pi 1-3, Zero
+    - ARMv8/AArch64 (64-bit) - Raspberry Pi 3-5 with 64-bit OS
+
+Framework Support:
+    - WiringPi (GC2 fork) - GPIO library with Arduino-like API
+    - lgpio - Modern kernel-based GPIO (recommended)
+    - pigpio - Hardware-timed GPIO (deprecated, Pi 1-4 only)
+
+Security Features:
+    - Command injection protection (v1.7.1+)
+    - Timeout protection on SSH operations
+    - Configurable host key verification
+
+For usage examples and documentation, see:
+    - README.md - Getting started guide
+    - docs/UPLOAD.md - Remote deployment guide
+    - docs/TESTING.md - Remote testing guide
+    - docs/DEBUGGING.md - Remote debugging guide
+
+Author: PlatformIO
+License: Apache 2.0
+"""
+
 import os
 import shlex
 import shutil
@@ -30,9 +73,54 @@ if _PLATFORM_DIR not in sys.path:
 
 
 class Linux_armPlatform(PlatformBase):
+    """
+    Main platform class for Linux ARM development.
+
+    This class extends PlatformIO's PlatformBase to provide ARM-specific
+    functionality including:
+        - Intelligent toolchain selection (native vs cross-compilation)
+        - Remote deployment via SSH/SCP/rsync
+        - Remote test execution
+        - Remote debugging via GDB + gdbserver
+        - Framework integration (WiringPi, lgpio, pigpio)
+
+    The platform automatically detects whether it's running on native ARM
+    Linux or needs cross-compilation toolchain, and configures the build
+    environment accordingly.
+
+    Attributes:
+        packages: Platform package dependencies (toolchain, frameworks)
+
+    Examples:
+        Configured via platformio.ini:
+
+        >>> # Cross-compilation from x86_64
+        >>> [env:raspberrypi_4b]
+        >>> platform = linux_arm
+        >>> framework = wiringpi
+        >>> board = raspberrypi_4b
+
+        >>> # Remote upload
+        >>> upload_protocol = scp
+        >>> upload_port = pi@raspberrypi.local:/home/pi/program
+
+    See Also:
+        - PlatformBase: Parent class from PlatformIO
+        - docs/UPLOAD.md: Remote deployment documentation
+    """
 
     @staticmethod
     def _is_native():
+        """
+        Detect if running natively on ARM Linux.
+
+        Returns:
+            bool: True if running on ARM Linux (32-bit or 64-bit), False otherwise.
+
+        Note:
+            Uses PlatformIO's get_systype() to detect the host system type.
+            Returns True for both linux_arm (32-bit) and linux_aarch64 (64-bit).
+        """
         # Lazy import to avoid breaking platform loading
         from platform_constants import SystemType
 
@@ -41,6 +129,21 @@ class Linux_armPlatform(PlatformBase):
 
     @property
     def packages(self):
+        """
+        Get platform package dependencies with intelligent toolchain selection.
+
+        Automatically excludes the cross-compilation toolchain package when
+        running on native ARM Linux or non-macOS systems, as these platforms
+        should use system-installed toolchains instead.
+
+        Returns:
+            dict: Package dependencies keyed by package name.
+
+        Note:
+            PlatformIO's bundled ARM toolchain only works on macOS x86_64.
+            On all other platforms (including native ARM Linux), the system's
+            installed toolchain is used instead (e.g., gcc-arm-linux-gnueabihf).
+        """
         # Lazy import to avoid breaking platform loading
         from platform_constants import SystemType, PackageName
 
@@ -53,6 +156,24 @@ class Linux_armPlatform(PlatformBase):
         return packages
 
     def configure_default_packages(self, variables, targets):
+        """
+        Configure default packages based on build configuration.
+
+        Args:
+            variables: Build variables dictionary containing framework and board configuration.
+            targets: Build targets list.
+
+        Returns:
+            dict: Configured package dependencies.
+
+        Raises:
+            PlatformioException: If attempting to cross-compile WiringPi framework.
+
+        Note:
+            WiringPi framework requires native execution on Raspberry Pi hardware
+            due to direct hardware access requirements. Cross-compilation is not
+            supported for WiringPi.
+        """
         # Lazy import to avoid breaking platform loading
         from platform_constants import Framework
 
@@ -122,7 +243,8 @@ class Linux_armPlatform(PlatformBase):
 
     def on_upload(self, target, source, env):
         """
-        Custom upload handler for Linux ARM platform.
+        Handle binary upload to Linux ARM platform.
+
         Supports multiple upload protocols: scp, rsync, ssh, manual.
 
         Args:
@@ -149,7 +271,18 @@ class Linux_armPlatform(PlatformBase):
         return handler(target, source, env)
 
     def _check_upload_tool(self, tool_name):
-        """Check if required upload tool is available."""
+        """
+        Check if required upload tool is available on system.
+
+        Args:
+            tool_name: Name of the upload tool (e.g., 'scp', 'rsync', 'ssh').
+
+        Raises:
+            PlatformioException: If the tool is not found in system PATH.
+
+        Note:
+            Provides platform-specific installation instructions for missing tools.
+        """
         if not shutil.which(tool_name):
             raise exception.PlatformioException(
                 f"Upload tool '{tool_name}' is not installed. "
@@ -160,13 +293,39 @@ class Linux_armPlatform(PlatformBase):
 
     def _parse_upload_port(self, upload_port, env):
         """
-        Parse upload_port into components.
-        Supported formats:
-          - user@host:/path/to/destination
-          - user@host
-          - host:/path
-          - host
-        Returns: (user, host, path)
+        Parse upload_port configuration into user, host, and path components.
+
+        Supports multiple formats:
+            - user@host:/path/to/destination
+            - user@host (uses default path)
+            - host:/path (uses default user)
+            - host (uses defaults for both)
+
+        Args:
+            upload_port: Upload port string from platformio.ini. Can be None,
+                in which case an exception is raised.
+            env: PlatformIO environment object for retrieving additional options
+                (upload_user, upload_path).
+
+        Returns:
+            tuple: A tuple of (user, host, path) where:
+                - user (str): SSH username
+                - host (str): SSH hostname or IP address
+                - path (str): Remote file path
+
+        Raises:
+            PlatformioException: If upload_port is None or has invalid format.
+
+        Examples:
+            >>> platform._parse_upload_port("pi@raspberrypi:/tmp/prog", env)
+            ('pi', 'raspberrypi', '/tmp/prog')
+
+            >>> platform._parse_upload_port("192.168.1.100", env)
+            ('pi', '192.168.1.100', '/tmp/program')  # uses defaults
+
+        Note:
+            Default values (user='pi', path='/tmp/program') can be overridden
+            via upload_user and upload_path options in platformio.ini.
         """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import parse_upload_port
@@ -189,7 +348,24 @@ class Linux_armPlatform(PlatformBase):
             raise exception.PlatformioException(str(e))
 
     def _upload_scp(self, target, source, env):
-        """Upload binary using SCP (Secure Copy Protocol)."""
+        """
+        Upload binary using SCP (Secure Copy Protocol).
+
+        Args:
+            target: Build target.
+            source: List of source files (binary path).
+            env: PlatformIO environment object.
+
+        Returns:
+            int: Exit code (0 for success, non-zero for failure).
+
+        Raises:
+            PlatformioException: If SCP is not installed, upload fails, or timeout occurs.
+
+        Note:
+            Supports optional post-upload execution via upload_run_after=true.
+            Timeout can be configured via upload_timeout option.
+        """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import SSHDefaults, Timeouts, UIConstants
@@ -258,7 +434,25 @@ class Linux_armPlatform(PlatformBase):
         return 0
 
     def _upload_rsync(self, target, source, env):
-        """Upload binary using rsync (efficient incremental transfer)."""
+        """
+        Upload binary using rsync (efficient incremental transfer).
+
+        Args:
+            target: Build target.
+            source: List of source files (binary path).
+            env: PlatformIO environment object.
+
+        Returns:
+            int: Exit code (0 for success, non-zero for failure).
+
+        Raises:
+            PlatformioException: If rsync is not installed, upload fails, or timeout occurs.
+
+        Note:
+            Rsync is more efficient than SCP for repeated uploads (only transfers changed data).
+            Supports optional post-upload execution via upload_run_after=true.
+            Default flags: '-avz' (archive, verbose, compress).
+        """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import SSHDefaults, RsyncDefaults, UIConstants
@@ -329,7 +523,25 @@ class Linux_armPlatform(PlatformBase):
     def _upload_ssh(self, target, source, env):
         """
         Upload binary using SSH with piped input.
-        This method uses SSH with cat to transfer the file.
+
+        This method transfers files by piping binary data through SSH to a remote
+        'cat' command, eliminating the need for SCP.
+
+        Args:
+            target: Build target.
+            source: List of source files (binary path).
+            env: PlatformIO environment object.
+
+        Returns:
+            int: Exit code (0 for success, non-zero for failure).
+
+        Raises:
+            PlatformioException: If SSH is not installed, upload fails, or timeout occurs.
+
+        Note:
+            This method uses 'cat > file && chmod +x file' on the remote host.
+            Supports optional post-upload execution via upload_run_after=true.
+            Command injection protection via shlex.quote.
         """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
@@ -400,7 +612,28 @@ class Linux_armPlatform(PlatformBase):
         return 0
 
     def _run_remote_command(self, user, host, ssh_port, ssh_key, remote_path, env):
-        """Run the uploaded program on the remote target."""
+        """
+        Run the uploaded program on the remote target.
+
+        Args:
+            user: SSH username.
+            host: SSH hostname or IP address.
+            ssh_port: SSH port number.
+            ssh_key: Path to SSH private key file (optional).
+            remote_path: Path to program on remote host.
+            env: PlatformIO environment object.
+
+        Returns:
+            int: Exit code from remote program execution.
+
+        Raises:
+            PlatformioException: If SSH connection fails or timeout occurs.
+
+        Note:
+            Supports custom run commands via upload_run_command option.
+            Default timeout: 60 seconds (configurable via upload_run_timeout).
+            Output is streamed directly to console (interactive mode).
+        """
         # Lazy import to avoid breaking platform loading
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import UIConstants, Timeouts
@@ -623,6 +856,7 @@ class Linux_armPlatform(PlatformBase):
     def configure_debug_session(self, debug_config: dict) -> dict:
         """
         Configure remote debugging session for ARM Linux targets.
+
         Supports GDB/gdbserver over SSH for remote debugging.
 
         Args:
@@ -660,8 +894,22 @@ class Linux_armPlatform(PlatformBase):
 
     def get_boards(self, id_=None):
         """
-        Return board configurations.
-        Overridden to add debug configuration to board definitions.
+        Return board configurations with debug support.
+
+        Overridden to add debug configuration to board definitions,
+        enabling remote debugging via gdbserver-ssh and gdb-remote.
+
+        Args:
+            id_: Optional board ID to retrieve specific board.
+                If None, returns all boards.
+
+        Returns:
+            dict or Board: Dictionary of all boards (if id_ is None),
+                or single Board object (if id_ is specified).
+
+        Note:
+            Automatically adds debug tools (gdbserver-ssh, gdb-remote)
+            to all board definitions.
         """
         result = super().get_boards(id_)
         if not result:
@@ -677,7 +925,21 @@ class Linux_armPlatform(PlatformBase):
                     for key, value in result.items()}
 
     def _add_debug_to_board(self, board):
-        """Add debug configuration to a board definition."""
+        """
+        Add debug configuration to a board definition.
+
+        Args:
+            board: Board configuration object.
+
+        Returns:
+            Board object with debug configuration added.
+
+        Note:
+            Adds support for two debug tools:
+                - gdbserver-ssh: Remote debugging via SSH tunnel to gdbserver
+                - gdb-remote: Direct TCP connection to gdbserver
+            Default tool is gdbserver-ssh.
+        """
         # Lazy import to avoid breaking platform loading
         from platform_constants import DebugTools
 
@@ -726,8 +988,27 @@ class Linux_armPlatform(PlatformBase):
 
     def on_test_upload(self, target, source, env):
         """
-        Custom test upload handler for Linux ARM platform.
-        Uploads test binaries to remote target via SSH and executes them.
+        Handle test binary upload to Linux ARM platform.
+
+        Uploads test binaries to remote target via SSH and executes them,
+        streaming output back to PlatformIO's test framework.
+
+        Args:
+            target: Build target.
+            source: List of source files (test binary path).
+            env: PlatformIO environment object.
+
+        Returns:
+            int: Exit code from test execution (0 for success).
+
+        Raises:
+            PlatformioException: If test_transport is invalid or not supported.
+
+        Note:
+            Supports two test transports:
+                - ssh: Automatic upload and execution via SSH
+                - manual: Display manual upload instructions
+            Configured via test_transport option in platformio.ini.
         """
         # Lazy import to avoid breaking platform loading
         from platform_constants import TestTransport, UIConstants
