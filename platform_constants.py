@@ -20,182 +20,184 @@ Centralized constants for Linux ARM platform to maintain single source of truth
 and improve code maintainability.
 """
 
+from typing import Final, List
+
 
 class SSHDefaults:
     """Default values for SSH connections and operations."""
 
     # Default SSH port
-    PORT = "22"
+    PORT: Final[str] = "22"
 
     # Default SSH username for Raspberry Pi and similar SBCs
-    USER = "pi"
+    USER: Final[str] = "pi"
 
     # Default upload destination path on remote target
-    UPLOAD_PATH = "/tmp/program"
+    UPLOAD_PATH: Final[str] = "/tmp/program"
 
     # Default test binary path on remote target
-    TEST_PATH = "/tmp/test_program"
+    TEST_PATH: Final[str] = "/tmp/test_program"
 
 
 class UploadProtocol:
     """Supported upload protocols for deploying binaries to remote targets."""
 
     # Secure Copy Protocol - simple file transfer
-    SCP = "scp"
+    SCP: Final[str] = "scp"
 
     # Rsync - efficient incremental file transfer
-    RSYNC = "rsync"
+    RSYNC: Final[str] = "rsync"
 
     # SSH with piped input - transfer via SSH with cat
-    SSH = "ssh"
+    SSH: Final[str] = "ssh"
 
     # Manual - display instructions to user
-    MANUAL = "manual"
+    MANUAL: Final[str] = "manual"
 
     # List of all valid protocols
-    ALL = [SCP, RSYNC, SSH, MANUAL]
+    ALL: Final[List[str]] = [SCP, RSYNC, SSH, MANUAL]
 
 
 class TestTransport:
     """Supported transport methods for test execution."""
 
     # Execute tests via SSH
-    SSH = "ssh"
+    SSH: Final[str] = "ssh"
 
     # Manual test execution (display instructions)
-    MANUAL = "manual"
+    MANUAL: Final[str] = "manual"
 
     # List of all valid transports
-    ALL = [SSH, MANUAL]
+    ALL: Final[List[str]] = [SSH, MANUAL]
 
 
 class Timeouts:
     """Timeout values in seconds for various operations."""
 
     # Upload operation timeout (SCP, rsync, SSH)
-    UPLOAD = 300
+    UPLOAD: Final[int] = 300
 
     # Remote command execution timeout after upload
-    UPLOAD_RUN = 300
+    UPLOAD_RUN: Final[int] = 300
 
     # Test binary upload timeout
-    TEST_UPLOAD = 300
+    TEST_UPLOAD: Final[int] = 300
 
     # Test execution timeout
-    TEST_EXECUTION = 600
+    TEST_EXECUTION: Final[int] = 600
 
     # Chmod operation timeout
-    CHMOD = 30
+    CHMOD: Final[int] = 30
 
 
 class TestConstants:
     """Constants for test execution and output parsing."""
 
     # Marker string for extracting exit code from test output
-    EXIT_CODE_MARKER = "__EXIT_CODE__:"
+    EXIT_CODE_MARKER: Final[str] = "__EXIT_CODE__:"
 
 
 class DebugTools:
     """Debug tool identifiers and configurations."""
 
     # GDB server over SSH tunnel
-    GDBSERVER_SSH = "gdbserver-ssh"
+    GDBSERVER_SSH: Final[str] = "gdbserver-ssh"
 
     # Direct GDB remote connection
-    GDB_REMOTE = "gdb-remote"
+    GDB_REMOTE: Final[str] = "gdb-remote"
 
     # Default debug tool
-    DEFAULT = GDBSERVER_SSH
+    DEFAULT: Final[str] = GDBSERVER_SSH
 
     # Default debug port for direct TCP connection
-    DEFAULT_PORT = "localhost:2345"
+    DEFAULT_PORT: Final[str] = "localhost:2345"
 
 
 class ToolchainPrefix:
     """Toolchain prefixes for cross-compilation."""
 
     # 64-bit ARM (ARMv8/AArch64) toolchain prefix
-    AARCH64 = "aarch64-linux-gnu-"
+    AARCH64: Final[str] = "aarch64-linux-gnu-"
 
     # 32-bit ARM (ARMv7) toolchain prefix
-    ARMV7 = "arm-linux-gnueabihf-"
+    ARMV7: Final[str] = "arm-linux-gnueabihf-"
 
 
 class GDBExecutable:
     """GDB executable names for different architectures."""
 
     # Native GDB (when running on ARM Linux)
-    NATIVE = "gdb"
+    NATIVE: Final[str] = "gdb"
 
     # 64-bit ARM GDB
-    AARCH64 = "aarch64-linux-gnu-gdb"
+    AARCH64: Final[str] = "aarch64-linux-gnu-gdb"
 
     # 32-bit ARM GDB
-    ARMV7 = "arm-linux-gnueabihf-gdb"
+    ARMV7: Final[str] = "arm-linux-gnueabihf-gdb"
 
 
 class Architecture:
     """Target architecture identifiers."""
 
     # 64-bit ARM (ARMv8)
-    AARCH64 = "aarch64"
+    AARCH64: Final[str] = "aarch64"
 
     # 32-bit ARM (ARMv7) - default for backward compatibility
-    ARMV7 = "armv7"
+    ARMV7: Final[str] = "armv7"
 
 
 class SystemType:
     """System type identifiers for platform detection."""
 
     # 32-bit ARM Linux
-    LINUX_ARM = "linux_arm"
+    LINUX_ARM: Final[str] = "linux_arm"
 
     # 64-bit ARM Linux
-    LINUX_AARCH64 = "linux_aarch64"
+    LINUX_AARCH64: Final[str] = "linux_aarch64"
 
     # macOS x86_64 (only platform with PlatformIO toolchain package)
-    DARWIN_X86_64 = "darwin_x86_64"
+    DARWIN_X86_64: Final[str] = "darwin_x86_64"
 
 
 class PackageName:
     """PlatformIO package names."""
 
     # Cross-compilation toolchain package
-    TOOLCHAIN_GCC_ARM = "toolchain-gccarmlinuxgnueabi"
+    TOOLCHAIN_GCC_ARM: Final[str] = "toolchain-gccarmlinuxgnueabi"
 
 
 class Framework:
     """Framework identifiers."""
 
     # WiringPi GPIO library
-    WIRINGPI = "wiringpi"
+    WIRINGPI: Final[str] = "wiringpi"
 
 
 class SSHOptions:
     """SSH command-line options for security and reliability."""
 
     # Disable strict host key checking (for automated deployments)
-    STRICT_HOST_KEY_CHECKING_NO = "StrictHostKeyChecking=no"
+    STRICT_HOST_KEY_CHECKING_NO: Final[str] = "StrictHostKeyChecking=no"
 
     # Don't save host keys (for automated deployments)
-    USER_KNOWN_HOSTS_FILE_NULL = "UserKnownHostsFile=/dev/null"
+    USER_KNOWN_HOSTS_FILE_NULL: Final[str] = "UserKnownHostsFile=/dev/null"
 
     # Reduce SSH output verbosity
-    LOG_LEVEL_ERROR = "LogLevel=ERROR"
+    LOG_LEVEL_ERROR: Final[str] = "LogLevel=ERROR"
 
 
 class RsyncDefaults:
     """Default values for rsync operations."""
 
     # Default rsync flags: archive mode, verbose, compress
-    FLAGS = "-avz"
+    FLAGS: Final[str] = "-avz"
 
 
 class UIConstants:
     """Constants for user interface and display."""
 
     # Width of separator lines in terminal output
-    SEPARATOR_WIDTH = 60
+    SEPARATOR_WIDTH: Final[int] = 60
 
     # Separator character
-    SEPARATOR_CHAR = "="
+    SEPARATOR_CHAR: Final[str] = "="

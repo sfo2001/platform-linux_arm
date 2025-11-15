@@ -60,6 +60,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+from typing import Any, Dict, List, Optional, Tuple
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
@@ -125,7 +126,7 @@ class Linux_armPlatform(PlatformBase):
         - platform_config.py: Configuration file support
     """
 
-    def __init__(self, manifest_path):
+    def __init__(self, manifest_path: str) -> None:
         """
         Initialize Linux ARM platform.
 
@@ -140,7 +141,7 @@ class Linux_armPlatform(PlatformBase):
         # Load platform configuration (global and project-local)
         self._config = get_platform_config()
 
-    def _get_config_default(self, key: str, fallback_default):
+    def _get_config_default(self, key: str, fallback_default: Any) -> Any:
         """
         Get configuration default value from config files.
 
@@ -163,7 +164,7 @@ class Linux_armPlatform(PlatformBase):
         return self._config.get(key, fallback_default)
 
     @staticmethod
-    def _is_native():
+    def _is_native() -> bool:
         """
         Detect if running natively on ARM Linux.
 
@@ -181,7 +182,7 @@ class Linux_armPlatform(PlatformBase):
         return SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systype
 
     @property
-    def packages(self):
+    def packages(self) -> Dict[str, dict]:
         """
         Get platform package dependencies with intelligent toolchain selection.
 
@@ -208,7 +209,7 @@ class Linux_armPlatform(PlatformBase):
             del packages[PackageName.TOOLCHAIN_GCC_ARM]
         return packages
 
-    def configure_default_packages(self, variables, targets):
+    def configure_default_packages(self, variables: Dict[str, Any], targets: List[str]) -> Dict[str, dict]:
         """
         Configure default packages based on build configuration.
 
