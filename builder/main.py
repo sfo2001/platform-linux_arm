@@ -134,7 +134,7 @@ AlwaysBuild(target_size)
 # Target: Upload program to remote target
 #
 
-def _upload_handler(target, source, env):
+def _upload_handler(target, source, env) -> int:
     """
     Handle upload target.
 
@@ -162,7 +162,7 @@ AlwaysBuild(target_upload)
 # Target: Upload and execute tests on remote target
 #
 
-def _test_upload_handler(target, source, env):
+def _test_upload_handler(target, source, env) -> int:
     """
     Handle test upload target.
 
