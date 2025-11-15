@@ -13,15 +13,18 @@ echo ""
 # Resolve script and repo directories BEFORE any cd commands
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-BUILD_DIR="${BUILD_DIR:-/tmp/lg-build}"
 CROSS_PREFIX="${CROSS_PREFIX:-arm-linux-gnueabihf-}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/arm-linux-gnueabihf}"
 
-# Detect architecture from cross-compiler prefix
+# Detect architecture from cross-compiler prefix and set arch-specific build dir
+# This prevents build contamination when switching between 32-bit and 64-bit builds
+# (make's timestamp-based dependency tracking doesn't detect compiler changes)
 if [[ "$CROSS_PREFIX" == "aarch64-"* ]]; then
     ARCH_NAME="ARM 64-bit (AArch64)"
+    BUILD_DIR="${BUILD_DIR:-/tmp/lg-build-aarch64}"
 else
     ARCH_NAME="ARM 32-bit (ARMv7)"
+    BUILD_DIR="${BUILD_DIR:-/tmp/lg-build-armhf}"
 fi
 
 # Check if cross-compiler is installed
