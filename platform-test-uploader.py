@@ -14,10 +14,35 @@
 # limitations under the License.
 
 """
-Remote SSH Test Uploader for Linux ARM Platform
+Remote SSH Test Uploader for Linux ARM Platform.
 
-This script uploads test binaries to a remote Linux ARM target via SSH,
-executes them, and streams the output back to PlatformIO's test framework.
+This module handles uploading and executing test binaries on remote Linux ARM
+targets via SSH/SCP, with real-time output streaming back to PlatformIO's test
+framework.
+
+Features:
+    - Automatic test binary upload via SCP
+    - Remote execution with exit code capture
+    - Real-time output streaming
+    - Configurable SSH authentication (password, key)
+    - Error handling and timeout support
+
+Usage:
+    This module is automatically invoked by PlatformIO when:
+        pio test
+
+    Configuration in platformio.ini:
+        [env:raspberrypi_4b]
+        test_transport = ssh
+        test_port = pi@raspberrypi.local:/tmp/test_program
+
+Security:
+    - SSH host key verification disabled by default (for CI/CD automation)
+    - Use strict checking for production: test_strict_host_check = yes
+    - Requires SSH key or password authentication
+    - Command injection protection via shlex.quote
+
+See REMOTE_TESTING.md for detailed documentation.
 """
 
 import os
@@ -33,9 +58,44 @@ from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
 class RemoteTestUploader:
     """
     Handles uploading and executing test binaries on remote Linux ARM targets via SSH.
+
+    This class manages the complete remote testing workflow:
+        1. Parse test configuration (host, port, credentials)
+        2. Upload test binary via SCP
+        3. Execute tests remotely with output streaming
+        4. Capture and return exit code
+
+    Attributes:
+        target: Build target from PlatformIO.
+        source: List of source files (test binary path).
+        env: PlatformIO environment object.
+        upload_port: SSH connection string (user@host:/path).
+        user: SSH username.
+        host: SSH hostname or IP address.
+        remote_path: Remote path for test binary.
+        ssh_port: SSH port number (default: 22).
+        ssh_key: Path to SSH private key file (optional).
+
+    Examples:
+        Typically invoked automatically by PlatformIO test framework:
+
+        >>> uploader = RemoteTestUploader(target, source, env)
+        >>> exit_code = uploader.run()
+
+    See Also:
+        - docs/TESTING.md: Remote testing documentation
+        - platform.on_test_upload: Integration with PlatformIO
     """
 
     def __init__(self, target, source, env):
+        """
+        Initialize the remote test uploader.
+
+        Args:
+            target: Build target from PlatformIO.
+            source: List of source files (test binary path).
+            env: PlatformIO environment object for configuration retrieval.
+        """
         # Lazy import to avoid breaking platform loading
         from platform_constants import SSHDefaults
 
@@ -51,12 +111,20 @@ class RemoteTestUploader:
 
     def parse_test_port(self):
         """
-        Parse test_port configuration.
+        Parse test_port configuration into connection components.
+
         Supported formats:
-          - user@host:/path/to/test_binary
-          - user@host
-          - host:/path
-          - host
+            - user@host:/path/to/test_binary
+            - user@host (uses default path)
+            - host:/path (uses default user)
+            - host (uses defaults for both)
+
+        Raises:
+            Exception: If test_port and upload_port are both not configured.
+
+        Note:
+            Falls back to upload_port if test_port is not specified.
+            Default values can be overridden via test_username and test_path options.
         """
         # Lazy import to avoid breaking platform loading
         from platform_constants import SSHDefaults
@@ -98,7 +166,15 @@ class RemoteTestUploader:
             self.ssh_key = self.env.GetProjectOption("upload_ssh_key", None)
 
     def check_ssh_available(self):
-        """Check if SSH is available on the system."""
+        """
+        Check if SSH and SCP are available on the system.
+
+        Raises:
+            Exception: If SSH or SCP is not found in system PATH.
+
+        Note:
+            Provides platform-specific installation instructions for missing tools.
+        """
         if not shutil.which("ssh"):
             raise Exception(
                 "SSH is not installed. Please install it using your system package manager:\n"
@@ -113,7 +189,21 @@ class RemoteTestUploader:
             )
 
     def build_ssh_command(self, remote_command=None):
-        """Build SSH command with proper authentication."""
+        """
+        Build SSH command with proper authentication.
+
+        Args:
+            remote_command: Optional command to execute on remote host.
+
+        Returns:
+            list: SSH command parts ready for subprocess execution.
+
+        Raises:
+            Exception: If SSH configuration is invalid.
+
+        Note:
+            Automatically configures port, key authentication, and host key verification.
+        """
         # Create SSH config
         try:
             config = SSHConnectionConfig(
@@ -131,7 +221,22 @@ class RemoteTestUploader:
         return builder.build_ssh_command(remote_command)
 
     def build_scp_command(self, local_file, remote_file):
-        """Build SCP command for file upload."""
+        """
+        Build SCP command for file upload.
+
+        Args:
+            local_file: Path to local file to upload.
+            remote_file: Remote destination path.
+
+        Returns:
+            list: SCP command parts ready for subprocess execution.
+
+        Raises:
+            Exception: If SSH configuration is invalid.
+
+        Note:
+            Uses shared SSH configuration (port, key, host verification).
+        """
         # Create SSH config
         try:
             config = SSHConnectionConfig(
@@ -149,7 +254,18 @@ class RemoteTestUploader:
         return builder.build_scp_command(local_file, remote_file)
 
     def upload_test_binary(self):
-        """Upload test binary to remote target via SCP."""
+        """
+        Upload test binary to remote target via SCP.
+
+        Uploads the test binary and makes it executable on the remote host.
+
+        Raises:
+            Exception: If upload fails, timeout occurs, or chmod fails.
+
+        Note:
+            Default timeout: 120 seconds (configurable via test_upload_timeout).
+            Automatically runs 'chmod +x' on the uploaded binary.
+        """
         # Lazy import to avoid breaking platform loading
         from platform_constants import Timeouts
 
@@ -302,7 +418,23 @@ class RemoteTestUploader:
         return exit_code
 
     def run(self):
-        """Main entry point for the test uploader."""
+        """
+        Run the complete remote testing workflow.
+
+        Orchestrates the complete remote testing workflow:
+            1. Parse configuration
+            2. Check prerequisites
+            3. Upload test binary
+            4. Execute tests
+            5. Return exit code
+
+        Returns:
+            int: Exit code from test execution (0 for success, non-zero for failure).
+
+        Note:
+            Handles all exceptions and returns appropriate exit codes.
+            Provides user-friendly error messages for common failures.
+        """
         try:
             # Parse configuration
             self.parse_test_port()
@@ -352,7 +484,32 @@ class RemoteTestUploader:
 def upload_test(target, source, env):
     """
     Entry point called by PlatformIO test framework.
-    This function is registered as the upload handler for tests.
+
+    This function is registered as the upload handler for tests and is
+    automatically invoked when 'pio test' is executed with test_transport=ssh.
+
+    Args:
+        target: Build target from PlatformIO.
+        source: List of source files (test binary path).
+        env: PlatformIO environment object.
+
+    Returns:
+        int: Exit code from test execution (0 for success).
+
+    Examples:
+        Automatically called by PlatformIO test framework:
+
+        >>> # platformio.ini
+        >>> [env:raspberrypi_4b]
+        >>> test_transport = ssh
+        >>> test_port = pi@raspberrypi.local:/tmp/test
+
+        >>> # Command line
+        >>> $ pio test
+
+    See Also:
+        - RemoteTestUploader: Main implementation class
+        - platform.on_test_upload: Platform integration
     """
     uploader = RemoteTestUploader(target, source, env)
     return uploader.run()
