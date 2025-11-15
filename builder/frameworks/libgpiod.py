@@ -183,10 +183,10 @@ if libgpiod_include:
             else:
                 libgpiod_version = "v1"
                 print("Detected libgpiod API version: v1.x")
-    except:
+    except (OSError, UnicodeDecodeError) as e:
         # If we can't detect, assume v1 for backward compatibility
         libgpiod_version = "v1"
-        print("Could not detect libgpiod API version, assuming v1.x")
+        print(f"Could not detect libgpiod API version ({e.__class__.__name__}), assuming v1.x")
 
 if not libgpiod_include or not libgpiod_lib:
     arch_name = "aarch64 (64-bit)" if is_aarch64 else "armhf (32-bit)"
