@@ -88,36 +88,65 @@ The script will:
 
 **To build v2.x instead**: Modify the script to check out a v2.x tag before building (see "Building v2.x" below).
 
-#### Windows (MSYS2/MinGW)
+#### Windows (MSYS2 + ARM GNU Toolchain)
 
-On Windows, use the MSYS2-based setup script:
+On Windows, libgpiod cross-compilation uses a hybrid approach combining MSYS2 build tools with ARM's official cross-compilation toolchains:
+
+**Prerequisites:**
+
+1. **Install MSYS2** from https://www.msys2.org/
+2. **Install build tools** in MSYS2 MINGW64 shell:
+   ```bash
+   pacman -S base-devel git autoconf autoconf-archive automake libtool pkgconf
+   ```
+
+3. **Download ARM GNU Toolchain** from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+   - For 32-bit ARM: `arm-gnu-toolchain-*-mingw-w64-i686-arm-none-linux-gnueabihf.zip`
+   - For 64-bit ARM: `arm-gnu-toolchain-*-mingw-w64-i686-aarch64-none-linux-gnu.zip`
+   - Extract to a known location (e.g., `C:\arm-toolchain\`)
+
+4. **Add toolchain to PATH** in MSYS2 shell:
+   ```bash
+   # For 32-bit ARM
+   export PATH="/c/arm-toolchain/arm-gnu-toolchain-*/bin:$PATH"
+
+   # For 64-bit ARM
+   export PATH="/c/arm-toolchain-aarch64/arm-gnu-toolchain-*/bin:$PATH"
+   ```
+
+**Build libgpiod:**
 
 ```bash
-# 1. Install MSYS2 from https://www.msys2.org/
-# 2. Open "MSYS2 MINGW64" shell
-# 3. Navigate to the repository directory
+# Navigate to repository in MSYS2 MINGW64 shell
+cd /path/to/platform-linux_arm
 
 # Build and install for 32-bit ARM (armhf)
+# Note: Toolchain uses "arm-none-linux-gnueabihf" prefix, create symlinks if needed
+CROSS_PREFIX=arm-linux-gnueabihf- \
+INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
 ./scripts/setup-libgpiod-cross-windows.sh
 
 # Build and install for 64-bit ARM (aarch64)
-CROSS_PREFIX=aarch64-none-linux-gnu- \
+CROSS_PREFIX=aarch64-linux-gnu- \
 INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 ./scripts/setup-libgpiod-cross-windows.sh
 ```
 
 **What the script does**:
-- Installs build dependencies via pacman (MSYS2 package manager)
-- Installs ARM cross-compilation toolchains from MSYS2 repositories
+- Verifies MSYS2 build tools are available
+- Verifies ARM cross-compiler is in PATH
+- Clones libgpiod from official kernel.org repository
 - Builds libgpiod from source using autotools
 - Installs to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
 
 **Requirements**:
 - Windows 10/11 (64-bit)
-- MSYS2 installed (download from https://www.msys2.org/)
+- MSYS2 installed with build tools
+- ARM GNU Toolchain (download ~500MB per architecture)
 - At least 2GB free disk space for toolchains and build artifacts
 
-**Note**: The Windows setup uses MSYS2's MinGW toolchains (`arm-none-linux-gnueabihf-*` and `aarch64-none-linux-gnu-*`), which are compatible with the PlatformIO build system. The script automatically handles toolchain prefix detection.
+**Why the hybrid approach?**
+MSYS2 doesn't provide ARM Linux cross-compilation toolchains in its package repository (only bare-metal ARM toolchains). Using ARM's official toolchains ensures compatibility and provides the latest compiler versions.
 
 ### Option 1: System Package (Multiarch) - Deprecated
 
@@ -616,11 +645,12 @@ The platform's CI workflow automatically builds libgpiod from source for both AR
 4. Build examples with PlatformIO
 
 **Windows:**
-1. Setup MSYS2 environment
-2. Install ARM cross-compilation toolchains via pacman
-3. Run `setup-libgpiod-cross-windows.sh` for armhf (32-bit)
-4. Run `setup-libgpiod-cross-windows.sh` for aarch64 (64-bit)
-5. Build examples with PlatformIO
+1. Download ARM GNU Toolchains from ARM's official website
+2. Setup MSYS2 environment with build tools
+3. Add downloaded toolchains to PATH
+4. Run `setup-libgpiod-cross-windows.sh` for armhf (32-bit)
+5. Run `setup-libgpiod-cross-windows.sh` for aarch64 (64-bit)
+6. Build examples with PlatformIO
 
 This approach:
 - ✅ Works on Ubuntu 22.04, 24.04, Windows 10/11, and future versions
@@ -701,29 +731,40 @@ dpkg -l | grep libgpiod
 
 If missing, install multiarch packages as described in "Installation" section.
 
-### Windows: MSYS2 not found
+### Windows: MSYS2 build tools not found
 
 **Symptom**:
 ```
-❌ ERROR: MSYS2 not found. This script requires MSYS2 environment.
+❌ ERROR: MSYS2 build tools not found.
 ```
 
-**Solution**: Install MSYS2 from https://www.msys2.org/ and run the script from an "MSYS2 MINGW64" shell.
+**Solution**: Install MSYS2 from https://www.msys2.org/ and install build tools:
+```bash
+pacman -S base-devel git autoconf autoconf-archive automake libtool pkgconf
+```
+Run the script from an "MSYS2 MINGW64" shell.
 
-### Windows: Cross-compiler not found after installation
+### Windows: Cross-compiler not found
 
 **Symptom**:
 ```
 ❌ ERROR: Cross-compiler not found: arm-linux-gnueabihf-gcc
 ```
 
-**Solution**: The script should automatically detect the MSYS2 toolchain naming. If this fails, ensure you're running from the MSYS2 MINGW64 shell (not MSYS, UCRT64, or other variants).
+**Solution**:
+1. Download the ARM GNU Toolchain from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+2. Extract the toolchain to a known location
+3. Add the toolchain's `bin` directory to your PATH before running the script:
+   ```bash
+   export PATH="/c/path/to/arm-gnu-toolchain-*/bin:$PATH"
+   ```
+4. Verify the compiler is available: `which arm-linux-gnueabihf-gcc`
 
 ### Windows: Build time exceeds 10 minutes
 
-**Cause**: First-time MSYS2 package installation can be slow, especially the ARM toolchains (1-2GB download).
+**Cause**: First-time setup includes downloading ARM toolchains (~500MB each) and MSYS2 build tools. The libgpiod build itself takes 3-5 minutes.
 
-**Solution**: This is normal for first-time setup. Subsequent builds use cached packages and are much faster. Consider using pre-built binaries for local development if build time is critical.
+**Solution**: This is normal for first-time setup. Subsequent builds reuse cached toolchains and are much faster. The ARM toolchain download is a one-time operation per architecture.
 
 ## Command-Line Tools
 

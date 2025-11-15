@@ -144,25 +144,65 @@ jobs:
             libtool
             pkgconf
 
-      # Windows: Install ARM cross-compilation toolchains via MSYS2
-      - name: Install ARM toolchains (Windows/MSYS2)
-        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
-        shell: msys2 {0}
-        run: |
-          echo "Installing ARM cross-compilation toolchains via pacman..."
-          pacman -S --needed --noconfirm \
-            mingw-w64-x86_64-arm-none-linux-gnueabihf-toolchain
-
       # Windows: Build libgpiod for ARM cross-compilation (32-bit)
       - name: Build libgpiod for ARM cross-compilation (32-bit) - Windows
         if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
         shell: msys2 {0}
         run: |
           echo "Building libgpiod library for ARM 32-bit..."
-          export PATH="/mingw64/bin:$PATH"
-          CROSS_PREFIX=arm-none-linux-gnueabihf- \
+
+          # Find the ARM toolchain that was downloaded earlier
+          TOOLCHAIN_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit 2>/dev/null || echo "")
+
+          if [ -z "$TOOLCHAIN_DIR" ]; then
+            echo "❌ ERROR: ARM toolchain not found. Make sure the 'Install ARM toolchains (Windows)' step ran successfully."
+            exit 1
+          fi
+
+          echo "Found ARM toolchain: $TOOLCHAIN_DIR"
+
+          # Add toolchain to PATH (convert to Unix-style path for MSYS2)
+          TOOLCHAIN_BIN="$TOOLCHAIN_DIR/bin"
+          export PATH="$TOOLCHAIN_BIN:$PATH"
+
+          # Verify cross-compiler is available
+          if command -v arm-linux-gnueabihf-gcc &> /dev/null; then
+            echo "✓ Cross-compiler found: $(arm-linux-gnueabihf-gcc --version | head -1)"
+          else
+            echo "❌ ERROR: arm-linux-gnueabihf-gcc not found in PATH"
+            exit 1
+          fi
+
+          # Build libgpiod
+          CROSS_PREFIX=arm-linux-gnueabihf- \
           INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
           ./scripts/setup-libgpiod-cross-windows.sh
+
+      # Windows: Download ARM64 toolchain for libgpiod cross-compilation
+      - name: Download ARM64 toolchain (Windows)
+        if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
+        shell: bash
+        run: |
+          echo "Downloading ARM64 GNU Toolchain for Windows..."
+          curl -L -o gcc-arm64.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-aarch64-none-linux-gnu.zip"
+
+          echo "Extracting ARM64 toolchain..."
+          unzip -q gcc-arm64.zip
+
+          # Find the extracted directory
+          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*aarch64*" -print -quit | sed 's|^\./||')
+          echo "Found ARM64 toolchain directory: $TOOLCHAIN_DIR"
+
+          # Create symlinks from aarch64-linux-gnu-* to aarch64-none-linux-gnu-*
+          echo "Creating symlinks for PlatformIO compatibility..."
+          cd "$TOOLCHAIN_DIR/bin"
+          for file in aarch64-none-linux-gnu-*; do
+            link_name=$(echo "$file" | sed 's/aarch64-none-linux-gnu-/aarch64-linux-gnu-/')
+            if [ ! -e "$link_name" ]; then
+              ln -s "$file" "$link_name"
+              echo "  Created: $link_name -> $file"
+            fi
+          done
 
       # Windows: Build libgpiod for ARM cross-compilation (64-bit)
       - name: Build libgpiod for ARM cross-compilation (64-bit) - Windows
@@ -170,12 +210,31 @@ jobs:
         shell: msys2 {0}
         run: |
           echo "Building libgpiod library for ARM 64-bit..."
-          # Install aarch64 toolchain
-          pacman -S --needed --noconfirm \
-            mingw-w64-x86_64-aarch64-none-linux-gnu-toolchain
 
-          export PATH="/mingw64/bin:$PATH"
-          CROSS_PREFIX=aarch64-none-linux-gnu- \
+          # Find the ARM64 toolchain
+          TOOLCHAIN_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type d -iname "arm-gnu-toolchain*aarch64*" -print -quit 2>/dev/null || echo "")
+
+          if [ -z "$TOOLCHAIN_DIR" ]; then
+            echo "❌ ERROR: ARM64 toolchain not found."
+            exit 1
+          fi
+
+          echo "Found ARM64 toolchain: $TOOLCHAIN_DIR"
+
+          # Add toolchain to PATH
+          TOOLCHAIN_BIN="$TOOLCHAIN_DIR/bin"
+          export PATH="$TOOLCHAIN_BIN:$PATH"
+
+          # Verify cross-compiler is available
+          if command -v aarch64-linux-gnu-gcc &> /dev/null; then
+            echo "✓ Cross-compiler found: $(aarch64-linux-gnu-gcc --version | head -1)"
+          else
+            echo "❌ ERROR: aarch64-linux-gnu-gcc not found in PATH"
+            exit 1
+          fi
+
+          # Build libgpiod
+          CROSS_PREFIX=aarch64-linux-gnu- \
           INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
           ./scripts/setup-libgpiod-cross-windows.sh
 
