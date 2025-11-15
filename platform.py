@@ -418,13 +418,12 @@ class Linux_armPlatform(PlatformBase):
             raise exception.PlatformioException(str(e))
 
         # Get custom run command or use default
-        # Use shlex.quote to prevent command injection
         run_command = env.GetProjectOption("upload_run_command", None)
         if run_command:
-            # For custom commands, use as-is
+            # Custom commands are trusted (from platformio.ini), passed as-is
             remote_command = run_command
         else:
-            # For simple path execution, quote the path
+            # For simple path execution, quote the path to prevent injection
             remote_command = shlex.quote(remote_path)
 
         # Build SSH command using shared builder
@@ -563,6 +562,7 @@ class Linux_armPlatform(PlatformBase):
         remote_command = "gdbserver - " + shlex.quote(prog_path)
         builder = SSHCommandBuilder(config)
         ssh_cmd_parts = builder.build_ssh_command(remote_command, extra_opts=["-T"])
+        # Quote all parts for defense in depth (even though literal parts like "ssh" don't need it)
         ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
 
         debug_config["server_executable"] = None
