@@ -78,11 +78,6 @@ jobs:
           - os: windows-latest
             example: examples/libgpiod-blink-v2
 
-          # Exclude libgpiod examples on macOS (no automated setup script)
-          - os: macos-latest
-            example: examples/libgpiod-blink
-          - os: macos-latest
-            example: examples/libgpiod-button
 
     steps:
       - uses: actions/checkout@v4
@@ -389,6 +384,43 @@ jobs:
         run: |
           brew tap messense/macos-cross-toolchains
           brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
+
+      # macOS: Install autotools for libgpiod cross-compilation
+      - name: Install autotools for libgpiod (macOS)
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod')
+        run: |
+          brew install autoconf autoconf-archive automake libtool pkg-config
+
+      # macOS: Cache built libgpiod libraries
+      - name: Cache libgpiod libraries (macOS)
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod')
+        uses: actions/cache@v4
+        id: cache-macos-libgpiod
+        with:
+          path: |
+            ~/.local/arm-linux-gnueabihf
+            ~/.local/aarch64-linux-gnu
+          key: ${{ runner.os }}-libgpiod-${{ hashFiles('scripts/setup-libgpiod-cross.sh') }}
+
+      # macOS: Build libgpiod for ARM cross-compilation (32-bit)
+      - name: Build libgpiod for ARM cross-compilation (32-bit) - macOS
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod') && steps.cache-macos-libgpiod.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "Building libgpiod library for ARM 32-bit on macOS..."
+          CROSS_PREFIX=arm-unknown-linux-gnueabihf- \
+          INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
+          ./scripts/setup-libgpiod-cross.sh
+
+      # macOS: Build libgpiod for ARM cross-compilation (64-bit)
+      - name: Build libgpiod for ARM cross-compilation (64-bit) - macOS
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod') && steps.cache-macos-libgpiod.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "Building libgpiod library for ARM 64-bit on macOS..."
+          CROSS_PREFIX=aarch64-unknown-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          ./scripts/setup-libgpiod-cross.sh
 
       # Debug: Verify PATH (Windows only)
       - name: Debug PATH (Windows)

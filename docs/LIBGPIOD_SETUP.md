@@ -88,6 +88,62 @@ The script will:
 
 **To build v2.x instead**: Modify the script to check out a v2.x tag before building (see "Building v2.x" below).
 
+#### macOS (Homebrew Cross-Compilation Toolchains)
+
+On macOS, libgpiod cross-compilation uses Homebrew cross-compilation toolchains:
+
+**Prerequisites:**
+
+1. **Install Homebrew** (if not already installed):
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+
+2. **Install ARM cross-compilation toolchains**:
+   ```bash
+   brew tap messense/macos-cross-toolchains
+   brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
+   ```
+
+3. **Install autotools for building libgpiod**:
+   ```bash
+   brew install autoconf autoconf-archive automake libtool pkg-config
+   ```
+
+**Build libgpiod:**
+
+```bash
+# Navigate to repository
+cd /path/to/platform-linux_arm
+
+# Build and install for 32-bit ARM (armhf)
+CROSS_PREFIX=arm-unknown-linux-gnueabihf- \
+INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
+./scripts/setup-libgpiod-cross.sh
+
+# Build and install for 64-bit ARM (aarch64)
+CROSS_PREFIX=aarch64-unknown-linux-gnu- \
+INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+./scripts/setup-libgpiod-cross.sh
+```
+
+**What the script does**:
+- Verifies ARM cross-compiler is available
+- Clones libgpiod from official kernel.org repository
+- Cross-compiles using autotools for ARM targets
+- Installs to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
+
+**Requirements**:
+- macOS 11.0 (Big Sur) or later
+- Homebrew package manager
+- ARM cross-compilation toolchains (~200MB per architecture)
+- At least 2GB free disk space for toolchains and build artifacts
+
+**Key Differences from Ubuntu**:
+- Toolchain naming: macOS uses `arm-unknown-linux-gnueabihf-*` instead of `arm-linux-gnueabihf-*`
+- Install location: Libraries install to `~/.local/arm-linux-gnueabihf/` (same as Ubuntu) for compatibility
+- Package manager: Homebrew instead of apt-get
+
 #### Windows (MSYS2 + ARM GNU Toolchain)
 
 On Windows, libgpiod cross-compilation uses a hybrid approach combining MSYS2 build tools with ARM's official cross-compilation toolchains:
@@ -634,7 +690,7 @@ if (ret > 0) {
 
 ## CI/CD Integration
 
-The platform's CI workflow automatically builds libgpiod from source for both ARM architectures on Ubuntu and Windows. This ensures consistent, reliable builds across all platforms without dependency on external package repositories.
+The platform's CI workflow automatically builds libgpiod from source for both ARM architectures on Ubuntu, macOS, and Windows. This ensures consistent, reliable builds across all platforms without dependency on external package repositories.
 
 ### Workflow Steps
 
@@ -643,6 +699,13 @@ The platform's CI workflow automatically builds libgpiod from source for both AR
 2. Run `setup-libgpiod-cross.sh` for armhf (32-bit)
 3. Run `setup-libgpiod-cross.sh` for aarch64 (64-bit)
 4. Build examples with PlatformIO
+
+**macOS:**
+1. Install Homebrew cross-compilation toolchains
+2. Install autotools via Homebrew
+3. Run `setup-libgpiod-cross.sh` for armhf (32-bit)
+4. Run `setup-libgpiod-cross.sh` for aarch64 (64-bit)
+5. Build examples with PlatformIO
 
 **Windows:**
 1. Download ARM GNU Toolchains from ARM's official website
@@ -653,12 +716,12 @@ The platform's CI workflow automatically builds libgpiod from source for both AR
 6. Build examples with PlatformIO
 
 This approach:
-- ✅ Works on Ubuntu 22.04, 24.04, Windows 10/11, and future versions
+- ✅ Works on Ubuntu 22.04, 24.04, macOS 11+, Windows 10/11, and future versions
 - ✅ Uses official kernel.org source code
 - ✅ No external package repository dependencies
 - ✅ Consistent with lgpio build pattern
 - ✅ Provides latest stable libgpiod version (v1.x by default)
-- ✅ Enables Windows developers to verify builds locally
+- ✅ Enables macOS and Windows developers to verify builds locally
 
 ## Troubleshooting
 
@@ -765,6 +828,60 @@ Run the script from an "MSYS2 MINGW64" shell.
 **Cause**: First-time setup includes downloading ARM toolchains (~500MB each) and MSYS2 build tools. The libgpiod build itself takes 3-5 minutes.
 
 **Solution**: This is normal for first-time setup. Subsequent builds reuse cached toolchains and are much faster. The ARM toolchain download is a one-time operation per architecture.
+
+### macOS: Homebrew cross-compiler not found
+
+**Symptom**:
+```
+❌ ERROR: Cross-compiler not found: arm-unknown-linux-gnueabihf-gcc
+```
+
+**Solution**:
+1. Ensure you've installed the Homebrew cross-compilation toolchains:
+   ```bash
+   brew tap messense/macos-cross-toolchains
+   brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
+   ```
+
+2. Verify the compilers are in your PATH:
+   ```bash
+   which arm-unknown-linux-gnueabihf-gcc
+   which aarch64-unknown-linux-gnu-gcc
+   ```
+
+3. If the compilers are installed but not found, add Homebrew bin directory to PATH:
+   ```bash
+   # For Intel Macs
+   export PATH="/usr/local/bin:$PATH"
+
+   # For Apple Silicon Macs
+   export PATH="/opt/homebrew/bin:$PATH"
+   ```
+
+### macOS: autotools not found
+
+**Symptom**:
+```
+❌ ERROR: Missing required build tools: autoconf automake pkg-config
+```
+
+**Solution**: Install autotools via Homebrew:
+```bash
+brew install autoconf autoconf-archive automake libtool pkg-config
+```
+
+### macOS: Build fails with "unknown target" error
+
+**Cause**: The cross-compiler may not be properly configured for Linux targets.
+
+**Solution**: Ensure you're using the correct cross-compiler prefix in the build command:
+```bash
+# For 32-bit ARM
+CROSS_PREFIX=arm-unknown-linux-gnueabihf- ./scripts/setup-libgpiod-cross.sh
+
+# For 64-bit ARM
+CROSS_PREFIX=aarch64-unknown-linux-gnu- ./scripts/setup-libgpiod-cross.sh
+```
 
 ## Command-Line Tools
 
