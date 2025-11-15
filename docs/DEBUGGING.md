@@ -9,6 +9,32 @@
 
 ---
 
+## Security Note for Remote Debugging
+
+⚠️ **Security Considerations**:
+
+Remote debugging uses SSH with GDB to connect to target devices. Ensure secure practices:
+
+- 🔐 **SSH Keys**: Use secure SSH keys (see [SECURITY.md](../SECURITY.md))
+- 🌐 **Network Security**: Use trusted networks only (avoid public WiFi)
+- 👤 **User Permissions**: Debug sessions run with target user permissions
+- 🏭 **Environment**: Use remote debugging in development/testing only, **not production**
+
+**Debug sessions expose**:
+- Full process memory access
+- Ability to modify program state
+- Potential information disclosure
+
+**Best Practices**:
+- Only debug on development/test hardware
+- Use VPN or SSH tunnels for remote debugging over untrusted networks
+- Disable debug capabilities in production builds
+- Verify debug target identity before connecting
+
+For comprehensive security guidelines, see [SECURITY.md](../SECURITY.md).
+
+---
+
 ## Overview
 
 This platform supports IDE-integrated remote debugging of ARM Linux applications using GDB and gdbserver over SSH. This is the industry-standard approach for debugging userland Linux applications on embedded ARM devices.

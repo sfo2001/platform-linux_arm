@@ -116,6 +116,29 @@ See `examples/` directory for more:
 - `remote-deployment/` - Automated deployment example
 - `remote-debugging/` - Remote debugging setup
 
+## Security Considerations
+
+This platform uses SSH for remote operations (upload, test, debug). Please review security best practices:
+
+- 📖 **Security Guidelines**: See [SECURITY.md](SECURITY.md) for comprehensive security documentation
+- 🔐 **SSH Key Setup**: Use dedicated SSH keys for PlatformIO (not personal keys)
+- ⏱️ **Timeouts**: Configure timeouts to prevent hung connections
+- ✅ **Host Verification**: Enable strict host key checking in production environments
+
+**Quick Security Checklist**:
+- [ ] Using dedicated SSH key (not personal key)
+- [ ] SSH key permissions set to 600 (`chmod 600 ~/.ssh/key`)
+- [ ] Host key verification enabled for production
+- [ ] Timeouts configured appropriately
+- [ ] No credentials committed to version control
+
+For detailed security guidance, configuration options, and best practices, see [SECURITY.md](SECURITY.md).
+
+**Recent Security Improvements (v1.7.1)**:
+- ✅ Fixed critical command injection vulnerabilities (CVSS 8.0-9.0)
+- ✅ Added timeout protection against DoS attacks
+- ✅ Comprehensive security documentation
+
 ## Supported Boards
 
 | Board ID | Description | Frameworks | Architectures |

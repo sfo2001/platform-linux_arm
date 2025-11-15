@@ -449,6 +449,61 @@ upload_flags = -avz --dry-run
 upload_flags = -avz --delete
 ```
 
+## Security Considerations
+
+### SSH Key Security
+
+Generate dedicated SSH keys for PlatformIO deployments:
+
+```bash
+# Generate dedicated key
+ssh-keygen -t ed25519 -f ~/.ssh/pio-deploy -C "platformio-deploy"
+
+# Set proper permissions
+chmod 600 ~/.ssh/pio-deploy
+chmod 644 ~/.ssh/pio-deploy.pub
+```
+
+Configure in platformio.ini:
+
+```ini
+[env:myboard]
+upload_ssh_key = ~/.ssh/pio-deploy
+```
+
+**Best Practices:**
+
+- Use separate keys for different environments (dev/staging/prod)
+- Use passphrase protection for keys
+- Never commit private keys to version control
+- Restrict key permissions (600 for private, 644 for public)
+
+### Host Key Verification
+
+By default, upload operations respect your SSH configuration. For strict host key checking:
+
+```ini
+[env:production]
+upload_flags = -o StrictHostKeyChecking=yes
+```
+
+### Timeout Protection
+
+Configure timeouts to prevent hung SSH connections:
+
+```ini
+[env:myboard]
+# Upload timeout in seconds (default: 300)
+upload_timeout = 300
+
+# Remote command execution timeout (default: 300)
+upload_run_timeout = 300
+```
+
+If uploads frequently timeout on slow networks, increase these values accordingly.
+
+See [SECURITY.md](../SECURITY.md) for comprehensive security guidelines.
+
 ## Troubleshooting
 
 ### Permission Denied (SSH Authentication)
