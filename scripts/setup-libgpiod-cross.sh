@@ -98,14 +98,23 @@ else
     git clone https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
     cd libgpiod
 
-    # Check out latest stable version (v2.x)
+    # Check out latest stable version (v1.x)
+    # Note: Using v1.x because most examples use v1 API
+    # (libgpiod-blink and libgpiod-button use v1, only libgpiod-blink-v2 uses v2)
     echo "Checking out latest stable version..."
-    LATEST_TAG=$(git tag -l 'v2.*' | sort -V | tail -1)
+    LATEST_TAG=$(git tag -l 'v1.*' | sort -V | tail -1)
     if [ -n "$LATEST_TAG" ]; then
-        echo "  Using: $LATEST_TAG"
+        echo "  Using: $LATEST_TAG (v1.x API)"
         git checkout "$LATEST_TAG"
     else
-        echo "  Warning: No v2.x tags found, using master branch"
+        echo "  Warning: No v1.x tags found, trying v2.x..."
+        LATEST_TAG=$(git tag -l 'v2.*' | sort -V | tail -1)
+        if [ -n "$LATEST_TAG" ]; then
+            echo "  Using: $LATEST_TAG (v2.x API)"
+            git checkout "$LATEST_TAG"
+        else
+            echo "  Warning: No stable tags found, using master branch"
+        fi
     fi
 fi
 
