@@ -378,6 +378,65 @@ upload_port = mypi:/tmp/program
 test_transport = ssh
 ```
 
+## Security Considerations for Remote Testing
+
+### SSH Configuration for CI/CD
+
+**Best Practices**:
+- Use dedicated SSH keys for automated testing (not personal keys)
+- Restrict SSH key permissions to specific commands (if supported by target)
+- Use key-based authentication exclusively (disable password auth)
+- Rotate CI/CD SSH keys regularly
+
+**Example: Generate CI/CD SSH Key**:
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/ci-test-runner -C "ci-test-automation"
+chmod 600 ~/.ssh/ci-test-runner
+```
+
+### Host Key Verification
+
+⚠️ **Important Security Note**: The test framework disables strict host key checking by default (lines 126-128 in platform-test-uploader.py) for automation convenience.
+
+Default behavior (automated testing):
+
+```python
+# SSH options in test uploader
+"-o", "StrictHostKeyChecking=no"
+"-o", "UserKnownHostsFile=/dev/null"
+```
+
+**Security implications:**
+
+- ✅ Enables automated testing without manual SSH setup
+- ❌ Vulnerable to man-in-the-middle (MITM) attacks
+- ⚠️ Only use in trusted networks
+
+For production or sensitive environments: Consider enabling strict checking by modifying the test uploader or using SSH config overrides.
+
+### Test Isolation
+
+**Recommended practices:**
+
+- Run tests in isolated environments (containers, VMs, or dedicated hardware)
+- Use dedicated test users with limited permissions
+- Clean up test artifacts after execution
+- Monitor test execution logs for anomalies
+
+### Timeout Configuration
+
+```ini
+[env:myboard]
+# Test upload timeout in seconds (default: 300)
+test_upload_timeout = 300
+
+# Test execution timeout in seconds (default: 600)
+# Tests may run longer than uploads
+test_timeout = 600
+```
+
+See [SECURITY.md](SECURITY.md) for detailed security guidance.
+
 ### Troubleshooting SSH
 
 #### Permission Denied
