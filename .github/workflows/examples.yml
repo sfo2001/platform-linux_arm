@@ -379,8 +379,10 @@ jobs:
           key: ${{ runner.os }}-homebrew-arm-toolchains
 
       # macOS: Install ARM cross-compilation toolchains
+      # Note: Always run this step even if cache hit - Homebrew will skip download
+      # but ensure proper linking of binaries to PATH
       - name: Install ARM toolchains (macOS)
-        if: matrix.os == 'macos-latest' && steps.cache-macos-toolchains.outputs.cache-hit != 'true'
+        if: matrix.os == 'macos-latest'
         run: |
           brew tap messense/macos-cross-toolchains
           brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
