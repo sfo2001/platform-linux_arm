@@ -151,25 +151,28 @@ jobs:
         run: |
           echo "Building libgpiod library for ARM 32-bit..."
 
-          # Find the ARM toolchain that was downloaded earlier
-          TOOLCHAIN_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type d -iname "arm-gnu-toolchain*" -print -quit 2>/dev/null || echo "")
-
-          if [ -z "$TOOLCHAIN_DIR" ]; then
-            echo "❌ ERROR: ARM toolchain not found. Make sure the 'Install ARM toolchains (Windows)' step ran successfully."
+          # Convert Windows path to MSYS2 Unix-style path
+          if [ -z "$ARM_TOOLCHAIN_DIR" ]; then
+            echo "❌ ERROR: ARM_TOOLCHAIN_DIR not set. Make sure the 'Install ARM toolchains (Windows)' step ran successfully."
             exit 1
           fi
 
-          echo "Found ARM toolchain: $TOOLCHAIN_DIR"
+          echo "ARM_TOOLCHAIN_DIR (Windows path): $ARM_TOOLCHAIN_DIR"
+          TOOLCHAIN_DIR=$(cygpath "$ARM_TOOLCHAIN_DIR")
+          echo "Converted to MSYS2 path: $TOOLCHAIN_DIR"
 
-          # Add toolchain to PATH (convert to Unix-style path for MSYS2)
+          # Add toolchain to PATH
           TOOLCHAIN_BIN="$TOOLCHAIN_DIR/bin"
           export PATH="$TOOLCHAIN_BIN:$PATH"
+          echo "Added to PATH: $TOOLCHAIN_BIN"
 
           # Verify cross-compiler is available
           if command -v arm-linux-gnueabihf-gcc &> /dev/null; then
             echo "✓ Cross-compiler found: $(arm-linux-gnueabihf-gcc --version | head -1)"
           else
             echo "❌ ERROR: arm-linux-gnueabihf-gcc not found in PATH"
+            echo "PATH: $PATH"
+            ls -la "$TOOLCHAIN_BIN" | grep gcc || true
             exit 1
           fi
 
@@ -203,6 +206,11 @@ jobs:
               echo "  Created: $link_name -> $file"
             fi
           done
+          cd "$GITHUB_WORKSPACE"
+
+          # Export ARM64 toolchain directory for use in MSYS2 build steps
+          echo "ARM64_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
+          echo "Exported ARM64_TOOLCHAIN_DIR for MSYS2 steps"
 
       # Windows: Build libgpiod for ARM cross-compilation (64-bit)
       - name: Build libgpiod for ARM cross-compilation (64-bit) - Windows
@@ -211,25 +219,28 @@ jobs:
         run: |
           echo "Building libgpiod library for ARM 64-bit..."
 
-          # Find the ARM64 toolchain
-          TOOLCHAIN_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type d -iname "arm-gnu-toolchain*aarch64*" -print -quit 2>/dev/null || echo "")
-
-          if [ -z "$TOOLCHAIN_DIR" ]; then
-            echo "❌ ERROR: ARM64 toolchain not found."
+          # Convert Windows path to MSYS2 Unix-style path
+          if [ -z "$ARM64_TOOLCHAIN_DIR" ]; then
+            echo "❌ ERROR: ARM64_TOOLCHAIN_DIR not set. Make sure the 'Download ARM64 toolchain (Windows)' step ran successfully."
             exit 1
           fi
 
-          echo "Found ARM64 toolchain: $TOOLCHAIN_DIR"
+          echo "ARM64_TOOLCHAIN_DIR (Windows path): $ARM64_TOOLCHAIN_DIR"
+          TOOLCHAIN_DIR=$(cygpath "$ARM64_TOOLCHAIN_DIR")
+          echo "Converted to MSYS2 path: $TOOLCHAIN_DIR"
 
           # Add toolchain to PATH
           TOOLCHAIN_BIN="$TOOLCHAIN_DIR/bin"
           export PATH="$TOOLCHAIN_BIN:$PATH"
+          echo "Added to PATH: $TOOLCHAIN_BIN"
 
           # Verify cross-compiler is available
           if command -v aarch64-linux-gnu-gcc &> /dev/null; then
             echo "✓ Cross-compiler found: $(aarch64-linux-gnu-gcc --version | head -1)"
           else
             echo "❌ ERROR: aarch64-linux-gnu-gcc not found in PATH"
+            echo "PATH: $PATH"
+            ls -la "$TOOLCHAIN_BIN" | grep gcc || true
             exit 1
           fi
 
@@ -296,6 +307,10 @@ jobs:
           else
             echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
           fi
+
+          # Export toolchain directory for use in MSYS2 build steps
+          echo "ARM_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
+          echo "Exported ARM_TOOLCHAIN_DIR for MSYS2 steps"
 
       # Debug: Verify PATH (Windows only)
       - name: Debug PATH (Windows)
