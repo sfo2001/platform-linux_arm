@@ -95,14 +95,16 @@ if env.GetProjectOption("board_build.arch", None):
 is_aarch64 = (target_arch == "aarch64")
 
 # Detect libgpiod installation paths
-# Priority: 1) User local build, 2) System multiarch, 3) System package
+# Priority: 1) CI workspace (for Windows CI), 2) User local build, 3) System multiarch, 4) System package
 home = expanduser("~")
+workspace = environ.get("GITHUB_WORKSPACE", "")  # CI workspace (Windows CI builds use this)
 
 # Build architecture-specific search path list
 # Put the target architecture's paths FIRST to avoid finding wrong architecture
 if is_aarch64:
     # 64-bit build: prioritize aarch64 paths
     libgpiod_search_paths = [
+        join(workspace, ".local", "aarch64-linux-gnu") if workspace else "",  # CI workspace (Windows)
         join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (recommended)
         "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
         "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
@@ -114,6 +116,7 @@ if is_aarch64:
 else:
     # 32-bit build: prioritize armhf paths
     libgpiod_search_paths = [
+        join(workspace, ".local", "arm-linux-gnueabihf") if workspace else "",  # CI workspace (Windows)
         join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (recommended)
         "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
         "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
@@ -126,6 +129,9 @@ else:
 libgpiod_include = None
 libgpiod_lib = None
 libgpiod_version = None  # Try to detect v1.x vs v2.x
+
+# Filter out empty strings from search paths
+libgpiod_search_paths = [p for p in libgpiod_search_paths if p]
 
 for base_path in libgpiod_search_paths:
     inc_path = join(base_path, "include")
