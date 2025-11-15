@@ -308,6 +308,42 @@ Command: sudo /home/pi/myapp
 [Program output appears here...]
 ```
 
+### Remote Program Monitoring
+
+Monitor the remote program's output in real-time via SSH (similar to serial monitor for microcontrollers):
+
+```bash
+# Upload and then monitor
+pio run --target upload --target monitor
+
+# Or monitor separately (runs the already-uploaded program)
+pio run --target monitor
+```
+
+**Configuration:**
+```ini
+[env:mypi]
+platform = linux_arm
+board = raspberrypi_4b
+
+upload_protocol = scp
+upload_port = pi@raspberrypi.local:/home/pi/myapp
+
+; Optional: Custom run command for monitoring
+; upload_run_command = sudo /home/pi/myapp
+; upload_run_timeout = 60  ; Timeout in seconds
+```
+
+**Notes:**
+- The `monitor` target runs the program at `upload_port` location
+- Output is streamed in real-time from the remote target
+- Press Ctrl+C to stop monitoring
+- Unlike serial monitors, this requires a network connection to the target
+
+**Comparison with upload_run_after:**
+- `upload_run_after = true`: Runs once after each upload
+- `--target monitor`: Can be run independently, useful for repeated testing without re-uploading
+
 ### Multiple Target Environments
 
 Deploy to different devices by environment:

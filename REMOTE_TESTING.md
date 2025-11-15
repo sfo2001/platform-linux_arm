@@ -908,7 +908,33 @@ test_port = pi@192.168.1.100:/tmp/test
 ssh pi@raspberrypi.local "systemctl status sshd"
 ```
 
-#### 5. Tests Pass Locally But Fail Remotely
+#### 5. "Warning! Ignore unknown configuration option `test_transport`"
+
+**Warning Message:**
+```
+Warning! Ignore unknown configuration option `test_transport` in section [env:raspberrypi_5]
+```
+
+**Explanation:**
+This warning is **normal and expected**. PlatformIO's core validator doesn't know about platform-specific configuration options like `test_transport`. The option is properly recognized and used by the `linux_arm` platform during test execution.
+
+**Why it appears:**
+- The warning appears when running non-test commands (`upload`, `build`, etc.)
+- PlatformIO validates all options in the environment section
+- Platform-specific options (like `test_transport`) are not in the core validation schema
+
+**Action Required:**
+None. The warning can be safely ignored. Your `test_transport` configuration is working correctly when you run `pio test`.
+
+**To verify it's working:**
+```bash
+# Run tests - test_transport will be used correctly
+pio test
+
+# You should see the SSH test execution without errors
+```
+
+#### 6. Tests Pass Locally But Fail Remotely
 
 **Possible causes:**
 - Different CPU architecture (endianness, alignment)
