@@ -36,6 +36,9 @@ class RemoteTestUploader:
     """
 
     def __init__(self, target, source, env):
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHDefaults
+
         self.target = target
         self.source = source
         self.env = env
@@ -43,7 +46,7 @@ class RemoteTestUploader:
         self.user = None
         self.host = None
         self.remote_path = None
-        self.ssh_port = "22"
+        self.ssh_port = SSHDefaults.PORT
         self.ssh_key = None
 
     def parse_test_port(self):
@@ -55,6 +58,9 @@ class RemoteTestUploader:
           - host:/path
           - host
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import SSHDefaults
+
         # Get test_port (preferred) or fallback to upload_port
         self.upload_port = self.env.GetProjectOption("test_port", None)
         if not self.upload_port:
@@ -69,8 +75,8 @@ class RemoteTestUploader:
             )
 
         # Get defaults from project options
-        default_user = self.env.GetProjectOption("test_username", "pi")
-        default_path = self.env.GetProjectOption("test_path", "/tmp/test_program")
+        default_user = self.env.GetProjectOption("test_username", SSHDefaults.USER)
+        default_path = self.env.GetProjectOption("test_path", SSHDefaults.TEST_PATH)
 
         # Use shared parser
         try:
@@ -83,9 +89,9 @@ class RemoteTestUploader:
             raise Exception(str(e))
 
         # Get SSH configuration
-        self.ssh_port = self.env.GetProjectOption("test_ssh_port", "22")
+        self.ssh_port = self.env.GetProjectOption("test_ssh_port", SSHDefaults.PORT)
         if not self.ssh_port:
-            self.ssh_port = self.env.GetProjectOption("upload_ssh_port", "22")
+            self.ssh_port = self.env.GetProjectOption("upload_ssh_port", SSHDefaults.PORT)
 
         self.ssh_key = self.env.GetProjectOption("test_ssh_key", None)
         if not self.ssh_key:
@@ -144,12 +150,15 @@ class RemoteTestUploader:
 
     def upload_test_binary(self):
         """Upload test binary to remote target via SCP."""
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import Timeouts
+
         source_file = str(self.source[0])
 
         print(f"\nUploading test binary to {self.user}@{self.host}:{self.remote_path}")
 
         # Upload the binary with timeout protection
-        upload_timeout = self.env.GetProjectOption("test_upload_timeout", 300)
+        upload_timeout = self.env.GetProjectOption("test_upload_timeout", Timeouts.TEST_UPLOAD)
         cmd = self.build_scp_command(source_file, self.remote_path)
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=upload_timeout)
@@ -169,7 +178,7 @@ class RemoteTestUploader:
         # Make it executable (use shlex.quote to prevent command injection)
         chmod_cmd = self.build_ssh_command(f"chmod +x {shlex.quote(self.remote_path)}")
         try:
-            result = subprocess.run(chmod_cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(chmod_cmd, capture_output=True, text=True, timeout=Timeouts.CHMOD)
         except subprocess.TimeoutExpired:
             raise Exception("Timeout while setting executable permission on remote test binary")
 
@@ -188,8 +197,11 @@ class RemoteTestUploader:
         Returns:
             Remote shell command string
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestConstants
+
         # Use shlex.quote to prevent command injection via remote_path
-        return f"{shlex.quote(self.remote_path)}; echo \"__EXIT_CODE__:$?\""
+        return f"{shlex.quote(self.remote_path)}; echo \"{TestConstants.EXIT_CODE_MARKER}$?\""
 
     def _stream_test_output(self, process, test_timeout: int) -> int:
         """
@@ -205,6 +217,9 @@ class RemoteTestUploader:
         Raises:
             Exception: If test execution times out
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestConstants
+
         exit_code = 0
 
         try:
@@ -214,7 +229,7 @@ class RemoteTestUploader:
                     break
 
                 # Check for exit code marker
-                if "__EXIT_CODE__:" in line:
+                if TestConstants.EXIT_CODE_MARKER in line:
                     exit_code = self._extract_exit_code(line)
                 else:
                     # Print to console (PlatformIO captures this)
@@ -242,8 +257,11 @@ class RemoteTestUploader:
         Returns:
             Extracted exit code, or 0 if extraction fails
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import TestConstants
+
         try:
-            return int(line.split("__EXIT_CODE__:")[1].strip())
+            return int(line.split(TestConstants.EXIT_CODE_MARKER)[1].strip())
         except (IndexError, ValueError):
             return 0
 
@@ -254,13 +272,16 @@ class RemoteTestUploader:
         Returns:
             Exit code from test execution
         """
+        # Lazy import to avoid breaking platform loading
+        from platform_constants import Timeouts
+
         print(f"\nExecuting tests on {self.user}@{self.host}...")
         print("=" * 80)
 
         # Build and execute test command
         test_command = self._build_test_command()
         cmd = self.build_ssh_command(test_command)
-        test_timeout = self.env.GetProjectOption("test_timeout", 600)
+        test_timeout = self.env.GetProjectOption("test_timeout", Timeouts.TEST_EXECUTION)
 
         # Start process
         process = subprocess.Popen(
