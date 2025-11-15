@@ -76,11 +76,15 @@ INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 ./scripts/setup-libgpiod-cross.sh
 ```
 
+**Important**: The script builds **libgpiod v1.x** by default (see "API Versions" section below for rationale).
+
 The script will:
 - Clone libgpiod from the official kernel.org repository
-- Check out the latest stable version (v2.x)
+- Check out the latest stable v1.x version (e.g., v1.6.4)
 - Cross-compile using autotools
 - Install headers, libraries, and tools to `~/.local/arm-linux-gnueabihf/` or `~/.local/aarch64-linux-gnu/`
+
+**To build v2.x instead**: Modify the script to check out a v2.x tag before building (see "Building v2.x" below).
 
 ### Option 1: System Package (Multiarch) - Deprecated
 
@@ -222,6 +226,38 @@ Check your SBC's documentation for equivalent device tree parameters or kernel o
 ## API Versions
 
 libgpiod has two major API versions with different design philosophies.
+
+### Framework Support
+
+**Important**: The `libgpiod` framework in this platform **supports both v1.x and v2.x APIs**. The framework automatically:
+
+1. **Auto-detects** which version is installed (by checking headers)
+2. **Sets compiler defines** for conditional compilation:
+   - `LIBGPIOD_V1` - defined when v1.x is detected
+   - `LIBGPIOD_V2` - defined when v2.x is detected
+3. **Links** the appropriate library version
+
+**This is a single framework, not two separate frameworks** - it adapts to whichever version you have installed.
+
+### Which Version to Choose?
+
+**The automated setup script builds v1.x by default** for these reasons:
+
+1. **Example Compatibility**: 2 out of 3 included examples use v1 API
+   - ✅ `examples/libgpiod-blink` - uses v1 API
+   - ✅ `examples/libgpiod-button` - uses v1 API
+   - ⚠️ `examples/libgpiod-blink-v2` - uses v2 API (requires manual v2 build)
+
+2. **Wider Deployment**: v1.x is available on older distributions (Ubuntu 20.04, Debian Bullseye)
+
+3. **Backward Compatibility**: Most existing libgpiod projects use v1 API
+
+4. **CI Testing**: The CI workflow builds v1 to test the majority of examples
+
+**Choose v2.x if:**
+- You're starting a new project and want the modern API
+- You need bulk GPIO operations or advanced configuration
+- You're targeting newer distributions only (Ubuntu 22.04+, Debian Bookworm+)
 
 ### Version 1.x (Legacy API)
 
@@ -367,6 +403,48 @@ You can use conditional compilation:
     struct gpiod_chip *chip = gpiod_chip_open_by_name("gpiochip0");
 #endif
 ```
+
+### Building v2.x
+
+If you need libgpiod v2.x instead of v1.x, manually build it from source:
+
+```bash
+# Install build dependencies
+sudo apt-get install -y \
+  autoconf autoconf-archive automake libtool pkg-config \
+  gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+# Clone libgpiod repository
+git clone https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
+cd libgpiod
+
+# Check out latest v2.x tag
+LATEST_V2=$(git tag -l 'v2.*' | sort -V | tail -1)
+echo "Building $LATEST_V2"
+git checkout "$LATEST_V2"
+
+# Configure for ARM cross-compilation
+./autogen.sh \
+    --enable-tools=yes \
+    --enable-bindings-cxx \
+    --prefix=$HOME/.local/arm-linux-gnueabihf \
+    --host=arm-linux-gnueabihf \
+    CC=arm-linux-gnueabihf-gcc \
+    CXX=arm-linux-gnueabihf-g++
+
+# Build and install
+make -j$(nproc)
+make install
+
+echo "✅ libgpiod v2.x installed to $HOME/.local/arm-linux-gnueabihf"
+```
+
+For 64-bit (aarch64), replace `arm-linux-gnueabihf` with `aarch64-linux-gnu` in the commands above.
+
+**After building v2.x:**
+- The framework will auto-detect v2 and set `LIBGPIOD_V2` define
+- `examples/libgpiod-blink-v2` will build successfully
+- `examples/libgpiod-blink` and `examples/libgpiod-button` will **not** build (they require v1 API)
 
 ## GPIO Pin Numbering
 
