@@ -77,6 +77,11 @@ jobs:
         isort --check-only --diff .
       continue-on-error: true
 
+    - name: Type check with mypy
+      run: |
+        mypy platform_constants.py platform.py || true
+      continue-on-error: true
+
     - name: Lint with pylint
       run: |
         pylint --rcfile=.pylintrc *.py || true
