@@ -387,6 +387,15 @@ jobs:
           brew tap messense/macos-cross-toolchains
           brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 
+          # Explicitly link toolchains (needed after cache restore)
+          brew link --force arm-unknown-linux-gnueabihf || true
+          brew link --force aarch64-unknown-linux-gnu || true
+
+          # Verify toolchains are accessible
+          echo "✓ Verifying toolchain installation..."
+          which arm-unknown-linux-gnueabihf-gcc || echo "⚠️  arm-unknown-linux-gnueabihf-gcc not in PATH"
+          which aarch64-unknown-linux-gnu-gcc || echo "⚠️  aarch64-unknown-linux-gnu-gcc not in PATH"
+
       # macOS: Install autotools for libgpiod cross-compilation
       - name: Install autotools for libgpiod (macOS)
         if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod')
