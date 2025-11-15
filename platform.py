@@ -241,7 +241,7 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
         return 0
 
-    def on_upload(self, target, source, env):
+    def on_upload(self, target, source, env) -> int:
         """
         Handle binary upload to Linux ARM platform.
 
@@ -253,7 +253,10 @@ class Linux_armPlatform(PlatformBase):
             env: PlatformIO environment
 
         Returns:
-            Exit code (0 for success, non-zero for failure)
+            Exit code (0 for success, or exit code from remote command if upload_run_after is True)
+
+        Raises:
+            PlatformioException: If upload fails or protocol is not supported
         """
         # Lazy import to avoid breaking platform loading
         from platform_constants import UploadProtocol
@@ -347,7 +350,7 @@ class Linux_armPlatform(PlatformBase):
         except ValueError as e:
             raise exception.PlatformioException(str(e))
 
-    def _upload_scp(self, target, source, env):
+    def _upload_scp(self, target, source, env) -> int:
         """
         Upload binary using SCP (Secure Copy Protocol).
 
@@ -433,7 +436,7 @@ class Linux_armPlatform(PlatformBase):
 
         return 0
 
-    def _upload_rsync(self, target, source, env):
+    def _upload_rsync(self, target, source, env) -> int:
         """
         Upload binary using rsync (efficient incremental transfer).
 
@@ -520,7 +523,7 @@ class Linux_armPlatform(PlatformBase):
 
         return 0
 
-    def _upload_ssh(self, target, source, env):
+    def _upload_ssh(self, target, source, env) -> int:
         """
         Upload binary using SSH with piped input.
 
@@ -611,7 +614,7 @@ class Linux_armPlatform(PlatformBase):
 
         return 0
 
-    def _run_remote_command(self, user, host, ssh_port, ssh_key, remote_path, env):
+    def _run_remote_command(self, user, host, ssh_port, ssh_key, remote_path, env) -> int:
         """
         Run the uploaded program on the remote target.
 
@@ -986,7 +989,7 @@ class Linux_armPlatform(PlatformBase):
         board.manifest["debug"] = debug
         return board
 
-    def on_test_upload(self, target, source, env):
+    def on_test_upload(self, target, source, env) -> int:
         """
         Handle test binary upload to Linux ARM platform.
 
