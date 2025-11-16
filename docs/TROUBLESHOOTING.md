@@ -15,6 +15,21 @@ This guide covers common issues and solutions when using the platform-linux_arm 
 
 ---
 
+## Topic-Specific Troubleshooting Guides
+
+For specialized issues, refer to these dedicated troubleshooting guides:
+
+| Topic | Guide | Description |
+|-------|-------|-------------|
+| **Remote Debugging** | [DEBUGGING.md](DEBUGGING.md#troubleshooting) | GDB connection issues, .gdbinit setup, common warnings |
+| **Upload/Deployment** | [UPLOAD.md](UPLOAD.md#troubleshooting) | SSH connection, SCP transfer, permission issues |
+| **Remote Testing** | [REMOTE_TESTING.md](REMOTE_TESTING.md#troubleshooting) | Test execution, SSH setup, CI/CD integration |
+| **lgpio Setup** | [LGPIO_SETUP.md](LGPIO_SETUP.md#troubleshooting) | Cross-compilation, library installation |
+| **libgpiod Setup** | [LIBGPIOD_SETUP.md](LIBGPIOD_SETUP.md#troubleshooting) | Library configuration, header files |
+| **PWM Configuration** | [PWM_SETUP.md](PWM_SETUP.md#troubleshooting) | PWM initialization, sysfs access |
+
+---
+
 ## Build Errors
 
 ### Error: `arm-linux-gnueabihf-gcc: command not found`
@@ -705,22 +720,14 @@ See [Framework Comparison](platforms/linux_arm.rst#framework-comparison) for det
 
 ### Q: Can I debug my program remotely?
 
-**A**: Yes, using GDB remote debugging:
+**A**: Yes. The platform supports comprehensive remote debugging via GDB over SSH.
 
-**On Raspberry Pi (target):**
-
-```bash
-gdbserver :2345 ./program
-```
-
-**On development machine (host):**
-
-```bash
-arm-linux-gnueabihf-gdb program
-(gdb) target remote raspberrypi.local:2345
-(gdb) break main
-(gdb) continue
-```
+See [DEBUGGING.md](DEBUGGING.md) for complete guide covering:
+- GDB setup and configuration
+- SSH-tunneled debugging
+- IDE integration (VS Code, CLion)
+- Common issues and solutions
+- PlatformIO-specific setup
 
 ---
 

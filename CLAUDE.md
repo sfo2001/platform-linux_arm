@@ -112,7 +112,7 @@ pio test
 # test_port = pi@raspberrypi.local:/tmp/test_program
 ```
 
-Cross-compiled test binaries are automatically deployed and executed on target hardware with real-time output streaming. See `REMOTE_TESTING.md` and `examples/remote-testing/` for complete documentation.
+Cross-compiled test binaries are automatically deployed and executed on target hardware with real-time output streaming. See `docs/REMOTE_TESTING.md` and `examples/remote-testing/` for complete documentation.
 
 ### Remote Debugging
 ```bash

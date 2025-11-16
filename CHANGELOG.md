@@ -173,7 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Real-time test output streaming from remote device
   - Unity test framework integration
   - CI/CD pipeline support for hardware-in-the-loop testing
-  - Complete testing documentation (`REMOTE_TESTING.md`)
+  - Complete testing documentation (`docs/REMOTE_TESTING.md`)
   - Remote testing example project (`examples/remote-testing/`)
 - **Hardware PWM support** via Linux PWM subsystem (sysfs) for lgpio framework (#34)
   - Complete PWM HAL library (`framework-lgpio/pwm-hal.c`, `framework-lgpio/pwm-hal.h`)
