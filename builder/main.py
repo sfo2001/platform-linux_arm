@@ -239,6 +239,16 @@ env.AddCustomTarget(
     always_build=True
 )
 
+# Add a custom SSH monitor target that definitely won't conflict
+env.AddCustomTarget(
+    name="sshmonitor",
+    dependencies=None,
+    actions=_monitor_handler,
+    title="SSH Monitor",
+    description="Monitor remote program via SSH (guaranteed to use custom handler)",
+    always_build=True
+)
+
 #
 # Default targets
 #
