@@ -1145,7 +1145,7 @@ See [LGPIO_SETUP.md](LGPIO_SETUP.md) for detailed cross-compilation instructions
 ### Related Documentation
 
 - [LGPIO_SETUP.md](LGPIO_SETUP.md) - lgpio framework setup
-- [GPIO_FRAMEWORK_DECISION.md](GPIO_FRAMEWORK_DECISION.md) - Framework comparison
+- [FRAMEWORKS.md](FRAMEWORKS.md) - Framework comparison
 - [UPLOAD.md](UPLOAD.md) - Remote deployment guide
 
 ## Support

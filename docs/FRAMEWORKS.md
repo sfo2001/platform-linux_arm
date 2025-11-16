@@ -57,7 +57,7 @@ START: What are you building?
 
 ## Framework Recommendations
 
-### 🥇 libgpiod: The Universal Standard
+### libgpiod: The Universal Standard
 
 **Best for:**
 - System services and daemons
@@ -94,7 +94,7 @@ board = raspberrypi_5  ; Works on any board
 
 ---
 
-### 🥈 lgpio: The Raspberry Pi Convenience Framework
+### lgpio: The Raspberry Pi Convenience Framework
 
 **Best for:**
 - Raspberry Pi-specific projects (all models including Pi 5)
@@ -130,7 +130,7 @@ board = raspberrypi_5
 
 ---
 
-### 🥉 pigpio: Legacy High-Performance (Pi 1-4 Only)
+### pigpio: Legacy High-Performance (Pi 1-4 Only)
 
 **Best for:**
 - **LEGACY PROJECTS ONLY**
@@ -173,7 +173,7 @@ board = raspberrypi_4b  ; Pi 5 NOT supported
 
 ---
 
-### ❌ WiringPi: Legacy Only (Not Recommended)
+### WiringPi: Legacy Only (Not Recommended)
 
 **Best for:**
 - **LEGACY PROJECTS ONLY**
@@ -208,7 +208,7 @@ board = raspberrypi_3b  ; Native compilation only
 
 ---
 
-### 🔧 Bare-metal: Manual Control
+### Bare-metal: Manual Control
 
 **Best for:**
 - Maximum portability (no library dependencies)
@@ -480,5 +480,3 @@ Not in official repos. GC2 fork requires manual build. Not recommended for new p
 - System daemon? → **libgpiod**
 - Pi 5? → **libgpiod** or **lgpio** (NOT pigpio/WiringPi)
 - Legacy code? → Keep existing, but plan migration
-
-Happy GPIO coding! 🎉

@@ -95,4 +95,4 @@ if (ret > 0) {
 
 - libgpiod Documentation: https://libgpiod.readthedocs.io/
 - Setup Guide: ../../docs/LIBGPIOD_SETUP.md
-- Framework Comparison: ../../docs/frameworks.md
+- Framework Comparison: ../../docs/FRAMEWORKS.md

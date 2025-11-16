@@ -583,8 +583,7 @@ digitalWrite(23, HIGH);
 
 - **libgpiod Setup**: [docs/LIBGPIOD_SETUP.md](LIBGPIOD_SETUP.md)
 - **lgpio Setup**: [docs/LGPIO_SETUP.md](LGPIO_SETUP.md)
-- **Framework Comparison**: [docs/frameworks.md](frameworks.md)
-- **Decision Guide**: [docs/GPIO_FRAMEWORK_DECISION.md](GPIO_FRAMEWORK_DECISION.md)
+- **Framework Comparison**: [docs/FRAMEWORKS.md](FRAMEWORKS.md)
 
 ---
 

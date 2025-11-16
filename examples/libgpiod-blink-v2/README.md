@@ -97,4 +97,4 @@ gpiod_chip_close(chip);
 
 - libgpiod v2 Documentation: https://libgpiod.readthedocs.io/en/latest/
 - Setup Guide: ../../docs/LIBGPIOD_SETUP.md
-- Framework Comparison: ../../docs/frameworks.md
+- Framework Comparison: ../../docs/FRAMEWORKS.md

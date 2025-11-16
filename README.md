@@ -195,7 +195,7 @@ framework = wiringpi
 
 **Note**: Cross-compilation not supported - must build on target device.
 
-See [docs/frameworks.md](docs/frameworks.md) for detailed comparison.
+See [docs/FRAMEWORKS.md](docs/FRAMEWORKS.md) for detailed comparison.
 
 ## Building and Deploying
 

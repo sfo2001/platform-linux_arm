@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-After comprehensive research and fact-checking, we've decided to support **two primary frameworks** with different target use cases:
+After comprehensive research and fact-checking, the platform supports **two primary frameworks** with different target use cases:
 
 1. **libgpiod** → Universal Linux standard (all SBCs, system daemons, production)
 2. **lgpio** → Raspberry Pi convenience (multi-protocol, rapid development)

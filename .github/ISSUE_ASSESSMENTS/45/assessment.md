@@ -366,7 +366,7 @@ env.Append(LIBS=libs)
 
 ### Research Documents
 - **Implementation Roadmap**: research/03-implementation-roadmap.md (Phase 4 future enhancements)
-- **Framework Priority Deep-Dive**: research/02-priority-frameworks.md
+- **Framework Priority Deep-Dive**: research/02-priority-FRAMEWORKS.md
 
 ---
 

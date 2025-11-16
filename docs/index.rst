@@ -89,9 +89,8 @@ The following documentation files are available in the repository:
 
 * **Testing Matrix** (``docs/TESTING.md``): Comprehensive testing documentation covering all boards, frameworks, and architectures
 * **Troubleshooting Guide** (``docs/TROUBLESHOOTING.md``): Common issues and solutions
-* **Framework Comparison** (``docs/frameworks.md``): Detailed comparison of lgpio, pigpio, and WiringPi frameworks
+* **Framework Comparison** (``docs/FRAMEWORKS.md``): Detailed comparison of lgpio, pigpio, and WiringPi frameworks
 * **lgpio Setup Guide** (``docs/LGPIO_SETUP.md``): Cross-compilation setup for lgpio framework
-* **GPIO Framework Decision** (``docs/GPIO_FRAMEWORK_DECISION.md``): Technical rationale for framework selection
 * **Documentation Plan** (``docs/DOCUMENTATION_PLAN.md``): Platform documentation roadmap
 
 Community & Contributing

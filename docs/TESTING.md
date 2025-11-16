@@ -467,9 +467,8 @@ We welcome community testing reports! Please open an issue with:
 - **CI/CD Configuration**: `.github/workflows/examples.yml`
 - **Board Definitions**: `boards/*.json`
 - **Framework Builders**: `builder/frameworks/*.py`
-- **GPIO Framework Decision**: `docs/GPIO_FRAMEWORK_DECISION.md`
 - **lgpio Setup Guide**: `docs/LGPIO_SETUP.md`
-- **Framework Comparison**: `docs/frameworks.md`
+- **Framework Comparison**: `docs/FRAMEWORKS.md`
 
 ---
 
