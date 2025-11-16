@@ -2,23 +2,23 @@
 
 **Platform**: Linux ARM (Raspberry Pi, Orange Pi)
 **Feature**: GDB Remote Debugging over SSH
-**Status**: ✅ Implemented | ⚠️ Testing Pending (Requires Hardware)
+**Status**: Implemented | Testing Pending (Requires Hardware)
 **Related**: Issue #35, examples/remote-debugging/
 
-> **💡 Quick Start:** For VS Code-specific setup, IntelliSense configuration, and troubleshooting, see **[VSCODE.md](VSCODE.md)** - Complete VS Code integration guide.
+> **Quick Start:** For VS Code-specific setup, IntelliSense configuration, and troubleshooting, see **[VSCODE.md](VSCODE.md)** - Complete VS Code integration guide.
 
 ---
 
 ## Security Note for Remote Debugging
 
-⚠️ **Security Considerations**:
+**Security Considerations**:
 
 Remote debugging uses SSH with GDB to connect to target devices. Ensure secure practices:
 
-- 🔐 **SSH Keys**: Use secure SSH keys (see [SECURITY.md](../SECURITY.md))
-- 🌐 **Network Security**: Use trusted networks only (avoid public WiFi)
-- 👤 **User Permissions**: Debug sessions run with target user permissions
-- 🏭 **Environment**: Use remote debugging in development/testing only, **not production**
+- **SSH Keys**: Use secure SSH keys (see [SECURITY.md](../SECURITY.md))
+- **Network Security**: Use trusted networks only (avoid public WiFi)
+- **User Permissions**: Debug sessions run with target user permissions
+- **Environment**: Use remote debugging in development/testing only, not production
 
 **Debug sessions expose**:
 - Full process memory access
@@ -59,7 +59,7 @@ The debugging workflow differs fundamentally from embedded platforms:
 
 ## Features
 
-### Implemented ✅
+### Implemented
 
 - **SSH-tunneled debugging** - Secure connection using existing SSH authentication
 - **Direct TCP debugging** - Manual gdbserver setup for advanced scenarios
@@ -70,21 +70,21 @@ The debugging workflow differs fundamentally from embedded platforms:
 - **Configuration reuse** - Leverages existing upload configuration (SSH host, port, keys)
 - **Board support** - Debug configurations for all supported boards
 
-### Testing Status ⚠️
+### Testing Status
 
 **Validation Completed:**
-- ✅ Python syntax validation
-- ✅ JSON schema validation
-- ✅ Code review and design verification
+- Python syntax validation
+- JSON schema validation
+- Code review and design verification
 
 **Pending Testing (Requires Hardware):**
-- ⚠️ 32-bit ARMv7 debugging (Raspberry Pi 1-4)
-- ⚠️ 64-bit AArch64 debugging (Raspberry Pi 5, Pi 4 with 64-bit OS)
-- ⚠️ VS Code debug session integration
-- ⚠️ CLion debug session integration
-- ⚠️ Breakpoint and stepping operations
-- ⚠️ Variable inspection and watch expressions
-- ⚠️ Call stack analysis
+- 32-bit ARMv7 debugging (Raspberry Pi 1-4)
+- 64-bit AArch64 debugging (Raspberry Pi 5, Pi 4 with 64-bit OS)
+- VS Code debug session integration
+- CLion debug session integration
+- Breakpoint and stepping operations
+- Variable inspection and watch expressions
+- Call stack analysis
 
 **Hardware Requirements for Testing:**
 - Raspberry Pi (any model, preferably Pi 4 or Pi 5)
@@ -363,7 +363,7 @@ debug_prog_path = /tmp/myapp
 
 The platform automatically generates debug configurations for VS Code.
 
-> **📖 For comprehensive VS Code setup, IntelliSense configuration, build tasks, and detailed troubleshooting, see [VSCODE.md](VSCODE.md).**
+> **Note:** For comprehensive VS Code setup, IntelliSense configuration, build tasks, and detailed troubleshooting, see [VSCODE.md](VSCODE.md).
 
 **Quick Workflow:**
 
@@ -659,12 +659,12 @@ sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf gdb-multiarch
    ```
 
 **Expected Results:**
-- ✅ GDB connects to target
-- ✅ Breakpoints work
-- ✅ Stepping through code works
-- ✅ Variable inspection works
-- ✅ Call stack displayed correctly
-- ✅ Debug session exits cleanly
+- GDB connects to target
+- Breakpoints work
+- Stepping through code works
+- Variable inspection works
+- Call stack displayed correctly
+- Debug session exits cleanly
 
 **Report Issues:**
 - Python errors or exceptions
@@ -752,9 +752,9 @@ debug_port = pi@raspberrypi5.local
 
 | Build Type | Optimization | Size | Speed | Debuggability |
 |-----------|-------------|------|-------|---------------|
-| Debug (`-O0 -g3`) | None | Large | Slow | Perfect |
-| Release (`-O2`) | Medium | Medium | Fast | Poor |
-| Release (`-O3`) | High | Small | Fastest | Very Poor |
+| Debug (`-O0 -g3`) | None | Large | Slow | Full |
+| Release (`-O2`) | Medium | Medium | Fast | Limited |
+| Release (`-O3`) | High | Small | Fastest | Minimal |
 
 **Recommendations:**
 - **Development**: Use debug builds for accurate debugging
@@ -794,7 +794,7 @@ Potential improvements for future development:
 
 ---
 
-**Status**: ✅ Implemented | ⚠️ Functional Testing Pending
+**Status**: Implemented | Functional Testing Pending
 **Last Updated**: 2025-11-11
 **Maintainer**: Platform Linux ARM Team
 **Feedback**: https://github.com/sfo2001/platform-linux_arm/issues/35

@@ -23,7 +23,7 @@ echo "set auto-load safe-path /" >> ~/.config/gdb/gdbinit
 pio debug --environment your_env --interface=gdb
 ```
 
-GDB will automatically connect to the remote target and stop at main!
+GDB will automatically connect to the remote target and stop at main.
 
 ## Why is .gdbinit Required?
 
@@ -187,10 +187,10 @@ VS Code will use the same debug configuration as CLI, so all the fixes apply.
 ## Testing Matrix
 
 Verified working configurations:
-- ✅ CLI debugging on Linux (x86_64 → ARM remote)
-- ⏳ VS Code debugging (pending user test)
-- ⏳ Windows → Linux remote via SSH
-- ⏳ Native ARM debugging
+- CLI debugging on Linux (x86_64 to ARM remote)
+- VS Code debugging (pending user test)
+- Windows to Linux remote via SSH
+- Native ARM debugging
 
 ## Additional Resources
 
