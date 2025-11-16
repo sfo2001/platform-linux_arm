@@ -25,4 +25,5 @@ docs/_build/
 
 # IDE
 .vscode/
+!examples/**/.vscode/
 .idea/

@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "PlatformIO: Monitor (SSH)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-l",
+                "-c",
+                "platformio run --target monitor --environment ${command:pickPlatformIOProjectEnv}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "PlatformIO: Upload and Monitor (SSH)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-l",
+                "-c",
+                "platformio run --target upload --target monitor --environment ${command:pickPlatformIOProjectEnv}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        }
+    ]
+}
