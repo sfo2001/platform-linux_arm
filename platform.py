@@ -1066,14 +1066,15 @@ class Linux_armPlatform(PlatformBase):
             raise exception.PlatformioException(str(e))
 
         # Build SSH command for GDB remote target
+        # gdbserver - <program> will listen on stdio (used for pipe connection)
         remote_command = "gdbserver - " + shlex.quote(prog_path)
         builder = SSHCommandBuilder(config)
         ssh_cmd_parts = builder.build_ssh_command(remote_command, extra_opts=["-T"])
         # Quote all parts for defense in depth (even though literal parts like "ssh" don't need it)
         ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
 
-        debug_config.server_executable = None
-        debug_config.server_arguments = []
+        # Set port to pipe command - PlatformIO will launch this command and communicate via stdio
+        # Format: "| <command>" tells PlatformIO to use pipe mode instead of TCP connection
         debug_config.port = f"| {ssh_cmd}"
 
     def _configure_gdb_remote(self, debug_config: dict) -> None:
