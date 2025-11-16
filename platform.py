@@ -991,10 +991,12 @@ class Linux_armPlatform(PlatformBase):
         from ssh_utils import parse_upload_port
         from platform_constants import SSHDefaults
 
-        upload_port = debug_config.get("upload_port")
-        ssh_port = debug_config.get("ssh_port", SSHDefaults.PORT)
-        ssh_key = debug_config.get("ssh_key")
-        prog_path = debug_config.get("prog_path", SSHDefaults.UPLOAD_PATH)
+        # Get configuration from env_options dict
+        env_opts = debug_config.env_options
+        upload_port = env_opts.get("upload_port") or env_opts.get("debug_port")
+        ssh_port = env_opts.get("debug_ssh_port") or env_opts.get("upload_ssh_port", SSHDefaults.PORT)
+        ssh_key = env_opts.get("debug_ssh_key") or env_opts.get("upload_ssh_key")
+        prog_path = env_opts.get("debug_prog_path", SSHDefaults.UPLOAD_PATH)
         user = SSHDefaults.USER
         host = None
 
@@ -1070,9 +1072,9 @@ class Linux_armPlatform(PlatformBase):
         # Quote all parts for defense in depth (even though literal parts like "ssh" don't need it)
         ssh_cmd = " ".join(shlex.quote(part) for part in ssh_cmd_parts)
 
-        debug_config["server_executable"] = None
-        debug_config["server_arguments"] = []
-        debug_config["port"] = f"| {ssh_cmd}"
+        debug_config.server_executable = None
+        debug_config.server_arguments = []
+        debug_config.port = f"| {ssh_cmd}"
 
     def _configure_gdb_remote(self, debug_config: dict) -> None:
         """
@@ -1086,8 +1088,8 @@ class Linux_armPlatform(PlatformBase):
             sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import DebugTools
 
-        debug_port = debug_config.get("port", DebugTools.DEFAULT_PORT)
-        debug_config["port"] = debug_port
+        debug_port = debug_config.env_options.get("debug_port", DebugTools.DEFAULT_PORT)
+        debug_config.port = debug_port
 
     def _build_debug_init_commands(
         self,
@@ -1115,15 +1117,15 @@ class Linux_armPlatform(PlatformBase):
 
         if debug_tool == DebugTools.GDBSERVER_SSH:
             init_cmds.extend([
-                f"target extended-remote {debug_config['port']}",
+                f"target extended-remote {debug_config.port}",
                 f"set remote exec-file {prog_path}",
                 "set sysroot /",
             ])
         else:
-            init_cmds.append(f"target extended-remote {debug_config['port']}")
+            init_cmds.append(f"target extended-remote {debug_config.port}")
 
-        # Add custom init commands from config
-        custom_init = debug_config.get("init_cmds", [])
+        # Add custom init commands from config (from env_options or init_cmds attribute)
+        custom_init = debug_config.env_options.get("debug_init_cmds") or debug_config.init_cmds or []
         if custom_init:
             init_cmds.extend(custom_init)
 
@@ -1147,15 +1149,17 @@ class Linux_armPlatform(PlatformBase):
         from platform_constants import DebugTools
 
         # Get board configuration and determine GDB executable
-        board_config = self.board_config(debug_config.get("env_name"))
-        target_arch = board_config.get("build.arch", "armv7")
+        board_config = self.board_config(debug_config.env_name)
+        # Get architecture from env_options (platformio.ini board_build.arch)
+        target_arch = debug_config.env_options.get("board_build.arch",
+                                                     board_config.get("build.arch", "armv7"))
         gdb_path = self._determine_gdb_executable(target_arch)
 
         # Parse connection information
         user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(debug_config)
 
-        # Get debug tool
-        debug_tool = debug_config.get("tool", DebugTools.GDBSERVER_SSH)
+        # Get debug tool from tool_name attribute or env_options
+        debug_tool = debug_config.tool_name or debug_config.env_options.get("debug_tool", DebugTools.GDBSERVER_SSH)
 
         # Configure debug server based on tool
         if debug_tool == DebugTools.GDBSERVER_SSH:
@@ -1163,11 +1167,14 @@ class Linux_armPlatform(PlatformBase):
         elif debug_tool == DebugTools.GDB_REMOTE:
             self._configure_gdb_remote(debug_config)
 
-        # Set GDB configuration
-        debug_config["executable"] = gdb_path
-        debug_config["prog_path"] = prog_path
-        debug_config["init_cmds"] = self._build_debug_init_commands(debug_tool, debug_config, prog_path)
+        # Override GDB path in build_data (init_cmds, prog_path are read-only properties)
+        # Update the build_data dict with our detected GDB executable
+        # NOTE: prog_path in build_data is LOCAL path for symbols, don't override it
+        if hasattr(debug_config, 'build_data') and isinstance(debug_config.build_data, dict):
+            debug_config.build_data['gdb_path'] = gdb_path
 
+        # Return the configured debug_config object
+        # PlatformIO will use our build_data values and server/port configuration
         return debug_config
 
     def get_boards(self, id_=None):
