@@ -110,7 +110,7 @@ debug_init_cmds =
 
 ## Troubleshooting
 
-See [DEBUGGING.md](../DEBUGGING.md) for comprehensive troubleshooting guide.
+See [DEBUGGING.md](../docs/DEBUGGING.md) for comprehensive troubleshooting guide.
 
 ### Quick Checks
 

@@ -98,6 +98,30 @@ The debugging workflow differs fundamentally from embedded platforms:
 
 ### Prerequisites
 
+#### PlatformIO GDB Integration Setup
+
+**Required: .gdbinit configuration**
+
+PlatformIO creates a `.pioinit` file with debug initialization commands, but GDB only auto-loads files named `.gdbinit`. This configuration ensures GDB automatically executes PlatformIO's debug setup.
+
+**1. Copy template .gdbinit to your project:**
+```bash
+cp examples/template.gdbinit /path/to/your/project/.gdbinit
+```
+
+**2. Configure GDB to allow auto-loading (one-time setup):**
+```bash
+mkdir -p ~/.config/gdb
+echo "add-auto-load-safe-path /path/to/your/project/.gdbinit" >> ~/.config/gdb/gdbinit
+```
+
+Alternative (less secure, allows all projects):
+```bash
+echo "set auto-load safe-path /" >> ~/.config/gdb/gdbinit
+```
+
+**Why this is required**: PlatformIO generates `.pioinit` but GDB security settings only auto-load `.gdbinit` files. The template `.gdbinit` file sources PlatformIO's `.pioinit` automatically when GDB starts.
+
 #### On Development Machine (Host)
 
 **Cross-compilation toolchain with GDB:**
@@ -586,6 +610,60 @@ debug_init_cmds =
     directory /path/to/src
 ```
 
+#### Exec format error when running program
+
+**Symptom:**
+```
+/bin/bash: cannot execute binary file: Exec format error
+```
+
+**Cause:** GDB attempting to run the ARM binary locally instead of on the remote target.
+
+**Solution:**
+1. Verify `.gdbinit` exists in project root
+2. Check GDB is allowed to load it (see Quick Start Prerequisites)
+3. Ensure `target extended-remote $DEBUG_PORT` is in `debug_init_cmds`
+
+#### GDB does not stop at main automatically
+
+**Symptom:** GDB starts but does not execute .pioinit commands.
+
+**Cause:** .gdbinit not being auto-loaded due to GDB security settings.
+
+**Solution:**
+```bash
+# Check if safe-path is configured
+gdb -q --batch -ex "show auto-load safe-path"
+
+# Add project to safe-path
+echo "add-auto-load-safe-path $(pwd)/.gdbinit" >> ~/.config/gdb/gdbinit
+```
+
+#### "The program is not being run"
+
+**Symptom:** Typing `continue` displays "The program is not being run".
+
+**Cause:** Not connected to remote target.
+
+**Solution:** Manually source .pioinit:
+```gdb
+(gdb) source ~/.platformio/.cache/.piodebug-XXXXX/.pioinit
+```
+Then verify .gdbinit configuration as described above.
+
+#### AsyncIO PermissionError
+
+**Symptom:**
+```
+PermissionError: [Errno 1] Operation not permitted
+```
+
+**Cause:** Python asyncio has issues with redirected or closed stdin.
+
+**Impact:** Cosmetic only. Debugging functionality continues to work.
+
+**Solution:** Run `pio debug` from an interactive terminal rather than from scripts with stdin redirection.
+
 ### Debug Logging
 
 Enable verbose debug output:
@@ -597,6 +675,79 @@ export PLATFORMIO_DEBUG=1
 # Run debug session
 pio debug -e debug
 ```
+
+---
+
+## Common Warnings
+
+The following warnings may appear during debugging sessions. These are typically harmless and do not prevent debugging functionality.
+
+### Build ID Mismatch
+
+**Warning message:**
+```
+Warning: Build ID mismatch between current exec-file ... and automatically determined exec-file ...
+```
+
+**Cause**: Local and remote binaries differ slightly due to timestamps or build IDs.
+
+**Impact**: Cosmetic only. Debugging functionality remains intact.
+
+**Solution**: Upload a fresh binary before debugging to eliminate this warning.
+
+### File Not Found
+
+**Warning message:**
+```
+Warning: ../sysdeps/aarch64/dl-start.S:22: Datei oder Verzeichnis nicht gefunden
+```
+
+**Cause**: GDB attempting to display source code for C library internals on the remote system.
+
+**Impact**: None. Application source code debugging functions normally.
+
+**Solution**: This is expected behavior when debugging without remote system source packages. The warning can be safely ignored.
+
+### File Transfer Performance
+
+**Warning message:**
+```
+Warning: File transfers from remote targets can be slow. Use "set sysroot" to access files locally instead.
+```
+
+**Cause**: GDB downloading library debug symbols from the remote target.
+
+**Impact**: Initial connection may be slower (one-time per session).
+
+**Solution**: Add `set sysroot /` to `debug_init_cmds` (already included in platform examples).
+
+### Debuginfod Prompt
+
+**Warning message:**
+```
+Enable debuginfod for this session? (y or [n])
+```
+
+**Cause**: GDB requesting permission to auto-download debug symbols.
+
+**Impact**: None when using the template .gdbinit file (disables this prompt).
+
+**Solution**: The template .gdbinit includes `set debuginfod enabled off` to suppress this prompt.
+
+### Exit Warning
+
+**Warning message:**
+```
+(gdb) quit
+Warning! Undefined pio_reset_run_target command
+Unknown monitor command.
+```
+
+**Cause**: GDB cleanup attempting to execute PlatformIO reset command.
+
+**Impact**: Cosmetic only. Session exits cleanly after this message.
+
+**Solution**: This warning is harmless and can be ignored.
 
 ---
 
