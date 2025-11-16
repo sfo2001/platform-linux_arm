@@ -17,11 +17,12 @@
 
 import os
 import sys
+import platform as stdlib_platform  # Import stdlib platform first to avoid circular import
 import importlib.util
 from unittest.mock import Mock, patch, MagicMock, mock_open
 import pytest
 
-# Add parent directory to path for imports
+# Add parent directory to path for imports (after stdlib platform is imported)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from platformio import exception
@@ -387,11 +388,12 @@ class TestParseUploadPort:
 class TestDetermineGdbExecutable:
     """Test cases for _determine_gdb_executable method."""
 
+    @patch('shutil.which')
     @patch('platform_module.Linux_armPlatform._is_native')
     @patch('platform_module.get_platform_config')
     @patch('platform_module.PlatformBase.__init__')
     def test_determine_gdb_native(
-        self, mock_base_init, mock_get_config, mock_is_native, mock_platform_manifest
+        self, mock_base_init, mock_get_config, mock_is_native, mock_which, mock_platform_manifest
     ):
         """Test GDB executable determination on native ARM."""
         from platform_module import Linux_armPlatform
@@ -399,17 +401,19 @@ class TestDetermineGdbExecutable:
         mock_base_init.return_value = None
         mock_get_config.return_value = Mock()
         mock_is_native.return_value = True
+        mock_which.return_value = "gdb"  # Mock shutil.which() to find gdb
 
         platform = Linux_armPlatform(mock_platform_manifest)
 
         gdb_path = platform._determine_gdb_executable("armv7")
         assert gdb_path == "gdb"
 
+    @patch('shutil.which')
     @patch('platform_module.Linux_armPlatform._is_native')
     @patch('platform_module.get_platform_config')
     @patch('platform_module.PlatformBase.__init__')
     def test_determine_gdb_cross_aarch64(
-        self, mock_base_init, mock_get_config, mock_is_native, mock_platform_manifest
+        self, mock_base_init, mock_get_config, mock_is_native, mock_which, mock_platform_manifest
     ):
         """Test GDB executable for cross-compilation to aarch64."""
         from platform_module import Linux_armPlatform
@@ -418,16 +422,25 @@ class TestDetermineGdbExecutable:
         mock_get_config.return_value = Mock()
         mock_is_native.return_value = False
 
+        # Mock shutil.which() to simulate arch-specific GDB being available
+        # Return None for gdb-multiarch, return the command for arch-specific GDB
+        def which_side_effect(cmd):
+            if cmd == "aarch64-linux-gnu-gdb":
+                return cmd
+            return None
+        mock_which.side_effect = which_side_effect
+
         platform = Linux_armPlatform(mock_platform_manifest)
 
         gdb_path = platform._determine_gdb_executable("aarch64")
         assert gdb_path == "aarch64-linux-gnu-gdb"
 
+    @patch('shutil.which')
     @patch('platform_module.Linux_armPlatform._is_native')
     @patch('platform_module.get_platform_config')
     @patch('platform_module.PlatformBase.__init__')
     def test_determine_gdb_cross_armv7(
-        self, mock_base_init, mock_get_config, mock_is_native, mock_platform_manifest
+        self, mock_base_init, mock_get_config, mock_is_native, mock_which, mock_platform_manifest
     ):
         """Test GDB executable for cross-compilation to armv7."""
         from platform_module import Linux_armPlatform
@@ -435,6 +448,14 @@ class TestDetermineGdbExecutable:
         mock_base_init.return_value = None
         mock_get_config.return_value = Mock()
         mock_is_native.return_value = False
+
+        # Mock shutil.which() to simulate arch-specific GDB being available
+        # Return None for gdb-multiarch, return the command for arch-specific GDB
+        def which_side_effect(cmd):
+            if cmd == "arm-linux-gnueabihf-gdb":
+                return cmd
+            return None
+        mock_which.side_effect = which_side_effect
 
         platform = Linux_armPlatform(mock_platform_manifest)
 
