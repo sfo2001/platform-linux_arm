@@ -2,13 +2,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "PlatformIO: Monitor (SSH)",
+            "label": "PlatformIO: Monitor (SSH) - Pure CLI",
             "type": "shell",
-            "command": "~/.platformio/penv/bin/pio",
+            "command": "bash",
             "args": [
-                "run",
-                "--target",
-                "monitor"
+                "-l",
+                "-c",
+                "command -v pio >/dev/null 2>&1 && pio run --target monitor || platformio run --target monitor"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -21,15 +21,13 @@
             }
         },
         {
-            "label": "PlatformIO: Upload and Monitor (SSH)",
+            "label": "PlatformIO: Upload and Monitor (SSH) - Pure CLI",
             "type": "shell",
-            "command": "~/.platformio/penv/bin/pio",
+            "command": "bash",
             "args": [
-                "run",
-                "--target",
-                "upload",
-                "--target",
-                "monitor"
+                "-l",
+                "-c",
+                "command -v pio >/dev/null 2>&1 && pio run --target upload --target monitor || platformio run --target upload --target monitor"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -42,15 +40,13 @@
             }
         },
         {
-            "label": "PlatformIO: Monitor (Specific Env)",
+            "label": "PlatformIO: Monitor (SSH) - Specific Environment",
             "type": "shell",
-            "command": "~/.platformio/penv/bin/pio",
+            "command": "bash",
             "args": [
-                "run",
-                "--target",
-                "monitor",
-                "--environment",
-                "raspberrypi_5"
+                "-l",
+                "-c",
+                "command -v pio >/dev/null 2>&1 && pio run --target monitor --environment raspberrypi_5 || platformio run --target monitor --environment raspberrypi_5"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -63,17 +59,13 @@
             }
         },
         {
-            "label": "PlatformIO: Upload and Monitor (Specific Env)",
+            "label": "PlatformIO: Upload and Monitor (SSH) - Specific Environment",
             "type": "shell",
-            "command": "~/.platformio/penv/bin/pio",
+            "command": "bash",
             "args": [
-                "run",
-                "--target",
-                "upload",
-                "--target",
-                "monitor",
-                "--environment",
-                "raspberrypi_5"
+                "-l",
+                "-c",
+                "command -v pio >/dev/null 2>&1 && pio run --target upload --target monitor --environment raspberrypi_5 || platformio run --target upload --target monitor --environment raspberrypi_5"
             ],
             "problemMatcher": [],
             "presentation": {
