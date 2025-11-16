@@ -10,6 +10,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Nothing yet
 
+## [1.8.0] - 2025-11-15 - "The Quality Release"
+
+**This release focuses on code quality, testing, security, and developer experience improvements.**
+
+**🎉 Highlights:**
+- **81 comprehensive unit tests** with 42% code coverage
+- **Type hints (PEP 484)** for better IDE support and type safety
+- **Configuration file support** for global defaults
+- **libgpiod cross-compilation** on Windows and macOS
+- **Security documentation** and vulnerability fixes
+- **Python code quality** improvements across the board
+
+---
+
+### Added
+
+- **libgpiod Framework Cross-Compilation** (#78, #82, #86, #94)
+  - Windows cross-compilation via MSYS2 (#82)
+  - macOS cross-compilation support (#94)
+  - Ubuntu cross-compilation from source (#86)
+  - Comprehensive build scripts and documentation
+
+- **Configuration File Support** (#73, #97)
+  - Global configuration: `~/.platformio/.platform-linux_arm.ini`
+  - Project-local configuration: `./.platform-linux_arm.ini`
+  - Configurable defaults for upload, test, and SSH settings
+  - Automatic configuration discovery and merging
+
+- **Comprehensive Unit Testing** (#71)
+  - 81 unit tests using pytest framework
+  - 42% code coverage (platform_constants: 100%, ssh_utils: 98%)
+  - Automated testing in CI/CD (Python 3.8-3.12)
+  - Developer guide (DEVELOPER.md) with testing instructions
+  - Coverage reporting with HTML and XML output
+
+- **Type Hints (PEP 484)** (#65)
+  - Type annotations for platform_constants.py (100% coverage)
+  - Type hints for platform.py core methods
+  - mypy configuration for static type checking
+  - CI/CD integration with automated mypy checks
+  - Improved IDE autocomplete and type safety
+
+- **Security Documentation** (#91)
+  - Phase 1 security documentation complete
+  - Threat model and risk assessment
+  - Security controls and mitigation strategies
+  - Best practices guide for secure deployments
+
+- **Hardware Test Matrix** (#79)
+  - Comprehensive board × framework compatibility matrix
+  - Architecture support documentation (32-bit/64-bit)
+  - Host OS × target board testing matrix
+  - CI/CD test coverage tracking
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Critical command injection vulnerabilities patched
+  - Timeout protection on all subprocess calls
+  - Input validation and sanitization throughout codebase
+
+- **Build System**
+  - Prevent lgpio build contamination between architectures (#96)
+  - Fix libgpiod Windows MSYS2 path translation issues
+  - Lazy imports to prevent platform load failures (#78)
+  - Missing environ import in libgpiod.py
+
+- **CI/CD**
+  - Fix pip cache configuration for requirements-dev.txt
+  - Proper toolchain path exports in Windows workflow
+  - C++ bindings disabled for Windows cross-compilation
+
+- **Upload & Run**
+  - Fix `upload_run_after` when `upload_port` specifies a directory path
+  - Automatically append program filename to directory paths
+  - Display correct executable path in remote execution output
+
+### Changed
+
+- **Code Quality Improvements**
+  - Comprehensive PEP 257 docstrings across Python codebase (#93)
+  - Extract magic values to named constants (#90)
+  - Improve error handling specificity (#89)
+  - Break down long methods for better maintainability (#68, #83)
+  - Standardize return values across upload/test methods (#95)
+
+- **Refactoring**
+  - Extract SSH command building to shared ssh_utils module (#77)
+  - Add comprehensive unit tests for ssh_utils (#88)
+  - Improved code organization and modularity
+
+### Documentation
+
+- Complete research documentation published to GitHub Wiki
+- Enhanced developer contribution guide (DEVELOPER.md)
+- Security documentation and best practices
+- Hardware test matrix with compatibility tracking
+- libgpiod setup and cross-compilation guides
+- Removed archived research (now on Wiki)
+
+### Performance
+
+- CI/CD workflow optimization with comprehensive caching (#92)
+  - 75% reduction in build times
+  - Windows toolchain caching (300MB each)
+  - Built library caching (libgpiod, lgpio)
+  - macOS Homebrew toolchain caching
+
 ## [1.7.0] - 2025-11-13 - "The Modernization Release"
 
 **This is a major modernization release forked from the original platformio/platform-linux_arm repository (last updated May 2022, abandoned for 3.5 years).**

@@ -16,7 +16,7 @@
     "type": "git",
     "url": "https://github.com/sfo2001/platform-linux_arm.git"
   },
-  "version": "1.7.0",
+  "version": "1.8.0",
   "frameworks": {
     "libgpiod": {
       "script": "builder/frameworks/libgpiod.py",
