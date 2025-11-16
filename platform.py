@@ -1015,6 +1015,15 @@ class Linux_armPlatform(PlatformBase):
                 else:
                     host = upload_port.split(":")[0]
 
+        # For debugging, if prog_path is a directory (ends with /), append program name
+        # The program name comes from the build metadata
+        if prog_path.endswith("/"):
+            # Get program name from build metadata (prog_path in build_data)
+            build_prog_path = debug_config.build_data.get("prog_path", "")
+            if build_prog_path:
+                prog_name = os.path.basename(build_prog_path)
+                prog_path = os.path.join(prog_path.rstrip("/"), prog_name)
+
         return user, host, prog_path, ssh_port, ssh_key
 
     def _configure_gdbserver_ssh(
@@ -1075,7 +1084,12 @@ class Linux_armPlatform(PlatformBase):
 
         # Set port to pipe command - PlatformIO will launch this command and communicate via stdio
         # Format: "| <command>" tells PlatformIO to use pipe mode instead of TCP connection
-        debug_config.port = f"| {ssh_cmd}"
+        pipe_port = f"| {ssh_cmd}"
+
+        # WORKAROUND: _port property doesn't persist between configure_debug_session and reveal_patterns
+        # Store in env_options["debug_port"] instead to ensure it's used when substituting $DEBUG_PORT
+        debug_config.env_options["debug_port"] = pipe_port
+        debug_config.port = pipe_port  # Also set property in case PlatformIO uses it directly
 
     def _configure_gdb_remote(self, debug_config: dict) -> None:
         """
