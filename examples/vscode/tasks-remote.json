@@ -2,13 +2,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "PlatformIO: Monitor (SSH)",
+            "label": "PlatformIO: SSH Monitor",
             "type": "shell",
             "command": "~/.platformio/penv/bin/pio",
             "args": [
                 "run",
                 "--target",
-                "monitor"
+                "sshmonitor"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -29,7 +29,7 @@
                 "--target",
                 "upload",
                 "--target",
-                "monitor"
+                "sshmonitor"
             ],
             "problemMatcher": [],
             "presentation": {
@@ -42,13 +42,13 @@
             }
         },
         {
-            "label": "PlatformIO: Monitor (Specific Env)",
+            "label": "PlatformIO: SSH Monitor (Specific Env)",
             "type": "shell",
             "command": "~/.platformio/penv/bin/pio",
             "args": [
                 "run",
                 "--target",
-                "monitor",
+                "sshmonitor",
                 "--environment",
                 "raspberrypi_5"
             ],
@@ -71,7 +71,7 @@
                 "--target",
                 "upload",
                 "--target",
-                "monitor",
+                "sshmonitor",
                 "--environment",
                 "raspberrypi_5"
             ],
