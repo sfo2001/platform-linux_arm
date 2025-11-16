@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **VSCode Integration**
+  - Custom tasks for SSH monitoring (examples/vscode/tasks.json)
+  - Comprehensive VSCode integration guide (docs/VSCODE.md)
+  - Workaround for PlatformIO GUI Monitor button limitation
+
 - **libgpiod Framework Cross-Compilation** (#78, #82, #86, #94)
   - Windows cross-compilation via MSYS2 (#82)
   - macOS cross-compilation support (#94)
