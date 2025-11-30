@@ -191,8 +191,9 @@ Compiled binaries are placed in `.pio/build/<board_name>/program` (note: the exa
 
 ## Version Management
 
-- Development version: 1.7.0 (unreleased, defined in `platform.json:19`)
-- Last released version: 1.6.0 (2025-11-09)
+- Development version: 1.8.0 (unreleased, defined in `platform.json:19`)
+- Last released version: 1.7.1 (2025-11-14)
+- Previous releases: 1.7.0 (2025-11-13), 1.6.0 (2025-11-09)
 - Uses conventional commit messages (see git history)
 - Git-flow workflow: `develop` branch for development, `release/*` branches for releases
 - Versions should be bumped in `platform.json` before tagging releases

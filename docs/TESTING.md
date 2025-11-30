@@ -1,7 +1,7 @@
 # Platform Testing Matrix
 
-**Last Updated**: 2025-11-09
-**Platform Version**: 1.6.0
+**Last Updated**: 2025-11-30
+**Platform Version**: 1.8.0
 **CI/CD Status**: [![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
 
 This document provides a comprehensive testing matrix for the platform-linux_arm platform, covering all supported boards, frameworks, architectures, and build configurations.

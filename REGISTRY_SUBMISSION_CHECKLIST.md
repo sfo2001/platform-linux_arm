@@ -1,8 +1,8 @@
 # PlatformIO Registry Submission Checklist
 
 **Platform**: linux_arm
-**Version**: 1.7.0
-**Date**: 2025-11-09
+**Version**: 1.8.0
+**Date**: 2025-11-30
 **Status**: Ready for Submission
 
 ## Pre-Submission Requirements
@@ -11,16 +11,17 @@
 
 - [x] **Platform Manifest** (`platform.json`)
   - [x] Name, title, description defined
-  - [x] Version specified (1.6.0 → 1.7.0 pending)
+  - [x] Version specified (1.8.0)
   - [x] Repository URL present
   - [x] License declared (Apache 2.0)
   - [x] Keywords defined
-  - [x] Frameworks declared (lgpio, pigpio, wiringpi)
+  - [x] Frameworks declared (libgpiod, lgpio, pigpio, wiringpi)
   - [x] Packages defined (toolchain-gccarmlinuxgnueabi)
   - [x] PlatformIO Core 6.0+ compatibility
 
 - [x] **Build Scripts**
   - [x] `builder/main.py` - Core build script
+  - [x] `builder/frameworks/libgpiod.py` - libgpiod framework
   - [x] `builder/frameworks/lgpio.py` - lgpio framework
   - [x] `builder/frameworks/pigpio.py` - pigpio framework
   - [x] `builder/frameworks/wiringpi.py` - wiringpi framework
@@ -36,10 +37,14 @@
 
 - [x] **Working Examples**
   - [x] `baremetal-hello` - Bare-metal example
+  - [x] `libgpiod-blink` - libgpiod framework example (v1 API)
+  - [x] `libgpiod-blink-v2` - libgpiod framework example (v2 API)
+  - [x] `libgpiod-button` - libgpiod button input example
   - [x] `lgpio-blink` - lgpio framework example
   - [x] `pigpio-blink` - pigpio framework example
   - [x] `wiringpi-blink` - wiringpi framework example
   - [x] `wiringpi-serial` - WiringPi serial example
+  - [x] `remote-deployment` - SSH deployment example
   - [x] All examples have `platformio.ini` and source code
   - [x] CI/CD tests passing
 
@@ -173,39 +178,38 @@ All mandatory requirements are met:
 
 ## Pre-Submission Tasks
 
-### Version Bump
+### Version History
 
-Current version in `platform.json`: **1.6.0**
+**Released versions:**
+- v1.7.1 (2025-11-14) - Security and bug fixes
+- v1.7.0 (2025-11-13) - Documentation and modernization release
+- v1.6.0 (2025-11-09) - Initial modernization
 
-**Recommended action**: Bump to **1.7.0** (new features, breaking changes)
+**Current development version in `platform.json`**: **1.8.0**
 
-Changes since 1.6.0:
-- Major documentation overhaul (RST format)
-- 64-bit ARM support
-- New boards (Pi 400, CM4, Zero 2W)
-- lgpio prioritized over pigpio
-- WiringPi updated to GC2 fork
-- Comprehensive testing matrix
-- Framework comparison and migration guides
+**Recommended action**: Release **1.8.0** (The Quality Release)
 
-**Version bump command**:
-```json
-// In platform.json, change:
-"version": "1.6.0"
-// To:
-"version": "1.7.0"
-```
+Changes since 1.7.1 (57 commits):
+- 81 comprehensive unit tests with 42% code coverage
+- Type hints (PEP 484) throughout Python codebase
+- Configuration file support (`~/.platformio/.platform-linux_arm.ini`)
+- libgpiod framework with cross-compilation support (Windows, macOS, Ubuntu)
+- VSCode integration improvements with custom tasks
+- Remote debugging enhancements with GDB over SSH
+- SSH monitoring improvements
+- Comprehensive security documentation
+- Hardware test matrix
+- PEP 257 docstrings
+- Code quality improvements (constants, error handling)
 
-### Git Tagging (After Version Bump)
+**Version is already at 1.8.0** - Ready for tagging when approved.
+
+### Git Tagging (When Ready for Release)
 
 ```bash
-# Commit version bump
-git add platform.json
-git commit -m "chore: bump version to 1.7.0 for registry submission"
-
 # Create and push tag
-git tag -a v1.7.0 -m "Release v1.7.0 - Documentation and modernization release"
-git push origin v1.7.0
+git tag -a v1.8.0 -m "Release v1.8.0 - The Quality Release"
+git push origin v1.8.0
 ```
 
 ### Final Pre-Flight Checks
@@ -220,15 +224,18 @@ pio run
 cd ../baremetal-hello
 pio run
 
-# 3. Verify Sphinx docs build
+# 3. Run unit tests
+pytest tests/ -v
+
+# 4. Verify Sphinx docs build
 cd docs
 sphinx-build -b html . _build
 
-# 4. Check for broken links (optional)
+# 5. Check for broken links (optional)
 # sphinx-build -b linkcheck . _build
 
-# 5. Verify CI is passing
-# Check: https://github.com/platformio/platform-linux_arm/actions
+# 6. Verify CI is passing
+# Check: https://github.com/sfo2001/platform-linux_arm/actions
 ```
 
 ---
@@ -252,17 +259,17 @@ Publishing package to the registry...
 ✓ Package validated successfully
 ✓ Documentation validated
 ✓ Examples validated
-✓ Platform published: platformio/linux_arm@1.7.0
+✓ Platform published: platformio/linux_arm@1.8.0
 ```
 
 ### Post-Publishing Verification
 
 1. **Registry Page**: https://registry.platformio.org/platforms/platformio/linux_arm
-2. **Version List**: Verify 1.7.0 appears
+2. **Version List**: Verify 1.8.0 appears
 3. **Documentation**: Verify docs render correctly on registry
 4. **Installation Test**:
    ```bash
-   pio pkg install --global --platform platformio/linux_arm@1.7.0
+   pio pkg install --global --platform platformio/linux_arm@1.8.0
    ```
 
 ---
@@ -303,12 +310,12 @@ After successful submission:
 
 If issues are discovered after publishing:
 
-1. **Minor Issues**: Document in GitHub issues, fix in patch release (1.7.1)
+1. **Minor Issues**: Document in GitHub issues, fix in patch release (1.8.1)
 2. **Critical Issues**:
    - Unpublish version (if possible)
    - Fix issues
-   - Publish corrected version (1.7.1)
-3. **Documentation Issues**: Update docs, publish 1.7.1 with doc fixes
+   - Publish corrected version (1.8.1)
+3. **Documentation Issues**: Update docs, publish 1.8.1 with doc fixes
 
 ---
 
@@ -336,6 +343,6 @@ Platform submission is successful when:
 ---
 
 **Prepared By**: Platform-linux_arm Team
-**Last Updated**: 2025-11-09
-**Document Version**: 1.0
-**Status**: ✅ **READY FOR SUBMISSION**
+**Last Updated**: 2025-11-30
+**Document Version**: 2.0
+**Status**: ✅ **READY FOR v1.8.0 SUBMISSION**

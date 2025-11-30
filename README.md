@@ -78,7 +78,7 @@ upload_port = pi@raspberrypi.local:/home/pi/myapp
 
 Or use a stable release:
 ```ini
-platform = linux_arm@^1.7.0
+platform = linux_arm@^1.8.0
 ```
 
 ## Quick Start Examples
@@ -308,6 +308,6 @@ Apache License 2.0 - see [LICENSE](LICENSE) file.
 
 ---
 
-**Version**: 1.7.0
+**Version**: 1.8.0
 **Maintained by**: [@sfo2001](https://github.com/sfo2001)
 **Original**: [platformio/platform-linux_arm](https://github.com/platformio/platform-linux_arm)

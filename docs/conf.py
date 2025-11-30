@@ -23,8 +23,8 @@ copyright = '2025, PlatformIO'
 author = 'PlatformIO'
 
 # The full version, including alpha/beta/rc tags
-release = '1.7.0'
-version = '1.7'
+release = '1.8.0'
+version = '1.8'
 
 
 # -- General configuration ---------------------------------------------------
