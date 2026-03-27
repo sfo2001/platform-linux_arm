@@ -406,34 +406,72 @@ jobs:
           echo "=== All executables in PATH matching 'arm' ==="
           find $(echo "$PATH" | tr ':' '\n') -maxdepth 1 -iname "*arm*" 2>/dev/null | head -20 || true
 
-      # Cache built lgpio libraries (Ubuntu/macOS)
-      - name: Cache lgpio libraries (Ubuntu/macOS)
+      # Cache built lgpio library (32-bit, Ubuntu/macOS)
+      # Separate cache key from 64-bit to prevent partial-restore contamination:
+      # if the 64-bit build fails on a first run the cache would be saved with only
+      # 32-bit libraries; subsequent runs would hit the cache, skip the 64-bit build,
+      # and the linker would fall back to the 32-bit .so producing "file format not
+      # recognized".
+      - name: Cache lgpio library (32-bit, Ubuntu/macOS)
         if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
         uses: actions/cache@v4
-        id: cache-lgpio
+        id: cache-lgpio-armhf
         with:
           path: |
             ~/.local/arm-linux-gnueabihf
             ~/.local/arm-unknown-linux-gnueabihf
+          key: ${{ runner.os }}-lgpio-armhf-${{ hashFiles('scripts/setup-lgpio-cross.sh') }}
+
+      # Cache built lgpio library (64-bit, Ubuntu/macOS)
+      - name: Cache lgpio library (64-bit, Ubuntu/macOS)
+        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        uses: actions/cache@v4
+        id: cache-lgpio-aarch64
+        with:
+          path: |
             ~/.local/aarch64-linux-gnu
             ~/.local/aarch64-unknown-linux-gnu
-          key: ${{ runner.os }}-lgpio-${{ hashFiles('scripts/setup-lgpio-cross.sh') }}
+          key: ${{ runner.os }}-lgpio-aarch64-${{ hashFiles('scripts/setup-lgpio-cross.sh') }}
 
-      # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu/macOS only
-      - name: Build lgpio for ARM cross-compilation (32-bit)
-        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio.outputs.cache-hit != 'true'
+      # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu only
+      - name: Build lgpio for ARM cross-compilation (32-bit) - Ubuntu
+        if: matrix.os == 'ubuntu-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-armhf.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 32-bit..."
           ./scripts/setup-lgpio-cross.sh
 
-      # Build lgpio for ARM cross-compilation (64-bit) - Ubuntu/macOS only
-      - name: Build lgpio for ARM cross-compilation (64-bit)
-        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio.outputs.cache-hit != 'true'
+      # Build lgpio for ARM cross-compilation (32-bit) - macOS only
+      # macOS brew toolchain uses arm-unknown-linux-gnueabihf- prefix (not arm-linux-gnueabihf-)
+      # Install to arm-linux-gnueabihf so the lgpio framework builder finds it
+      - name: Build lgpio for ARM cross-compilation (32-bit) - macOS
+        if: matrix.os == 'macos-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-armhf.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "Building lgpio library for ARM 32-bit on macOS..."
+          CROSS_PREFIX=arm-unknown-linux-gnueabihf- \
+          INSTALL_DIR=$HOME/.local/arm-linux-gnueabihf \
+          ./scripts/setup-lgpio-cross.sh
+
+      # Build lgpio for ARM cross-compilation (64-bit) - Ubuntu only
+      - name: Build lgpio for ARM cross-compilation (64-bit) - Ubuntu
+        if: matrix.os == 'ubuntu-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-aarch64.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 64-bit..."
           CROSS_PREFIX=aarch64-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          ./scripts/setup-lgpio-cross.sh
+
+      # Build lgpio for ARM cross-compilation (64-bit) - macOS only
+      # macOS brew toolchain uses aarch64-unknown-linux-gnu- prefix (not aarch64-linux-gnu-)
+      # Install to aarch64-linux-gnu so the lgpio framework builder finds it
+      - name: Build lgpio for ARM cross-compilation (64-bit) - macOS
+        if: matrix.os == 'macos-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-aarch64.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "Building lgpio library for ARM 64-bit on macOS..."
+          CROSS_PREFIX=aarch64-unknown-linux-gnu- \
           INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
           ./scripts/setup-lgpio-cross.sh
 
