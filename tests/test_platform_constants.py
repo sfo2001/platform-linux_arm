@@ -26,8 +26,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import platform_constants
 
 
-class TestToolchainPrefixLinux:
-    """Verify ToolchainPrefix values on non-Windows platforms."""
+class TestToolchainPrefixPosix:
+    """Verify ToolchainPrefix values when simulating a non-Windows platform."""
+
+    @pytest.fixture(autouse=True)
+    def posix_constants(self):
+        with patch.object(os, 'name', 'posix'):
+            importlib.reload(platform_constants)
+        yield
+        importlib.reload(platform_constants)
 
     def test_aarch64_linux_prefix(self):
         assert platform_constants.ToolchainPrefix.AARCH64 == "aarch64-linux-gnu-"
@@ -36,8 +43,15 @@ class TestToolchainPrefixLinux:
         assert platform_constants.ToolchainPrefix.ARMV7 == "arm-linux-gnueabihf-"
 
 
-class TestGDBExecutableLinux:
-    """Verify GDBExecutable values on non-Windows platforms."""
+class TestGDBExecutablePosix:
+    """Verify GDBExecutable values when simulating a non-Windows platform."""
+
+    @pytest.fixture(autouse=True)
+    def posix_constants(self):
+        with patch.object(os, 'name', 'posix'):
+            importlib.reload(platform_constants)
+        yield
+        importlib.reload(platform_constants)
 
     def test_native_gdb(self):
         assert platform_constants.GDBExecutable.NATIVE == "gdb"
@@ -52,35 +66,35 @@ class TestGDBExecutableLinux:
 class TestToolchainPrefixWindows:
     """Verify ToolchainPrefix values when simulating Windows (os.name == 'nt')."""
 
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def windows_constants(self):
         with patch.object(os, 'name', 'nt'):
-            mod = importlib.reload(platform_constants)
-        yield mod
-        importlib.reload(platform_constants)  # restore non-Windows values
+            importlib.reload(platform_constants)
+        yield
+        importlib.reload(platform_constants)
 
-    def test_aarch64_windows_prefix(self, windows_constants):
-        assert windows_constants.ToolchainPrefix.AARCH64 == "aarch64-none-linux-gnu-"
+    def test_aarch64_windows_prefix(self):
+        assert platform_constants.ToolchainPrefix.AARCH64 == "aarch64-none-linux-gnu-"
 
-    def test_armv7_windows_prefix(self, windows_constants):
-        assert windows_constants.ToolchainPrefix.ARMV7 == "arm-none-linux-gnueabihf-"
+    def test_armv7_windows_prefix(self):
+        assert platform_constants.ToolchainPrefix.ARMV7 == "arm-none-linux-gnueabihf-"
 
 
 class TestGDBExecutableWindows:
     """Verify GDBExecutable values when simulating Windows (os.name == 'nt')."""
 
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def windows_constants(self):
         with patch.object(os, 'name', 'nt'):
-            mod = importlib.reload(platform_constants)
-        yield mod
-        importlib.reload(platform_constants)  # restore non-Windows values
+            importlib.reload(platform_constants)
+        yield
+        importlib.reload(platform_constants)
 
-    def test_aarch64_windows_gdb(self, windows_constants):
-        assert windows_constants.GDBExecutable.AARCH64 == "aarch64-none-linux-gnu-gdb"
+    def test_aarch64_windows_gdb(self):
+        assert platform_constants.GDBExecutable.AARCH64 == "aarch64-none-linux-gnu-gdb"
 
-    def test_armv7_windows_gdb(self, windows_constants):
-        assert windows_constants.GDBExecutable.ARMV7 == "arm-none-linux-gnueabihf-gdb"
+    def test_armv7_windows_gdb(self):
+        assert platform_constants.GDBExecutable.ARMV7 == "arm-none-linux-gnueabihf-gdb"
 
-    def test_native_gdb_unchanged(self, windows_constants):
-        assert windows_constants.GDBExecutable.NATIVE == "gdb"
+    def test_native_gdb_unchanged(self):
+        assert platform_constants.GDBExecutable.NATIVE == "gdb"

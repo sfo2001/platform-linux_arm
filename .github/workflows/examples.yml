@@ -171,49 +171,21 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          # Find the extracted directory (case-insensitive) and get absolute path
+          # Find the extracted directory and get absolute path
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*arm-none-linux-gnueabihf*" -print -quit | sed 's|^\./||')
           echo "Found toolchain directory: $TOOLCHAIN_DIR"
 
-          # Create symlinks from arm-linux-gnueabihf-* to arm-none-linux-gnueabihf-*
-          # The toolchain uses "arm-none-linux-gnueabihf" but PlatformIO expects "arm-linux-gnueabihf"
-          echo "Creating symlinks for PlatformIO compatibility..."
-          cd "$TOOLCHAIN_DIR/bin"
-          for file in arm-none-linux-gnueabihf-*; do
-            link_name=$(echo "$file" | sed 's/arm-none-linux-gnueabihf-/arm-linux-gnueabihf-/')
-            if [ ! -e "$link_name" ]; then
-              ln -s "$file" "$link_name"
-              echo "  Created: $link_name -> $file"
-            fi
-          done
-          cd "$GITHUB_WORKSPACE"
-
-          # Get absolute path - convert to Windows path format
+          # Add to PATH for subsequent steps
           TOOLCHAIN_BIN="$GITHUB_WORKSPACE/$TOOLCHAIN_DIR/bin"
-          echo "Toolchain bin path: $TOOLCHAIN_BIN"
-
-          # Convert to Windows path format for GITHUB_PATH
           TOOLCHAIN_BIN_WINDOWS=$(cygpath -w "$TOOLCHAIN_BIN")
-          echo "Windows path format: $TOOLCHAIN_BIN_WINDOWS"
-
-          # Add to PATH for subsequent steps (Windows format)
           echo "$TOOLCHAIN_BIN_WINDOWS" >> $GITHUB_PATH
           echo "Added to GITHUB_PATH: $TOOLCHAIN_BIN_WINDOWS"
 
-          # Verify installation and symlinks
-          echo "Verifying toolchain binaries and symlinks..."
-          ls -la "$TOOLCHAIN_DIR/bin/" | grep -E "(arm-linux-gnueabihf-gcc|arm-none-linux-gnueabihf-gcc)" || true
-
-          # Test if arm-linux-gnueabihf-gcc exists
-          if [ -f "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ] || [ -L "$TOOLCHAIN_DIR/bin/arm-linux-gnueabihf-gcc.exe" ]; then
-            echo "✅ arm-linux-gnueabihf-gcc.exe found (symlink or file)"
-          else
-            echo "❌ arm-linux-gnueabihf-gcc.exe NOT found"
-          fi
+          # Verify toolchain binary is present
+          ls -la "$TOOLCHAIN_DIR/bin/" | grep arm-none-linux-gnueabihf-gcc || true
 
           # Export toolchain directory for use in MSYS2 build steps
           echo "ARM_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
-          echo "Exported ARM_TOOLCHAIN_DIR for MSYS2 steps"
 
       # Windows: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (Windows)
@@ -222,8 +194,8 @@ jobs:
         id: cache-windows-libgpiod
         with:
           path: |
-            .local/arm-linux-gnueabihf
-            .local/aarch64-linux-gnu
+            .local/arm-none-linux-gnueabihf
+            .local/aarch64-none-linux-gnu
           key: ${{ runner.os }}-libgpiod-${{ hashFiles('scripts/setup-libgpiod-cross-windows.sh') }}
 
       # Windows: Setup MSYS2 environment for libgpiod cross-compilation
@@ -265,10 +237,10 @@ jobs:
           echo "Added to PATH: $TOOLCHAIN_BIN"
 
           # Verify cross-compiler is available
-          if command -v arm-linux-gnueabihf-gcc &> /dev/null; then
-            echo "✓ Cross-compiler found: $(arm-linux-gnueabihf-gcc --version | head -1)"
+          if command -v arm-none-linux-gnueabihf-gcc &> /dev/null; then
+            echo "Cross-compiler found: $(arm-none-linux-gnueabihf-gcc --version | head -1)"
           else
-            echo "❌ ERROR: arm-linux-gnueabihf-gcc not found in PATH"
+            echo "ERROR: arm-none-linux-gnueabihf-gcc not found in PATH"
             echo "PATH: $PATH"
             ls -la "$TOOLCHAIN_BIN" | grep gcc || true
             exit 1
@@ -277,8 +249,8 @@ jobs:
           # Build libgpiod - install to workspace so Python can find it
           # Convert GITHUB_WORKSPACE to MSYS2 path
           WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
-          CROSS_PREFIX=arm-linux-gnueabihf- \
-          INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-linux-gnueabihf" \
+          CROSS_PREFIX=arm-none-linux-gnueabihf- \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-none-linux-gnueabihf" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
       # Windows: Cache ARM64 toolchain
@@ -310,21 +282,8 @@ jobs:
           TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -iname "arm-gnu-toolchain*aarch64*" -print -quit | sed 's|^\./||')
           echo "Found ARM64 toolchain directory: $TOOLCHAIN_DIR"
 
-          # Create symlinks from aarch64-linux-gnu-* to aarch64-none-linux-gnu-*
-          echo "Creating symlinks for PlatformIO compatibility..."
-          cd "$TOOLCHAIN_DIR/bin"
-          for file in aarch64-none-linux-gnu-*; do
-            link_name=$(echo "$file" | sed 's/aarch64-none-linux-gnu-/aarch64-linux-gnu-/')
-            if [ ! -e "$link_name" ]; then
-              ln -s "$file" "$link_name"
-              echo "  Created: $link_name -> $file"
-            fi
-          done
-          cd "$GITHUB_WORKSPACE"
-
           # Export ARM64 toolchain directory for use in MSYS2 build steps
           echo "ARM64_TOOLCHAIN_DIR=$GITHUB_WORKSPACE/$TOOLCHAIN_DIR" >> $GITHUB_ENV
-          echo "Exported ARM64_TOOLCHAIN_DIR for MSYS2 steps"
 
       # Windows: Build libgpiod for ARM cross-compilation (64-bit)
       - name: Build libgpiod for ARM cross-compilation (64-bit) - Windows
@@ -349,10 +308,10 @@ jobs:
           echo "Added to PATH: $TOOLCHAIN_BIN"
 
           # Verify cross-compiler is available
-          if command -v aarch64-linux-gnu-gcc &> /dev/null; then
-            echo "✓ Cross-compiler found: $(aarch64-linux-gnu-gcc --version | head -1)"
+          if command -v aarch64-none-linux-gnu-gcc &> /dev/null; then
+            echo "Cross-compiler found: $(aarch64-none-linux-gnu-gcc --version | head -1)"
           else
-            echo "❌ ERROR: aarch64-linux-gnu-gcc not found in PATH"
+            echo "ERROR: aarch64-none-linux-gnu-gcc not found in PATH"
             echo "PATH: $PATH"
             ls -la "$TOOLCHAIN_BIN" | grep gcc || true
             exit 1
@@ -361,8 +320,8 @@ jobs:
           # Build libgpiod - install to workspace so Python can find it
           # Convert GITHUB_WORKSPACE to MSYS2 path
           WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
-          CROSS_PREFIX=aarch64-linux-gnu- \
-          INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-linux-gnu" \
+          CROSS_PREFIX=aarch64-none-linux-gnu- \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-none-linux-gnu" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
       # macOS: Cache Homebrew ARM toolchains
@@ -441,8 +400,8 @@ jobs:
           echo "=== Current PATH ==="
           echo "$PATH" | tr ':' '\n'
           echo ""
-          echo "=== Checking for arm-linux-gnueabihf-gcc ==="
-          which arm-linux-gnueabihf-gcc || echo "arm-linux-gnueabihf-gcc not found in PATH"
+          echo "=== Checking for arm-none-linux-gnueabihf-gcc ==="
+          which arm-none-linux-gnueabihf-gcc || echo "arm-none-linux-gnueabihf-gcc not found in PATH"
           echo ""
           echo "=== All executables in PATH matching 'arm' ==="
           find $(echo "$PATH" | tr ':' '\n') -maxdepth 1 -iname "*arm*" 2>/dev/null | head -20 || true
