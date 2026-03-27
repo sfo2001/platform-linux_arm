@@ -424,8 +424,10 @@ class TestDetermineGdbExecutable:
 
         # Mock shutil.which() to simulate arch-specific GDB being available
         # Return None for gdb-multiarch, return the command for arch-specific GDB
+        from platform_constants import GDBExecutable
+
         def which_side_effect(cmd):
-            if cmd == "aarch64-linux-gnu-gdb":
+            if cmd == GDBExecutable.AARCH64:
                 return cmd
             return None
         mock_which.side_effect = which_side_effect
@@ -433,7 +435,7 @@ class TestDetermineGdbExecutable:
         platform = Linux_armPlatform(mock_platform_manifest)
 
         gdb_path = platform._determine_gdb_executable("aarch64")
-        assert gdb_path == "aarch64-linux-gnu-gdb"
+        assert gdb_path == GDBExecutable.AARCH64
 
     @patch('shutil.which')
     @patch('platform_module.Linux_armPlatform._is_native')
@@ -451,8 +453,10 @@ class TestDetermineGdbExecutable:
 
         # Mock shutil.which() to simulate arch-specific GDB being available
         # Return None for gdb-multiarch, return the command for arch-specific GDB
+        from platform_constants import GDBExecutable
+
         def which_side_effect(cmd):
-            if cmd == "arm-linux-gnueabihf-gdb":
+            if cmd == GDBExecutable.ARMV7:
                 return cmd
             return None
         mock_which.side_effect = which_side_effect
@@ -460,7 +464,7 @@ class TestDetermineGdbExecutable:
         platform = Linux_armPlatform(mock_platform_manifest)
 
         gdb_path = platform._determine_gdb_executable("armv7")
-        assert gdb_path == "arm-linux-gnueabihf-gdb"
+        assert gdb_path == GDBExecutable.ARMV7
 
 
 class TestGetConfigDefault:
