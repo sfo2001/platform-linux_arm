@@ -90,7 +90,7 @@ is_native = SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systy
 if not is_native:
     # Detect target architecture from board configuration
     board = env.BoardConfig()
-    target_arch = board.get("build.arch", Architecture.ARMV7)  # Default to 32-bit for backward compatibility
+    target_arch = board.get("build.arch", Architecture.ARMV7)
 
     # Check if user explicitly set architecture via board_build.arch in platformio.ini
     # This takes precedence over board definition
@@ -236,16 +236,6 @@ env.AddCustomTarget(
     actions=_monitor_handler,
     title="Monitor",
     description="Monitor remote program via SSH",
-    always_build=True
-)
-
-# Add a custom SSH monitor target that definitely won't conflict
-env.AddCustomTarget(
-    name="sshmonitor",
-    dependencies=None,
-    actions=_monitor_handler,
-    title="SSH Monitor",
-    description="Monitor remote program via SSH (guaranteed to use custom handler)",
     always_build=True
 )
 

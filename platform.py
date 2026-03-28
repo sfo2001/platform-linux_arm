@@ -172,12 +172,14 @@ class Linux_armPlatform(PlatformBase):
         Creates a marker file to track first-time use.
         Displays important information about VSCode integration.
         """
-        import os
+        import logging
         from pathlib import Path
+        from platform_constants import UIConstants
 
-        # Marker file in platform directory
-        platform_dir = os.path.dirname(os.path.realpath(__file__))
-        marker_file = os.path.join(platform_dir, ".welcome_shown")
+        # Marker file in user-writable PlatformIO core directory (not the platform install dir,
+        # which may be read-only when installed via the PlatformIO package manager)
+        core_dir = os.environ.get("PLATFORMIO_CORE_DIR", os.path.expanduser("~/.platformio"))
+        marker_file = os.path.join(core_dir, ".linux_arm_welcome_shown")
 
         if os.path.exists(marker_file):
             return  # Already shown
@@ -185,22 +187,33 @@ class Linux_armPlatform(PlatformBase):
         # Create marker file
         try:
             Path(marker_file).touch()
-        except Exception:
-            pass  # Ignore errors (e.g., permissions)
+        except OSError as e:
+            logging.debug("Could not write welcome marker file %s: %s", marker_file, e)
+
+        # Build doc URL from platform manifest to avoid hardcoding the fork URL
+        try:
+            import json
+            with open(os.path.join(_PLATFORM_DIR, "platform.json")) as _f:
+                _manifest = json.load(_f)
+            homepage = _manifest.get("homepage", "https://github.com/platformio/platform-linux_arm")
+        except (OSError, ValueError):
+            homepage = "https://github.com/platformio/platform-linux_arm"
+        vscode_doc_url = f"{homepage.rstrip('/')}/blob/develop/docs/VSCODE.md"
 
         # Show welcome message
-        print("\n" + "=" * 70)
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
         print("  Welcome to Linux ARM Platform!")
-        print("=" * 70)
+        print(separator)
         print("\n[!] Important for VS Code Users:")
         print("    The PlatformIO GUI Monitor button doesn't work with this platform.")
         print("    Copy examples/vscode/tasks.json to your project's .vscode/ folder.")
-        print("    See: https://github.com/sfo2001/platform-linux_arm/blob/develop/docs/VSCODE.md")
+        print(f"    See: {vscode_doc_url}")
         print("\n[i] Documentation:")
         print("    - Remote Deployment: docs/UPLOAD.md")
         print("    - Remote Testing:    docs/TESTING.md")
         print("    - VSCode Setup:      docs/VSCODE.md")
-        print("\n" + "=" * 70 + "\n")
+        print("\n" + separator + "\n")
 
     @staticmethod
     def _is_native() -> bool:
@@ -491,6 +504,7 @@ class Linux_armPlatform(PlatformBase):
         ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
         ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
         upload_flags = env.GetProjectOption("upload_flags", self._get_config_default("upload_flags", ""))
+        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
 
         # Create SSH config
         try:
@@ -499,7 +513,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -589,6 +603,7 @@ class Linux_armPlatform(PlatformBase):
         ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
         ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
         upload_flags = env.GetProjectOption("upload_flags", self._get_config_default("upload_flags", RsyncDefaults.FLAGS))
+        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
 
         # Create SSH config
         try:
@@ -597,7 +612,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -609,7 +624,7 @@ class Linux_armPlatform(PlatformBase):
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
         print("\n" + separator)
         print("UPLOADING VIA RSYNC")
-        print("="*60)
+        print(separator)
         print(f"Source:      {source[0]}")
         print(f"Destination: {user}@{host}:{path}")
         print(f"SSH Port:    {ssh_port}")
@@ -680,6 +695,7 @@ class Linux_armPlatform(PlatformBase):
 
         ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
         ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
+        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
 
         # Create SSH config
         try:
@@ -688,7 +704,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -702,7 +718,7 @@ class Linux_armPlatform(PlatformBase):
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
         print("\n" + separator)
         print("UPLOADING VIA SSH")
-        print("="*60)
+        print(separator)
         print(f"Source:      {source[0]}")
         print(f"Destination: {user}@{host}:{path}")
         print(f"SSH Port:    {ssh_port}")
@@ -773,6 +789,8 @@ class Linux_armPlatform(PlatformBase):
         from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import UIConstants, Timeouts
 
+        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
+
         # Create SSH config
         try:
             config = SSHConnectionConfig(
@@ -780,7 +798,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -788,7 +806,8 @@ class Linux_armPlatform(PlatformBase):
         # Get custom run command or use default
         run_command = env.GetProjectOption("upload_run_command", None)
         if run_command:
-            # Custom commands are trusted (from platformio.ini), passed as-is
+            # SECURITY: upload_run_command is treated as trusted user input from platformio.ini.
+            # Arbitrary shell metacharacters are intentionally permitted. See docs/SECURITY.md.
             remote_command = run_command
         else:
             # Determine the actual executable path
@@ -810,7 +829,7 @@ class Linux_armPlatform(PlatformBase):
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
         print("\n" + separator)
         print("RUNNING REMOTE PROGRAM")
-        print("="*60)
+        print(separator)
         print(f"Target: {user}@{host}")
         print(f"Command: {run_command if run_command else executable_path}")
         print(separator + "\n")
@@ -954,7 +973,7 @@ class Linux_armPlatform(PlatformBase):
         # 2. Architecture-specific GDB (from cross-toolchain, macOS/Linux)
         # 3. System GDB (last resort)
         candidates = [
-            "gdb-multiarch",           # Linux multi-arch GDB
+            GDBExecutable.MULTIARCH,   # Linux multi-arch GDB
             arch_specific_gdb,         # Architecture-specific GDB
             GDBExecutable.NATIVE       # System GDB
         ]
@@ -1334,20 +1353,11 @@ class Linux_armPlatform(PlatformBase):
         test_transport = env.GetProjectOption("test_transport", TestTransport.SSH)
 
         if test_transport == TestTransport.SSH:
-            # Load and execute the SSH test uploader
-            uploader_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                "platform-test-uploader.py"
-            )
-
-            # Import the uploader module
-            import importlib.util
-            spec = importlib.util.spec_from_file_location("test_uploader", uploader_path)
-            uploader_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(uploader_module)
-
-            # Execute the upload_test function
-            return uploader_module.upload_test(target, source, env)
+            # Import the test uploader from the platform directory
+            if _PLATFORM_DIR not in sys.path:
+                sys.path.insert(0, _PLATFORM_DIR)
+            from platform_test_uploader import RemoteTestUploader
+            return RemoteTestUploader(target, source, env).run()
 
         elif test_transport == TestTransport.MANUAL:
             separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH

@@ -61,7 +61,7 @@
     },
     "upload_run_timeout": {
       "type": "number",
-      "description": "Timeout for remote program execution in seconds (default: 60)"
+      "description": "Timeout for remote program execution in seconds (default: 300)"
     },
     "upload_user": {
       "type": "string",
@@ -83,9 +83,45 @@
       "type": "number",
       "description": "Upload timeout in seconds (default: 300)"
     },
+    "upload_flags": {
+      "type": "string",
+      "description": "Additional flags passed to the upload tool (scp/rsync/ssh)"
+    },
+    "upload_strict_host_check": {
+      "type": "bool",
+      "description": "Enable SSH strict host key checking for uploads (default: false)"
+    },
     "test_transport": {
       "type": "string",
       "description": "Test upload transport: ssh or manual (default: ssh)"
+    },
+    "test_port": {
+      "type": "number",
+      "description": "Port number for test execution on the remote target (default: 22)"
+    },
+    "test_ssh_port": {
+      "type": "number",
+      "description": "SSH port used for test upload and execution (default: 22)"
+    },
+    "test_username": {
+      "type": "string",
+      "description": "SSH username for test upload and execution (default: pi)"
+    },
+    "test_path": {
+      "type": "string",
+      "description": "Remote path where the test binary is uploaded (default: /tmp/test_program)"
+    },
+    "test_upload_timeout": {
+      "type": "number",
+      "description": "Timeout for test binary upload in seconds (default: 300)"
+    },
+    "test_timeout": {
+      "type": "number",
+      "description": "Timeout for remote test execution in seconds (default: 600)"
+    },
+    "test_ssh_key": {
+      "type": "string",
+      "description": "Path to SSH private key for test upload and execution"
     }
   },
   "debug": {

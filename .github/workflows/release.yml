@@ -147,8 +147,14 @@ jobs:
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...${{ steps.version.outputs.tag }}
           EOF
 
-          # Substitute variables
-          sed -i "s/\$COMMITS/$COMMITS/g" RELEASE_CHANGELOG.md
+          # Substitute $COMMITS placeholder using Python to safely handle
+          # shell metacharacters (/, &, \n) that would break sed substitution
+          python3 -c "
+import os
+content = open('RELEASE_CHANGELOG.md').read()
+commits = os.environ.get('COMMITS', '')
+open('RELEASE_CHANGELOG.md', 'w').write(content.replace('\$COMMITS', commits))
+"
 
       - name: Install PlatformIO Core
         run: pip install -U platformio
@@ -161,7 +167,7 @@ jobs:
           pio pkg list --global --only-platforms
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@26994186c0ac3ef5cae75ac16aa32e8153525f77 # v1
         with:
           name: Release ${{ steps.version.outputs.tag }}
           body_path: RELEASE_CHANGELOG.md
@@ -173,6 +179,6 @@ jobs:
 
       - name: Post-release notification
         run: |
-          echo "✅ Release ${{ steps.version.outputs.tag }} created successfully!"
-          echo "📦 Platform version: ${{ steps.version.outputs.version }}"
-          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}"
+          echo "OK: Release ${{ steps.version.outputs.tag }} created successfully."
+          echo "Platform version: ${{ steps.version.outputs.version }}"
+          echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}"

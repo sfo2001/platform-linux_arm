@@ -24,6 +24,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
+from platform_constants import SSHDefaults, SSHOptions
 
 
 class TestSSHConnectionConfig:
@@ -155,8 +156,7 @@ class TestSSHCommandBuilder:
 
         assert builder.config == config
 
-    @patch('os.path.exists')
-    def test_init_validates_config(self, mock_exists):
+    def test_init_validates_config(self):
         """Test initialization calls validate on config."""
         config = SSHConnectionConfig(user="", host="testhost")
 
@@ -176,7 +176,7 @@ class TestSSHCommandBuilder:
         assert "22" in cmd
         assert "-o" in cmd
         assert "StrictHostKeyChecking=no" in cmd
-        assert "UserKnownHostsFile=/dev/null" in cmd
+        assert SSHOptions.USER_KNOWN_HOSTS_FILE_NULL in cmd
         assert "LogLevel=ERROR" in cmd
         assert "pi@raspberrypi.local" in cmd
 
@@ -248,7 +248,7 @@ class TestSSHCommandBuilder:
 
         assert "-o" in cmd
         assert "StrictHostKeyChecking=no" in cmd
-        assert "UserKnownHostsFile=/dev/null" in cmd
+        assert SSHOptions.USER_KNOWN_HOSTS_FILE_NULL in cmd
 
     @patch('os.path.exists')
     def test_build_ssh_command_with_strict_host_checking(self, mock_exists):
@@ -264,7 +264,7 @@ class TestSSHCommandBuilder:
 
         # Should NOT include StrictHostKeyChecking=no when enabled
         assert "StrictHostKeyChecking=no" not in cmd
-        assert "UserKnownHostsFile=/dev/null" not in cmd
+        assert SSHOptions.USER_KNOWN_HOSTS_FILE_NULL not in cmd
 
     @patch('os.path.exists')
     def test_build_scp_command_basic(self, mock_exists):
@@ -456,7 +456,7 @@ class TestParseUploadPort:
 
         assert user == "admin"
         assert host == "example.com"
-        assert path == "/tmp/program"  # default path
+        assert path == SSHDefaults.UPLOAD_PATH  # default path
 
     def test_parse_host_path_format(self):
         """Test parsing host:/path format (no user)."""
@@ -472,7 +472,7 @@ class TestParseUploadPort:
 
         assert user == "pi"  # default user
         assert host == "192.168.1.100"
-        assert path == "/tmp/program"  # default path
+        assert path == SSHDefaults.UPLOAD_PATH  # default path
 
     def test_parse_with_custom_default_user(self):
         """Test parsing with custom default user."""
@@ -483,7 +483,7 @@ class TestParseUploadPort:
 
         assert user == "admin"
         assert host == "example.com"
-        assert path == "/tmp/program"
+        assert path == SSHDefaults.UPLOAD_PATH
 
     def test_parse_with_custom_default_path(self):
         """Test parsing with custom default path."""
