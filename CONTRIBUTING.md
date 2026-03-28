@@ -447,15 +447,24 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 
 ### Scopes
 
+- `arch`: Architecture support (32-bit/64-bit)
 - `boards`: Board definitions
+- `ci`: CI/CD configuration
+- `config`: Platform configuration file support
+- `debug`: GDB/SSH remote debugging
+- `docs`: Documentation
 - `frameworks`: Framework support (lgpio, pigpio, wiringpi)
 - `lgpio`: lgpio-specific changes
+- `monitor`: SSH serial monitor
+- `onboarding`: First-run welcome and setup
 - `pigpio`: pigpio-specific changes
-- `wiringpi`: wiringpi-specific changes
-- `ci`: CI/CD configuration
-- `docs`: Documentation
-- `arch`: Architecture support (32-bit/64-bit)
 - `platform`: Platform core changes
+- `scripts`: Build and setup scripts
+- `test`: Remote test execution
+- `toolchain`: Cross-compilation toolchain selection
+- `upload`: Remote deploy (scp/rsync/ssh)
+- `vscode`: VS Code integration
+- `wiringpi`: wiringpi-specific changes
 
 ### Examples
 
@@ -484,6 +493,14 @@ docs: update testing matrix with Pi 5 compatibility notes
 Clarified that pigpio does NOT work on Pi 5 due to RP1 I/O
 controller. Added recommendation to use lgpio instead.
 ```
+
+---
+
+## AI-Assisted Contributions
+
+Commits generated or assisted by AI tools (e.g., Claude Code) must be disclosed in the PR
+description. Remove AI co-author trailers (`Co-Authored-By: Claude ...`) from commits before
+submitting to upstream.
 
 ---
 

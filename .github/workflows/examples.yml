@@ -27,20 +27,20 @@ jobs:
             echo "Checking $file"
             python -m json.tool "$file" > /dev/null || exit 1
           done
-          echo "✅ All JSON files are valid"
+          echo "OK: All JSON files are valid"
 
       - name: Validate platform.json
         run: |
           echo "Validating platform.json..."
           python -m json.tool platform.json > /dev/null || exit 1
-          echo "✅ platform.json is valid"
+          echo "OK: platform.json is valid"
 
       - name: Check Python syntax
         run: |
           echo "Checking Python syntax..."
           python -m py_compile platform.py
           python -m py_compile ssh_utils.py
-          python -m py_compile platform-test-uploader.py
+          python -m py_compile platform_test_uploader.py
           python -m py_compile builder/main.py
           python -m py_compile builder/frameworks/*.py
           echo "✅ All Python files have valid syntax"
@@ -201,7 +201,7 @@ jobs:
       # Windows: Setup MSYS2 environment for libgpiod cross-compilation
       - name: Setup MSYS2 (Windows)
         if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod') && steps.cache-windows-libgpiod.outputs.cache-hit != 'true'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2
         with:
           msystem: MINGW64
           update: true

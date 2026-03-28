@@ -56,6 +56,9 @@ class TestGDBExecutablePosix:
     def test_native_gdb(self):
         assert platform_constants.GDBExecutable.NATIVE == "gdb"
 
+    def test_multiarch_gdb(self):
+        assert platform_constants.GDBExecutable.MULTIARCH == "gdb-multiarch"
+
     def test_aarch64_gdb(self):
         assert platform_constants.GDBExecutable.AARCH64 == "aarch64-linux-gnu-gdb"
 

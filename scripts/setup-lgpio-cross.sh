@@ -59,12 +59,12 @@ cd "$BUILD_DIR"
 if [ -d "lg/.git" ]; then
     echo "Updating existing lg repository..."
     cd lg
-    git pull
+    git pull --ff-only
     echo "Cleaning previous build artifacts..."
     make clean
 else
     echo "Cloning lg repository..."
-    git clone https://github.com/joan2937/lg.git
+    git clone --depth 1 https://github.com/joan2937/lg.git
     cd lg
 fi
 

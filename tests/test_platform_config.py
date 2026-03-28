@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import platform_config as _pc_module
 from platform_config import PlatformConfig
 
 
@@ -24,6 +25,12 @@ class TestPlatformConfig(unittest.TestCase):
         """Set up test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
         self.addCleanup(lambda: self._cleanup_temp_dir())
+        # Reset the module-level singleton so tests don't share state
+        _pc_module._global_config_instance = None
+
+    def tearDown(self):
+        """Reset singleton after each test."""
+        _pc_module._global_config_instance = None
 
     def _cleanup_temp_dir(self):
         """Clean up temporary directory."""
@@ -107,8 +114,10 @@ upload_path = /opt/myapp
     def test_invalid_config_file(self):
         """Test handling of invalid config file."""
         config_path = Path(self.temp_dir) / ".platform-linux_arm.ini"
-        # Invalid INI format
-        config_path.write_text("this is not valid INI format!!!")
+        # A key=value line without a section header reliably triggers
+        # configparser.MissingSectionHeaderError on all Python versions
+        self.assertTrue(config_path.parent.exists(), "temp dir should exist before writing")
+        config_path.write_text("key = value_without_section\n")
 
         # Should not raise exception, just ignore invalid file
         config = PlatformConfig(project_dir=self.temp_dir)
@@ -201,6 +210,72 @@ class TestConfigIntegration(unittest.TestCase):
         self.assertIn('[defaults]', content)
         self.assertIn('upload_timeout', content)
         self.assertIn('upload_user', content)
+
+
+class TestPlatformConfigEnvVar(unittest.TestCase):
+    """Test environment variable interaction for PlatformConfig."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.addCleanup(self._cleanup)
+        _pc_module._global_config_instance = None
+
+    def tearDown(self):
+        _pc_module._global_config_instance = None
+
+    def _cleanup(self):
+        import shutil
+        _env_key = 'PLATFORMIO_CORE_DIR'
+        if _env_key in os.environ:
+            del os.environ[_env_key]
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+
+    def test_global_config_path_respects_env_var(self):
+        """PLATFORMIO_CORE_DIR controls the global config path."""
+        os.environ['PLATFORMIO_CORE_DIR'] = self.temp_dir
+        config = PlatformConfig(project_dir=self.temp_dir)
+        global_path = config._get_global_config_path()
+        self.assertEqual(str(global_path.parent), self.temp_dir)
+
+    def test_project_config_overrides_global_config(self):
+        """Project-local config takes priority over global config for the same key."""
+        # Global config: upload_timeout = 100
+        global_dir = tempfile.mkdtemp()
+        self.addCleanup(lambda: __import__('shutil').rmtree(global_dir, ignore_errors=True))
+        global_config = Path(global_dir) / ".platform-linux_arm.ini"
+        global_config.write_text("[defaults]\nupload_timeout = 100\n")
+
+        # Project config: upload_timeout = 999
+        project_config = Path(self.temp_dir) / ".platform-linux_arm.ini"
+        project_config.write_text("[defaults]\nupload_timeout = 999\n")
+
+        os.environ['PLATFORMIO_CORE_DIR'] = global_dir
+        config = PlatformConfig(project_dir=self.temp_dir)
+
+        # Project-local value must win (int conversion because default is int)
+        self.assertEqual(config.get('upload_timeout', 300), 999)
+
+
+class TestSingletonIsolation(unittest.TestCase):
+    """Verify that get_platform_config() singleton resets correctly between tests."""
+
+    def setUp(self):
+        _pc_module._global_config_instance = None
+
+    def tearDown(self):
+        _pc_module._global_config_instance = None
+
+    def test_singleton_returns_same_instance(self):
+        """get_platform_config() returns the same object on repeated calls."""
+        from platform_config import get_platform_config
+        first = get_platform_config()
+        second = get_platform_config()
+        self.assertIs(first, second)
+
+    def test_singleton_resets_between_tests(self):
+        """setUp resets the singleton so each test starts with a fresh instance."""
+        self.assertIsNone(_pc_module._global_config_instance)
 
 
 if __name__ == '__main__':

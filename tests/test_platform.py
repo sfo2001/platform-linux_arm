@@ -466,6 +466,52 @@ class TestDetermineGdbExecutable:
         gdb_path = platform._determine_gdb_executable("armv7")
         assert gdb_path == GDBExecutable.ARMV7
 
+    @patch('shutil.which')
+    @patch('platform_module.Linux_armPlatform._is_native')
+    @patch('platform_module.get_platform_config')
+    @patch('platform_module.PlatformBase.__init__')
+    def test_determine_gdb_prefers_multiarch(
+        self, mock_base_init, mock_get_config, mock_is_native, mock_which, mock_platform_manifest
+    ):
+        """Test GDB executable prefers gdb-multiarch when available."""
+        from platform_module import Linux_armPlatform
+        from platform_constants import GDBExecutable
+
+        mock_base_init.return_value = None
+        mock_get_config.return_value = Mock()
+        mock_is_native.return_value = False
+
+        def which_side_effect(cmd):
+            if cmd == GDBExecutable.MULTIARCH:
+                return GDBExecutable.MULTIARCH
+            return None
+        mock_which.side_effect = which_side_effect
+
+        platform = Linux_armPlatform(mock_platform_manifest)
+
+        gdb_path = platform._determine_gdb_executable("armv7")
+        assert gdb_path == GDBExecutable.MULTIARCH
+
+    @patch('shutil.which')
+    @patch('platform_module.Linux_armPlatform._is_native')
+    @patch('platform_module.get_platform_config')
+    @patch('platform_module.PlatformBase.__init__')
+    def test_determine_gdb_none_available_raises_error(
+        self, mock_base_init, mock_get_config, mock_is_native, mock_which, mock_platform_manifest
+    ):
+        """Test GDB raises PlatformioException when no GDB is found."""
+        from platform_module import Linux_armPlatform
+
+        mock_base_init.return_value = None
+        mock_get_config.return_value = Mock()
+        mock_is_native.return_value = False
+        mock_which.return_value = None  # No GDB available anywhere
+
+        platform = Linux_armPlatform(mock_platform_manifest)
+
+        with pytest.raises(exception.PlatformioException):
+            platform._determine_gdb_executable("armv7")
+
 
 class TestGetConfigDefault:
     """Test cases for _get_config_default method."""

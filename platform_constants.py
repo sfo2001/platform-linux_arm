@@ -139,6 +139,9 @@ class GDBExecutable:
     # Native GDB (when running on ARM Linux)
     NATIVE: Final[str] = "gdb"
 
+    # Multi-architecture GDB (Linux; works for all architectures, preferred over arch-specific)
+    MULTIARCH: Final[str] = "gdb-multiarch"
+
     # 64-bit ARM GDB
     AARCH64: Final[str] = "aarch64-none-linux-gnu-gdb" if _WINDOWS else "aarch64-linux-gnu-gdb"
 

@@ -287,12 +287,9 @@ class PlatformConfig:
 _global_config_instance = None
 
 
-def get_platform_config(project_dir: Optional[str] = None) -> PlatformConfig:
+def get_platform_config() -> PlatformConfig:
     """
     Get or create global platform configuration instance.
-
-    Args:
-        project_dir: Optional project directory path
 
     Returns:
         PlatformConfig instance
@@ -300,11 +297,13 @@ def get_platform_config(project_dir: Optional[str] = None) -> PlatformConfig:
     Note:
         Uses a singleton pattern for efficiency - config is loaded once
         and reused across multiple calls within the same PlatformIO session.
+        For tests or code that requires a per-directory config, instantiate
+        PlatformConfig(project_dir) directly instead of using this function.
     """
     global _global_config_instance
 
     if _global_config_instance is None:
-        _global_config_instance = PlatformConfig(project_dir)
+        _global_config_instance = PlatformConfig()
 
     return _global_config_instance
 

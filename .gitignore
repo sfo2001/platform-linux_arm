@@ -14,6 +14,13 @@ htmlcov/
 .tox/
 coverage.xml
 *.cover
+junit*.xml
+
+# Type checking
+.mypy_cache/
+
+# Local platform configuration (user-specific, not for version control)
+.platform-linux_arm.ini
 
 # PlatformIO
 .pio/
@@ -27,3 +34,7 @@ docs/_build/
 .vscode/
 !examples/**/.vscode/
 .idea/
+
+# Claude Code session exports
+conversation.txt
+conversation.md
