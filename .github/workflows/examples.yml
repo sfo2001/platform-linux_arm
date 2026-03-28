@@ -194,8 +194,8 @@ jobs:
         id: cache-windows-libgpiod
         with:
           path: |
-            .local/arm-none-linux-gnueabihf
-            .local/aarch64-none-linux-gnu
+            .local/arm-linux-gnueabihf
+            .local/aarch64-linux-gnu
           key: ${{ runner.os }}-libgpiod-${{ hashFiles('scripts/setup-libgpiod-cross-windows.sh') }}
 
       # Windows: Setup MSYS2 environment for libgpiod cross-compilation
@@ -250,7 +250,7 @@ jobs:
           # Convert GITHUB_WORKSPACE to MSYS2 path
           WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
           CROSS_PREFIX=arm-none-linux-gnueabihf- \
-          INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-none-linux-gnueabihf" \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/arm-linux-gnueabihf" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
       # Windows: Cache ARM64 toolchain
@@ -321,7 +321,7 @@ jobs:
           # Convert GITHUB_WORKSPACE to MSYS2 path
           WORKSPACE_MSYS=$(cygpath "$GITHUB_WORKSPACE")
           CROSS_PREFIX=aarch64-none-linux-gnu- \
-          INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-none-linux-gnu" \
+          INSTALL_DIR="$WORKSPACE_MSYS/.local/aarch64-linux-gnu" \
           ./scripts/setup-libgpiod-cross-windows.sh
 
       # macOS: Cache Homebrew ARM toolchains
