@@ -70,7 +70,9 @@ fi
 
 echo ""
 echo "Building lgpio library for ARM..."
-make CROSS_PREFIX="$CROSS_PREFIX" lib
+# CC must be set explicitly: the lg Makefile uses CC ?= $(CROSS_COMPILE)gcc
+# but GNU Make has CC as a built-in default (CC = cc), so ?= never fires.
+make CROSS_COMPILE="$CROSS_PREFIX" CC="${CROSS_PREFIX}gcc" lib
 
 echo ""
 echo "Installing to $INSTALL_DIR..."
