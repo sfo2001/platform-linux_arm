@@ -101,7 +101,7 @@ if not is_native:
     if target_arch == Architecture.AARCH64:
         env.Replace(_BINPREFIX=ToolchainPrefix.AARCH64)
         print("Cross-compiling for ARM Linux (AArch64/ARMv8 64-bit)")
-        print("Using toolchain prefix: aarch64-linux-gnu-")
+        print(f"Using toolchain prefix: {ToolchainPrefix.AARCH64}")
         print("Ensure toolchain is installed:")
         print("  Linux:   sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu")
         print("  macOS:   brew tap messense/macos-cross-toolchains")
@@ -110,7 +110,7 @@ if not is_native:
         # Default: 32-bit ARMv7 (backward compatible)
         env.Replace(_BINPREFIX=ToolchainPrefix.ARMV7)
         print("Cross-compiling for ARM Linux (ARMv7 32-bit)")
-        print("Using toolchain prefix: arm-linux-gnueabihf-")
+        print(f"Using toolchain prefix: {ToolchainPrefix.ARMV7}")
         print("Ensure toolchain is installed:")
         print("  Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf")
         print("  macOS:   brew tap messense/macos-cross-toolchains")
