@@ -55,18 +55,16 @@ echo ""
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Clone or update lgpio repository (pinned to v0.2.2 for reproducible builds)
-LG_TAG="v0.2.2"
+# Clone or update lgpio repository
 if [ -d "lg/.git" ]; then
-    echo "Updating existing lg repository to $LG_TAG..."
+    echo "Updating existing lg repository..."
     cd lg
-    git fetch --tags
-    git checkout "$LG_TAG"
+    git pull --ff-only
     echo "Cleaning previous build artifacts..."
     make clean
 else
-    echo "Cloning lg repository at $LG_TAG..."
-    git clone --depth 1 --branch "$LG_TAG" https://github.com/joan2937/lg.git
+    echo "Cloning lg repository..."
+    git clone --depth 1 https://github.com/joan2937/lg.git
     cd lg
 fi
 
