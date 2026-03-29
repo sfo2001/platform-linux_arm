@@ -35,6 +35,13 @@ docs/_build/
 !examples/**/.vscode/
 .idea/
 
+# OS artifacts
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
 # Claude Code session exports
 conversation.txt
 conversation.md

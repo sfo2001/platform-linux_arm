@@ -52,8 +52,10 @@ import subprocess
 import sys
 import time
 
-from ssh_utils import SSHConnectionConfig, SSHCommandBuilder, parse_upload_port
-from platform_config import get_platform_config
+from platformio import exception
+
+from platform_config import get_platform_config, parse_bool_option
+from ssh_utils import SSHCommandBuilder, SSHConnectionConfig, parse_upload_port
 
 
 class RemoteTestUploader:
@@ -137,7 +139,8 @@ class RemoteTestUploader:
             - host (uses defaults for both)
 
         Raises:
-            Exception: If test_port and upload_port are both not configured.
+            PlatformioException: If test_port and upload_port are both not configured.
+            ValueError: If test_port format is invalid.
 
         Note:
             Falls back to upload_port if test_port is not specified.
@@ -152,7 +155,7 @@ class RemoteTestUploader:
             self.upload_port = self.env.GetProjectOption("upload_port", None)
 
         if not self.upload_port:
-            raise Exception(
+            raise exception.PlatformioException(
                 "test_port or upload_port is not configured. Add to platformio.ini:\n"
                 "  test_port = user@hostname:/path/to/test_binary\n"
                 "  or\n"
@@ -160,31 +163,38 @@ class RemoteTestUploader:
             )
 
         # Get defaults from project options (with config file fallback)
-        default_user = self.env.GetProjectOption("test_username", self._get_config_default("test_username", SSHDefaults.USER))
-        default_path = self.env.GetProjectOption("test_path", self._get_config_default("test_path", SSHDefaults.TEST_PATH))
+        default_user = self.env.GetProjectOption(
+            "test_username", self._get_config_default("test_username", SSHDefaults.USER)
+        )
+        default_path = self.env.GetProjectOption(
+            "test_path", self._get_config_default("test_path", SSHDefaults.TEST_PATH)
+        )
 
         # Use shared parser
         try:
             self.user, self.host, self.remote_path = parse_upload_port(
-                self.upload_port,
-                default_user=default_user,
-                default_path=default_path
+                self.upload_port, default_user=default_user, default_path=default_path
             )
         except ValueError as e:
-            raise Exception(str(e))
+            raise ValueError(str(e)) from e
 
         # Get SSH configuration (with config file fallback)
-        self.ssh_port = self.env.GetProjectOption("test_ssh_port",
-            self._get_config_default("test_ssh_port", SSHDefaults.PORT))
+        self.ssh_port = self.env.GetProjectOption(
+            "test_ssh_port", self._get_config_default("test_ssh_port", SSHDefaults.PORT)
+        )
         if not self.ssh_port:
-            self.ssh_port = self.env.GetProjectOption("upload_ssh_port",
-                self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
+            self.ssh_port = self.env.GetProjectOption(
+                "upload_ssh_port",
+                self._get_config_default("upload_ssh_port", SSHDefaults.PORT),
+            )
 
-        self.ssh_key = self.env.GetProjectOption("test_ssh_key",
-            self._get_config_default("test_ssh_key", None))
+        self.ssh_key = self.env.GetProjectOption(
+            "test_ssh_key", self._get_config_default("test_ssh_key", None)
+        )
         if not self.ssh_key:
-            self.ssh_key = self.env.GetProjectOption("upload_ssh_key",
-                self._get_config_default("upload_ssh_key", None))
+            self.ssh_key = self.env.GetProjectOption(
+                "upload_ssh_key", self._get_config_default("upload_ssh_key", None)
+            )
 
     def check_ssh_available(self):
         """
@@ -197,13 +207,13 @@ class RemoteTestUploader:
             Provides platform-specific installation instructions for missing tools.
         """
         if not shutil.which("ssh"):
-            raise Exception(
+            raise exception.PlatformioException(
                 "SSH is not installed. Please install it using your system package manager:\n"
                 "  Linux: sudo apt install openssh-client\n"
                 "  macOS: SSH is pre-installed"
             )
         if not shutil.which("scp"):
-            raise Exception(
+            raise exception.PlatformioException(
                 "SCP is not installed. Please install it using your system package manager:\n"
                 "  Linux: sudo apt install openssh-client\n"
                 "  macOS: SCP is pre-installed"
@@ -226,16 +236,22 @@ class RemoteTestUploader:
             Automatically configures port, key authentication, and host key verification.
         """
         # Create SSH config
+        strict_host_check = parse_bool_option(
+            self.env.GetProjectOption(
+                "test_strict_host_check",
+                self._get_config_default("test_strict_host_check", False),
+            )
+        )
         try:
             config = SSHConnectionConfig(
                 user=self.user,
                 host=self.host,
                 port=self.ssh_port,
                 key=self.ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
-            raise Exception(str(e))
+            raise exception.PlatformioException(str(e)) from e
 
         # Build SSH command using shared builder
         builder = SSHCommandBuilder(config)
@@ -259,16 +275,22 @@ class RemoteTestUploader:
             Uses shared SSH configuration (port, key, host verification).
         """
         # Create SSH config
+        strict_host_check = parse_bool_option(
+            self.env.GetProjectOption(
+                "test_strict_host_check",
+                self._get_config_default("test_strict_host_check", False),
+            )
+        )
         try:
             config = SSHConnectionConfig(
                 user=self.user,
                 host=self.host,
                 port=self.ssh_port,
                 key=self.ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
-            raise Exception(str(e))
+            raise exception.PlatformioException(str(e)) from e
 
         # Build SCP command using shared builder
         builder = SSHCommandBuilder(config)
@@ -298,19 +320,23 @@ class RemoteTestUploader:
         print(f"\nUploading test binary to {self.user}@{self.host}:{self.remote_path}")
 
         # Upload the binary with timeout protection
-        upload_timeout = self.env.GetProjectOption("test_upload_timeout",
-            self._get_config_default("test_upload_timeout", Timeouts.TEST_UPLOAD))
+        upload_timeout = self.env.GetProjectOption(
+            "test_upload_timeout",
+            self._get_config_default("test_upload_timeout", Timeouts.TEST_UPLOAD),
+        )
         cmd = self.build_scp_command(source_file, self.remote_path)
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=upload_timeout)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=upload_timeout
+            )
         except subprocess.TimeoutExpired:
-            raise Exception(
+            raise exception.PlatformioException(
                 f"Test upload timeout after {upload_timeout} seconds. "
                 "Increase timeout with 'test_upload_timeout' option in platformio.ini"
             )
 
         if result.returncode != 0:
-            raise Exception(
+            raise exception.PlatformioException(
                 f"Failed to upload test binary:\n"
                 f"Command: {' '.join(cmd)}\n"
                 f"Error: {result.stderr}"
@@ -319,13 +345,18 @@ class RemoteTestUploader:
         # Make it executable (use shlex.quote to prevent command injection)
         chmod_cmd = self.build_ssh_command(f"chmod +x {shlex.quote(self.remote_path)}")
         try:
-            result = subprocess.run(chmod_cmd, capture_output=True, text=True, timeout=Timeouts.CHMOD)
+            result = subprocess.run(
+                chmod_cmd, capture_output=True, text=True, timeout=Timeouts.CHMOD
+            )
         except subprocess.TimeoutExpired:
-            raise Exception("Timeout while setting executable permission on remote test binary")
+            raise exception.PlatformioException(
+                "Timeout while setting executable permission on remote test binary"
+            )
 
         if result.returncode != 0:
-            raise Exception(
+            raise exception.PlatformioException(
                 f"Failed to make test binary executable:\n"
+                f"Command: {' '.join(chmod_cmd)}\n"
                 f"Error: {result.stderr}"
             )
 
@@ -343,11 +374,15 @@ class RemoteTestUploader:
         from platform_constants import TestConstants
 
         # Use shlex.quote to prevent command injection via remote_path
-        return f"{shlex.quote(self.remote_path)}; echo \"{TestConstants.EXIT_CODE_MARKER}$?\""
+        return f'{shlex.quote(self.remote_path)}; echo "{TestConstants.EXIT_CODE_MARKER}$?"'
 
-    def _stream_test_output(self, process, test_timeout: int) -> int:
+    def _collect_test_output(self, process, test_timeout: int) -> int:
         """
-        Stream test output from remote process and extract exit code.
+        Collect test output from remote process and extract exit code.
+
+        Buffers all output via communicate() to ensure the timeout covers
+        the entire I/O operation (a readline loop cannot be reliably timed
+        out without threads).
 
         Args:
             process: subprocess.Popen instance
@@ -357,7 +392,7 @@ class RemoteTestUploader:
             Exit code from test execution
 
         Raises:
-            Exception: If test execution times out
+            PlatformioException: If test execution times out
         """
         # Lazy import to avoid breaking platform loading
         from platform_constants import TestConstants
@@ -365,27 +400,24 @@ class RemoteTestUploader:
         exit_code = 0
 
         try:
-            # Stream output line by line
-            for line in iter(process.stdout.readline, ""):
-                if not line:
-                    break
-
-                # Check for exit code marker
-                if TestConstants.EXIT_CODE_MARKER in line:
-                    exit_code = self._extract_exit_code(line)
-                else:
-                    # Print to console (PlatformIO captures this)
-                    print(line, end="")
-
-            # Wait for process to complete with timeout
-            process.wait(timeout=test_timeout)
+            # communicate() applies the timeout to the entire blocking I/O
+            # operation, unlike process.wait() which only guards the final
+            # wait after the stdout loop — a hung process would block forever
+            # with the old iter() approach.
+            stdout, _ = process.communicate(timeout=test_timeout)
         except subprocess.TimeoutExpired:
             process.kill()
-            process.wait()
-            raise Exception(
+            process.communicate()  # drain pipes to avoid deadlock
+            raise exception.PlatformioException(
                 f"Test execution timeout after {test_timeout} seconds. "
                 "Increase timeout with 'test_timeout' option in platformio.ini"
             )
+
+        for line in stdout.splitlines(keepends=True):
+            if TestConstants.EXIT_CODE_MARKER in line:
+                exit_code = self._extract_exit_code(line)
+            else:
+                print(line, end="")
 
         return exit_code
 
@@ -415,16 +447,18 @@ class RemoteTestUploader:
             Exit code from test execution
         """
         # Lazy import to avoid breaking platform loading
-        from platform_constants import Timeouts
+        from platform_constants import Timeouts, UIConstants
 
         print(f"\nExecuting tests on {self.user}@{self.host}...")
-        print("=" * 80)
+        print(UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH)
 
         # Build and execute test command
         test_command = self._build_test_command()
         cmd = self.build_ssh_command(test_command)
-        test_timeout = self.env.GetProjectOption("test_timeout",
-            self._get_config_default("test_timeout", Timeouts.TEST_EXECUTION))
+        test_timeout = self.env.GetProjectOption(
+            "test_timeout",
+            self._get_config_default("test_timeout", Timeouts.TEST_EXECUTION),
+        )
 
         # Start process
         process = subprocess.Popen(
@@ -432,15 +466,13 @@ class RemoteTestUploader:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1,
-            universal_newlines=True
         )
 
         # Stream output and get exit code
         try:
-            exit_code = self._stream_test_output(process, test_timeout)
+            exit_code = self._collect_test_output(process, test_timeout)
         finally:
-            print("=" * 80)
+            print(UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH)
 
         return exit_code
 
@@ -483,8 +515,14 @@ class RemoteTestUploader:
             return exit_code
 
         except subprocess.TimeoutExpired as e:
-            print(f"\nERROR: Operation timed out after {e.timeout} seconds", file=sys.stderr)
-            print("Increase timeout with 'test_timeout' or 'test_upload_timeout' option in platformio.ini", file=sys.stderr)
+            print(
+                f"\nERROR: Operation timed out after {e.timeout} seconds",
+                file=sys.stderr,
+            )
+            print(
+                "Increase timeout with 'test_timeout' or 'test_upload_timeout' option in platformio.ini",
+                file=sys.stderr,
+            )
             return 1
         except subprocess.CalledProcessError as e:
             print(f"\nERROR: Remote command failed: {e}", file=sys.stderr)
@@ -504,6 +542,7 @@ class RemoteTestUploader:
         except Exception as e:
             print(f"\nERROR: Unexpected error: {e}", file=sys.stderr)
             import traceback
+
             traceback.print_exc()
             return 1
 

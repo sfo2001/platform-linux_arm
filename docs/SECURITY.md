@@ -56,17 +56,26 @@ test_timeout = 600
 
 ### 3. SSH Host Key Verification
 
-**For upload and debugging operations:**
-By default, SSH host key checking is enabled and follows your system's SSH configuration (`~/.ssh/known_hosts`).
+SSH strict host key checking is **disabled by default** for all operations (upload, test, and
+debug). This allows automated workflows without manual `known_hosts` setup but introduces a
+man-in-the-middle (MITM) attack risk on untrusted networks.
 
-**For automated testing:**
-The test framework (`platform-test-uploader.py`) disables strict host key checking by default to enable automated CI/CD workflows. This is documented and intentional, but introduces a potential man-in-the-middle (MITM) attack risk.
+To enable strict host key checking, set the corresponding option in `platformio.ini`:
 
-**To enable strict host key checking for tests**, you can override this behavior by configuring custom SSH options:
 ```ini
 [env:myboard]
-test_ssh_flags = -o StrictHostKeyChecking=yes
+; Enable for upload operations
+upload_strict_host_check = yes
+
+; Enable for test operations
+test_strict_host_check = yes
+
+; Enable for GDB debug sessions
+debug_strict_host_check = yes
 ```
+
+When enabled, SSH will verify the remote host's key against `~/.ssh/known_hosts` and refuse to
+connect if the key is unknown or has changed.
 
 ## Security Best Practices
 
@@ -128,7 +137,7 @@ Adjust timeouts based on your specific use case:
 If you discover a security vulnerability in platform-linux_arm, please report it by:
 
 1. **DO NOT** open a public GitHub issue
-2. Email the maintainer at: [maintainer contact - update this]
+2. Report via [GitHub Security Advisories](https://github.com/sfo2001/platform-linux_arm/security/advisories/new)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce

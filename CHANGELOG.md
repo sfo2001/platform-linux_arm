@@ -7,8 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `test_port` type corrected from `number` to `string` (supports `user@host:/path` format)
+- Removed `has_key()` from `PlatformConfig` (use `key in config` instead)
+- Extracted `parse_bool_option()` in `platform_config.py` for consistent boolean parsing
+- Renamed `_stream_test_output` to `_collect_test_output`
+- Upload failure error messages now include the failed command
+- CI lint steps (black, isort) enforced (no longer continue-on-error)
+- GitHub Actions pinned to verified commit SHAs
+
 ### Added
-- Nothing yet
+- `debug_strict_host_check` option for strict SSH host key checking during GDB debug sessions
+
+### Fixed
+- `actions/setup-python` was incorrectly pinned to `actions/upload-artifact` SHA
+- `actions/upload-artifact` was incorrectly pinned to `actions/checkout` SHA
+- Inconsistent `actions/checkout` SHAs across workflow files
+- Security vulnerability reporting now uses GitHub Security Advisories
 
 ## [1.8.0] - 2025-11-15
 

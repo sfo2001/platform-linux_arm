@@ -50,9 +50,18 @@ See Also:
 """
 
 import configparser
+import logging
 import os
 from pathlib import Path
 from typing import Optional, Union
+
+
+def parse_bool_option(value) -> bool:
+    """Parse a boolean option value to bool.
+
+    Accepts "true", "yes", "1", "on" (case-insensitive) as True.
+    """
+    return str(value).lower() in ("true", "yes", "1", "on")
 
 
 class PlatformConfig:
@@ -119,7 +128,7 @@ class PlatformConfig:
             otherwise defaults to ~/.platformio/
         """
         # Check for PLATFORMIO_CORE_DIR environment variable
-        platformio_dir = os.environ.get('PLATFORMIO_CORE_DIR')
+        platformio_dir = os.environ.get("PLATFORMIO_CORE_DIR")
         if platformio_dir:
             return Path(platformio_dir) / self.CONFIG_FILENAME
 
@@ -172,8 +181,10 @@ class PlatformConfig:
 
             return {}
 
-        except (configparser.Error, OSError, IOError):
-            # Silently ignore errors for backward compatibility
+        except (configparser.Error, OSError, IOError) as e:
+            logging.debug(
+                "Config file parse error (continuing with empty config): %s", e
+            )
             return {}
 
     def _load_config_files(self):
@@ -196,7 +207,9 @@ class PlatformConfig:
         project_config = self._load_config_file(self._project_path)
         self._config.update(project_config)
 
-    def get(self, key: str, default: Optional[Union[str, int, bool]] = None) -> Optional[Union[str, int, bool]]:
+    def get(
+        self, key: str, default: Optional[Union[str, int, bool]] = None
+    ) -> Optional[Union[str, int, bool]]:
         """
         Get configuration value with fallback to default.
 
@@ -226,8 +239,7 @@ class PlatformConfig:
         # Type conversion based on default parameter type
         if default is not None:
             if isinstance(default, bool):
-                # Handle boolean conversion
-                return value.lower() in ('true', 'yes', '1', 'on')
+                return parse_bool_option(value)
             elif isinstance(default, int):
                 try:
                     return int(value)
@@ -240,18 +252,6 @@ class PlatformConfig:
                     return default
 
         return value
-
-    def has_key(self, key: str) -> bool:
-        """
-        Check if a configuration key exists.
-
-        Args:
-            key: Configuration key to check
-
-        Returns:
-            True if key exists in loaded configuration, False otherwise
-        """
-        return key in self._config
 
     def get_loaded_files(self) -> list:
         """

@@ -50,12 +50,11 @@ Author: PlatformIO
 License: Apache 2.0
 """
 
-import sys
 import os
+import sys
 
+from platformio.public import get_systype  # requires PlatformIO >= 6.0
 from SCons.Script import AlwaysBuild, Default, DefaultEnvironment
-
-from platformio.util import get_systype
 
 env = DefaultEnvironment()
 
@@ -79,8 +78,7 @@ env.Replace(
     OBJCOPY="${_BINPREFIX}objcopy",
     RANLIB="${_BINPREFIX}ranlib",
     SIZETOOL="${_BINPREFIX}size",
-
-    SIZEPRINTCMD='$SIZETOOL $SOURCES'
+    SIZEPRINTCMD="$SIZETOOL $SOURCES",
 )
 
 # Detect if we're cross-compiling (not native ARM Linux)
@@ -112,7 +110,9 @@ if not is_native:
         print("Cross-compiling for ARM Linux (ARMv7 32-bit)")
         print(f"Using toolchain prefix: {ToolchainPrefix.ARMV7}")
         print("Ensure toolchain is installed:")
-        print("  Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf")
+        print(
+            "  Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf"
+        )
         print("  macOS:   brew tap messense/macos-cross-toolchains")
         print("           brew install arm-unknown-linux-gnueabihf")
 
@@ -126,13 +126,15 @@ target_bin = env.BuildProgram()
 # Target: Print binary size
 #
 
-target_size = env.Alias("size", target_bin, env.VerboseAction(
-    "$SIZEPRINTCMD", "Calculating size $SOURCE"))
+target_size = env.Alias(
+    "size", target_bin, env.VerboseAction("$SIZEPRINTCMD", "Calculating size $SOURCE")
+)
 AlwaysBuild(target_size)
 
 #
 # Target: Upload program to remote target
 #
+
 
 def _upload_handler(target, source, env) -> int:
     """
@@ -155,12 +157,14 @@ def _upload_handler(target, source, env) -> int:
     platform = env.PioPlatform()
     return platform.on_upload(target, source, env)
 
+
 target_upload = env.Alias("upload", target_bin, _upload_handler)
 AlwaysBuild(target_upload)
 
 #
 # Target: Upload and execute tests on remote target
 #
+
 
 def _test_upload_handler(target, source, env) -> int:
     """
@@ -183,11 +187,12 @@ def _test_upload_handler(target, source, env) -> int:
     """
     platform = env.PioPlatform()
     # Check if platform has on_test_upload method
-    if hasattr(platform, 'on_test_upload'):
+    if hasattr(platform, "on_test_upload"):
         return platform.on_test_upload(target, source, env)
     else:
         # Fallback to regular upload if test upload not implemented
         return platform.on_upload(target, source, env)
+
 
 # Register the test upload handler
 env.Replace(UPLOADTESTCMD=_test_upload_handler)
@@ -195,6 +200,7 @@ env.Replace(UPLOADTESTCMD=_test_upload_handler)
 #
 # Target: Monitor remote program via SSH
 #
+
 
 def _monitor_handler(target, source, env) -> int:
     """
@@ -216,18 +222,19 @@ def _monitor_handler(target, source, env) -> int:
     """
     platform = env.PioPlatform()
     # Check if platform has on_monitor method
-    if hasattr(platform, 'on_monitor'):
+    if hasattr(platform, "on_monitor"):
         return platform.on_monitor(target, source, env)
     else:
         # Fallback: show instructions if monitor not implemented
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Remote monitoring is not configured.")
-        print("="*60)
+        print("=" * 60)
         print("\nTo monitor your remote program, use one of:")
         print("  1. Enable upload_run_after = true in platformio.ini")
         print("  2. Manually SSH to target: ssh user@host")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
         return 0
+
 
 # Use AddCustomTarget to properly override PlatformIO's built-in monitor
 env.AddCustomTarget(
@@ -236,7 +243,7 @@ env.AddCustomTarget(
     actions=_monitor_handler,
     title="Monitor",
     description="Monitor remote program via SSH",
-    always_build=True
+    always_build=True,
 )
 
 #

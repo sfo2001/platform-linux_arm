@@ -34,7 +34,7 @@ class SSHConnectionConfig:
         host: str,
         port: Optional[str] = None,
         key: Optional[str] = None,
-        strict_host_check: bool = False
+        strict_host_check: bool = False,
     ):
         """
         Initialize SSH connection configuration.
@@ -92,7 +92,7 @@ class SSHCommandBuilder:
     def build_ssh_command(
         self,
         remote_command: Optional[str] = None,
-        extra_opts: Optional[List[str]] = None
+        extra_opts: Optional[List[str]] = None,
     ) -> List[str]:
         """
         Build SSH command.
@@ -137,10 +137,7 @@ class SSHCommandBuilder:
         return cmd
 
     def build_scp_command(
-        self,
-        local_path: str,
-        remote_path: str,
-        extra_flags: Optional[List[str]] = None
+        self, local_path: str, remote_path: str, extra_flags: Optional[List[str]] = None
     ) -> List[str]:
         """
         Build SCP command.
@@ -185,10 +182,7 @@ class SSHCommandBuilder:
         return cmd
 
     def build_rsync_command(
-        self,
-        local_path: str,
-        remote_path: str,
-        flags: Optional[str] = None
+        self, local_path: str, remote_path: str, flags: Optional[str] = None
     ) -> List[str]:
         """
         Build rsync command with SSH transport.
@@ -202,7 +196,7 @@ class SSHCommandBuilder:
             Command as list of arguments suitable for subprocess
         """
         # Lazy import to avoid breaking platform loading
-        from platform_constants import RsyncDefaults
+        from platform_constants import RsyncDefaults, SSHOptions
 
         cmd = ["rsync"]
 
@@ -216,6 +210,17 @@ class SSHCommandBuilder:
         if self.config.key:
             key_path = os.path.expanduser(self.config.key)
             ssh_opts.extend(["-i", key_path])
+        if not self.config.strict_host_check:
+            ssh_opts.extend(
+                [
+                    "-o",
+                    SSHOptions.STRICT_HOST_KEY_CHECKING_NO,
+                    "-o",
+                    SSHOptions.USER_KNOWN_HOSTS_FILE_NULL,
+                    "-o",
+                    SSHOptions.LOG_LEVEL_ERROR,
+                ]
+            )
 
         # Build SSH command string (for rsync -e option)
         ssh_cmd = "ssh " + " ".join(shlex.quote(opt) for opt in ssh_opts)
@@ -231,7 +236,7 @@ class SSHCommandBuilder:
 def parse_upload_port(
     upload_port: str,
     default_user: Optional[str] = None,
-    default_path: Optional[str] = None
+    default_path: Optional[str] = None,
 ) -> Tuple[str, str, str]:
     """
     Parse upload_port into components.

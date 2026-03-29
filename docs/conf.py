@@ -18,13 +18,13 @@ import sys
 
 # -- Project information -----------------------------------------------------
 
-project = 'Platform Linux ARM'
-copyright = '2025, PlatformIO'
-author = 'PlatformIO'
+project = "Platform Linux ARM"
+copyright = "2025, PlatformIO"
+author = "PlatformIO"
 
 # The full version, including alpha/beta/rc tags
-release = '1.8.0'
-version = '1.8'
+release = "1.8.0"
+version = "1.8"
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,69 +33,69 @@ version = '1.8'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The suffix(es) of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  See the documentation for the theme you're using.
 html_theme_options = {
-    'description': 'PlatformIO development platform for ARM-based Linux systems (Raspberry Pi)',
-    'github_user': 'platformio',
-    'github_repo': 'platform-linux_arm',
-    'github_banner': True,
-    'github_button': True,
-    'github_type': 'star',
-    'fixed_sidebar': True,
+    "description": "PlatformIO development platform for ARM-based Linux systems (Raspberry Pi)",
+    "github_user": "platformio",
+    "github_repo": "platform-linux_arm",
+    "github_banner": True,
+    "github_button": True,
+    "github_type": "star",
+    "fixed_sidebar": True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',
-        'searchbox.html',
+    "**": [
+        "about.html",
+        "navigation.html",
+        "relations.html",
+        "searchbox.html",
     ]
 }
 
 # The name for this set of Sphinx documents.
-html_title = 'Platform Linux ARM Documentation'
+html_title = "Platform Linux ARM Documentation"
 
 # A shorter title for the navigation bar.
-html_short_title = 'Linux ARM'
+html_short_title = "Linux ARM"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -108,7 +108,7 @@ html_short_title = 'Linux ARM'
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = "%b %d, %Y"
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -130,15 +130,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -148,8 +145,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'PlatformLinuxARM.tex', 'Platform Linux ARM Documentation',
-     'PlatformIO', 'manual'),
+    (
+        master_doc,
+        "PlatformLinuxARM.tex",
+        "Platform Linux ARM Documentation",
+        "PlatformIO",
+        "manual",
+    ),
 ]
 
 
@@ -158,8 +160,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'platformlinuxarm', 'Platform Linux ARM Documentation',
-     [author], 1)
+    (master_doc, "platformlinuxarm", "Platform Linux ARM Documentation", [author], 1)
 ]
 
 
@@ -169,9 +170,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'PlatformLinuxARM', 'Platform Linux ARM Documentation',
-     author, 'PlatformLinuxARM', 'PlatformIO development platform for ARM Linux',
-     'Miscellaneous'),
+    (
+        master_doc,
+        "PlatformLinuxARM",
+        "Platform Linux ARM Documentation",
+        author,
+        "PlatformLinuxARM",
+        "PlatformIO development platform for ARM Linux",
+        "Miscellaneous",
+    ),
 ]
 
 
@@ -181,8 +188,8 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'platformio': ('https://docs.platformio.org/en/latest/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "platformio": ("https://docs.platformio.org/en/latest/", None),
 }
 
 # -- Options for todo extension ----------------------------------------------

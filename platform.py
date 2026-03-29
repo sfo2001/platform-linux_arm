@@ -56,6 +56,7 @@ License: Apache 2.0
 """
 
 import os
+import posixpath
 import shlex
 import shutil
 import subprocess
@@ -73,7 +74,7 @@ if _PLATFORM_DIR not in sys.path:
     sys.path.insert(0, _PLATFORM_DIR)
 
 # Import platform configuration support
-from platform_config import get_platform_config
+from platform_config import get_platform_config, parse_bool_option
 
 
 class Linux_armPlatform(PlatformBase):
@@ -174,11 +175,14 @@ class Linux_armPlatform(PlatformBase):
         """
         import logging
         from pathlib import Path
+
         from platform_constants import UIConstants
 
         # Marker file in user-writable PlatformIO core directory (not the platform install dir,
         # which may be read-only when installed via the PlatformIO package manager)
-        core_dir = os.environ.get("PLATFORMIO_CORE_DIR", os.path.expanduser("~/.platformio"))
+        core_dir = os.environ.get(
+            "PLATFORMIO_CORE_DIR", os.path.expanduser("~/.platformio")
+        )
         marker_file = os.path.join(core_dir, ".linux_arm_welcome_shown")
 
         if os.path.exists(marker_file):
@@ -193,9 +197,12 @@ class Linux_armPlatform(PlatformBase):
         # Build doc URL from platform manifest to avoid hardcoding the fork URL
         try:
             import json
+
             with open(os.path.join(_PLATFORM_DIR, "platform.json")) as _f:
                 _manifest = json.load(_f)
-            homepage = _manifest.get("homepage", "https://github.com/platformio/platform-linux_arm")
+            homepage = _manifest.get(
+                "homepage", "https://github.com/platformio/platform-linux_arm"
+            )
         except (OSError, ValueError):
             homepage = "https://github.com/platformio/platform-linux_arm"
         vscode_doc_url = f"{homepage.rstrip('/')}/blob/develop/docs/VSCODE.md"
@@ -255,17 +262,22 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from platform_constants import SystemType, PackageName
+        from platform_constants import PackageName, SystemType
 
         packages = PlatformBase.packages.fget(self)
         systype = get_systype()
         # PlatformIO's toolchain package only works on macOS x86_64
         # All other platforms use system-installed toolchains
-        if systype != SystemType.DARWIN_X86_64 and PackageName.TOOLCHAIN_GCC_ARM in packages:
+        if (
+            systype != SystemType.DARWIN_X86_64
+            and PackageName.TOOLCHAIN_GCC_ARM in packages
+        ):
             del packages[PackageName.TOOLCHAIN_GCC_ARM]
         return packages
 
-    def configure_default_packages(self, variables: Dict[str, Any], targets: List[str]) -> Dict[str, dict]:
+    def configure_default_packages(
+        self, variables: Dict[str, Any], targets: List[str]
+    ) -> Dict[str, dict]:
         """
         Configure default packages based on build configuration.
 
@@ -290,11 +302,13 @@ class Linux_armPlatform(PlatformBase):
         from platform_constants import Framework
 
         if not self._is_native() and Framework.WIRINGPI in variables.get(
-                "pioframework", []):
+            "pioframework", []
+        ):
             raise exception.PlatformioException(
                 "PlatformIO temporary does not support cross-compilation "
                 "for WiringPi framework. Please use PIO Core directly on "
-                "Raspberry Pi")
+                "Raspberry Pi"
+            )
         return super().configure_default_packages(variables, targets)
 
     def _get_upload_protocol(self, env) -> str:
@@ -385,7 +399,9 @@ class Linux_armPlatform(PlatformBase):
             UploadProtocol.SCP: self._upload_scp,
             UploadProtocol.RSYNC: self._upload_rsync,
             UploadProtocol.SSH: self._upload_ssh,
-            UploadProtocol.MANUAL: lambda t, s, e: self._show_manual_upload_instructions(s)
+            UploadProtocol.MANUAL: lambda t, s, e: self._show_manual_upload_instructions(
+                s
+            ),
         }
 
         handler = upload_handlers[upload_protocol]
@@ -451,8 +467,8 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import parse_upload_port
         from platform_constants import SSHDefaults
+        from ssh_utils import parse_upload_port
 
         if not upload_port:
             raise exception.PlatformioException(
@@ -461,8 +477,13 @@ class Linux_armPlatform(PlatformBase):
             )
 
         # Get defaults from project options (with config file fallback)
-        default_user = env.GetProjectOption("upload_user", self._get_config_default("upload_user", SSHDefaults.USER))
-        default_path = env.GetProjectOption("upload_path", self._get_config_default("upload_path", SSHDefaults.UPLOAD_PATH))
+        default_user = env.GetProjectOption(
+            "upload_user", self._get_config_default("upload_user", SSHDefaults.USER)
+        )
+        default_path = env.GetProjectOption(
+            "upload_path",
+            self._get_config_default("upload_path", SSHDefaults.UPLOAD_PATH),
+        )
 
         # Use shared parser
         try:
@@ -493,18 +514,30 @@ class Linux_armPlatform(PlatformBase):
         # Ensure platform directory is in sys.path for imports
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
         from platform_constants import SSHDefaults, Timeouts, UIConstants
+        from ssh_utils import SSHCommandBuilder, SSHConnectionConfig
 
         self._check_upload_tool("scp")
 
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
-        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
-        upload_flags = env.GetProjectOption("upload_flags", self._get_config_default("upload_flags", ""))
-        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
+        ssh_port = env.GetProjectOption(
+            "upload_ssh_port",
+            self._get_config_default("upload_ssh_port", SSHDefaults.PORT),
+        )
+        ssh_key = env.GetProjectOption(
+            "upload_ssh_key", self._get_config_default("upload_ssh_key", None)
+        )
+        upload_flags = env.GetProjectOption(
+            "upload_flags", self._get_config_default("upload_flags", "")
+        )
+        strict_host_check = parse_bool_option(
+            env.GetProjectOption(
+                "upload_strict_host_check",
+                self._get_config_default("upload_strict_host_check", False),
+            )
+        )
 
         # Create SSH config
         try:
@@ -513,7 +546,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=strict_host_check
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -532,8 +565,8 @@ class Linux_armPlatform(PlatformBase):
 
         # Show final executable path for clarity
         program_name = os.path.basename(str(source[0]))
-        if path.endswith('/'):
-            final_path = os.path.join(path, program_name)
+        if path.endswith("/"):
+            final_path = posixpath.join(path, program_name)
             print(f"Program:     {final_path}")
         else:
             print(f"Program:     {path}")
@@ -544,9 +577,14 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute SCP command with timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", self._get_config_default("upload_timeout", Timeouts.UPLOAD))
+        upload_timeout = env.GetProjectOption(
+            "upload_timeout",
+            self._get_config_default("upload_timeout", Timeouts.UPLOAD),
+        )
         try:
-            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
+            result = subprocess.run(
+                cmd, capture_output=False, text=True, timeout=upload_timeout
+            )
         except subprocess.TimeoutExpired:
             raise exception.PlatformioException(
                 f"SCP upload timeout after {upload_timeout} seconds. "
@@ -555,7 +593,8 @@ class Linux_armPlatform(PlatformBase):
 
         if result.returncode != 0:
             raise exception.PlatformioException(
-                f"SCP upload failed with exit code {result.returncode}"
+                f"SCP upload failed with exit code {result.returncode}\n"
+                f"Command: {' '.join(cmd)}"
             )
 
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
@@ -564,8 +603,10 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Post-upload execution if configured
-        if env.GetProjectOption("upload_run_after", False):
-            return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
+        if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
+            return self._run_remote_command(
+                user, host, ssh_port, ssh_key, path, env, source
+            )
 
         return 0
 
@@ -592,18 +633,31 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
-        from platform_constants import SSHDefaults, RsyncDefaults, UIConstants
+        from platform_constants import RsyncDefaults, SSHDefaults, Timeouts, UIConstants
+        from ssh_utils import SSHCommandBuilder, SSHConnectionConfig
 
         self._check_upload_tool("rsync")
 
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
-        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
-        upload_flags = env.GetProjectOption("upload_flags", self._get_config_default("upload_flags", RsyncDefaults.FLAGS))
-        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
+        ssh_port = env.GetProjectOption(
+            "upload_ssh_port",
+            self._get_config_default("upload_ssh_port", SSHDefaults.PORT),
+        )
+        ssh_key = env.GetProjectOption(
+            "upload_ssh_key", self._get_config_default("upload_ssh_key", None)
+        )
+        upload_flags = env.GetProjectOption(
+            "upload_flags",
+            self._get_config_default("upload_flags", RsyncDefaults.FLAGS),
+        )
+        strict_host_check = parse_bool_option(
+            env.GetProjectOption(
+                "upload_strict_host_check",
+                self._get_config_default("upload_strict_host_check", False),
+            )
+        )
 
         # Create SSH config
         try:
@@ -612,7 +666,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=strict_host_check
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -634,9 +688,14 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute rsync command with timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", self._get_config_default("upload_timeout", Timeouts.UPLOAD))
+        upload_timeout = env.GetProjectOption(
+            "upload_timeout",
+            self._get_config_default("upload_timeout", Timeouts.UPLOAD),
+        )
         try:
-            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
+            result = subprocess.run(
+                cmd, capture_output=False, text=True, timeout=upload_timeout
+            )
         except subprocess.TimeoutExpired:
             raise exception.PlatformioException(
                 f"Rsync upload timeout after {upload_timeout} seconds. "
@@ -645,7 +704,8 @@ class Linux_armPlatform(PlatformBase):
 
         if result.returncode != 0:
             raise exception.PlatformioException(
-                f"Rsync upload failed with exit code {result.returncode}"
+                f"Rsync upload failed with exit code {result.returncode}\n"
+                f"Command: {' '.join(cmd)}"
             )
 
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
@@ -654,8 +714,10 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Post-upload execution if configured
-        if env.GetProjectOption("upload_run_after", False):
-            return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
+        if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
+            return self._run_remote_command(
+                user, host, ssh_port, ssh_key, path, env, source
+            )
 
         return 0
 
@@ -685,17 +747,27 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
-        from platform_constants import SSHDefaults, UIConstants
+        from platform_constants import SSHDefaults, Timeouts, UIConstants
+        from ssh_utils import SSHCommandBuilder, SSHConnectionConfig
 
         self._check_upload_tool("ssh")
 
         upload_port = env.GetProjectOption("upload_port", None)
         user, host, path = self._parse_upload_port(upload_port, env)
 
-        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
-        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
-        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
+        ssh_port = env.GetProjectOption(
+            "upload_ssh_port",
+            self._get_config_default("upload_ssh_port", SSHDefaults.PORT),
+        )
+        ssh_key = env.GetProjectOption(
+            "upload_ssh_key", self._get_config_default("upload_ssh_key", None)
+        )
+        strict_host_check = parse_bool_option(
+            env.GetProjectOption(
+                "upload_strict_host_check",
+                self._get_config_default("upload_strict_host_check", False),
+            )
+        )
 
         # Create SSH config
         try:
@@ -704,7 +776,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=strict_host_check
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -727,10 +799,19 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute SSH command with file as stdin and timeout protection
-        upload_timeout = env.GetProjectOption("upload_timeout", self._get_config_default("upload_timeout", Timeouts.UPLOAD))
+        upload_timeout = env.GetProjectOption(
+            "upload_timeout",
+            self._get_config_default("upload_timeout", Timeouts.UPLOAD),
+        )
         try:
             with open(str(source[0]), "rb") as f:
-                result = subprocess.run(cmd, stdin=f, capture_output=False, text=False, timeout=upload_timeout)
+                result = subprocess.run(
+                    cmd,
+                    stdin=f,
+                    capture_output=False,
+                    text=False,
+                    timeout=upload_timeout,
+                )
         except subprocess.TimeoutExpired:
             raise exception.PlatformioException(
                 f"SSH upload timeout after {upload_timeout} seconds. "
@@ -739,7 +820,8 @@ class Linux_armPlatform(PlatformBase):
 
         if result.returncode != 0:
             raise exception.PlatformioException(
-                f"SSH upload failed with exit code {result.returncode}"
+                f"SSH upload failed with exit code {result.returncode}\n"
+                f"Command: {' '.join(cmd)}"
             )
 
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
@@ -748,12 +830,16 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Post-upload execution if configured
-        if env.GetProjectOption("upload_run_after", False):
-            return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
+        if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
+            return self._run_remote_command(
+                user, host, ssh_port, ssh_key, path, env, source
+            )
 
         return 0
 
-    def _run_remote_command(self, user, host, ssh_port, ssh_key, remote_path, env, source=None) -> int:
+    def _run_remote_command(
+        self, user, host, ssh_port, ssh_key, remote_path, env, source=None
+    ) -> int:
         """
         Run the uploaded program on the remote target.
 
@@ -776,7 +862,7 @@ class Linux_armPlatform(PlatformBase):
 
         Note:
             Supports custom run commands via upload_run_command option.
-            Default timeout: 60 seconds (configurable via upload_run_timeout).
+            Default timeout: 300 seconds (Timeouts.UPLOAD_RUN, configurable via upload_run_timeout).
             Output is streamed directly to console (interactive mode).
 
         Examples:
@@ -786,10 +872,15 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
-        from platform_constants import UIConstants, Timeouts
+        from platform_constants import Timeouts, UIConstants
+        from ssh_utils import SSHCommandBuilder, SSHConnectionConfig
 
-        strict_host_check = bool(env.GetProjectOption("upload_strict_host_check", self._get_config_default("upload_strict_host_check", False)))
+        strict_host_check = parse_bool_option(
+            env.GetProjectOption(
+                "upload_strict_host_check",
+                self._get_config_default("upload_strict_host_check", False),
+            )
+        )
 
         # Create SSH config
         try:
@@ -798,7 +889,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=strict_host_check
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -813,9 +904,9 @@ class Linux_armPlatform(PlatformBase):
             # Determine the actual executable path
             # Rule: If remote_path ends with '/', it's a directory - append program name
             #       Otherwise, it's the full file path - use as-is
-            if source and remote_path.endswith('/'):
+            if source and remote_path.endswith("/"):
                 program_name = os.path.basename(str(source[0]))
-                executable_path = os.path.join(remote_path, program_name)
+                executable_path = posixpath.join(remote_path, program_name)
             else:
                 executable_path = remote_path
 
@@ -835,7 +926,10 @@ class Linux_armPlatform(PlatformBase):
         print(separator + "\n")
 
         # Execute remote command with timeout protection (interactive - shows output directly)
-        run_timeout = env.GetProjectOption("upload_run_timeout", self._get_config_default("upload_run_timeout", Timeouts.UPLOAD_RUN))
+        run_timeout = env.GetProjectOption(
+            "upload_run_timeout",
+            self._get_config_default("upload_run_timeout", Timeouts.UPLOAD_RUN),
+        )
         try:
             result = subprocess.run(cmd, timeout=run_timeout)
         except subprocess.TimeoutExpired:
@@ -868,7 +962,7 @@ class Linux_armPlatform(PlatformBase):
         Note:
             Requires upload_port to be configured in platformio.ini.
             Optionally supports upload_run_command for custom execution.
-            Uses upload_run_timeout for timeout protection (default: 60 seconds).
+            Uses upload_run_timeout for timeout protection (default: 300 seconds, Timeouts.UPLOAD_RUN).
             If upload_run_after=true, monitor is skipped (program already ran).
 
         Example:
@@ -886,10 +980,10 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from platform_constants import UIConstants, SSHDefaults
+        from platform_constants import SSHDefaults, UIConstants
 
         # If upload_run_after is enabled, skip monitor (program already ran during upload)
-        if env.GetProjectOption("upload_run_after", False):
+        if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
             separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
             print("\n" + separator)
             print("MONITOR SKIPPED")
@@ -918,8 +1012,13 @@ class Linux_armPlatform(PlatformBase):
 
         # Parse upload port to get connection info
         user, host, path = self._parse_upload_port(upload_port, env)
-        ssh_port = env.GetProjectOption("upload_ssh_port", self._get_config_default("upload_ssh_port", SSHDefaults.PORT))
-        ssh_key = env.GetProjectOption("upload_ssh_key", self._get_config_default("upload_ssh_key", None))
+        ssh_port = env.GetProjectOption(
+            "upload_ssh_port",
+            self._get_config_default("upload_ssh_port", SSHDefaults.PORT),
+        )
+        ssh_key = env.GetProjectOption(
+            "upload_ssh_key", self._get_config_default("upload_ssh_key", None)
+        )
 
         # When monitor is called independently (not after upload), source is not available
         # Create a pseudo-source list with the program path from the build environment
@@ -933,7 +1032,9 @@ class Linux_armPlatform(PlatformBase):
                 source = [expanded_path]
 
         # Run the remote command and stream output
-        return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
+        return self._run_remote_command(
+            user, host, ssh_port, ssh_key, path, env, source
+        )
 
     def _determine_gdb_executable(self, target_arch: str) -> str:
         """
@@ -956,7 +1057,7 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from platform_constants import GDBExecutable, Architecture
+        from platform_constants import Architecture, GDBExecutable
 
         # For native ARM Linux, use system GDB
         if self._is_native():
@@ -973,9 +1074,9 @@ class Linux_armPlatform(PlatformBase):
         # 2. Architecture-specific GDB (from cross-toolchain, macOS/Linux)
         # 3. System GDB (last resort)
         candidates = [
-            GDBExecutable.MULTIARCH,   # Linux multi-arch GDB
-            arch_specific_gdb,         # Architecture-specific GDB
-            GDBExecutable.NATIVE       # System GDB
+            GDBExecutable.MULTIARCH,  # Linux multi-arch GDB
+            arch_specific_gdb,  # Architecture-specific GDB
+            GDBExecutable.NATIVE,  # System GDB
         ]
 
         for gdb_cmd in candidates:
@@ -1007,13 +1108,15 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import parse_upload_port
         from platform_constants import SSHDefaults
+        from ssh_utils import parse_upload_port
 
         # Get configuration from env_options dict
         env_opts = debug_config.env_options
         upload_port = env_opts.get("upload_port") or env_opts.get("debug_port")
-        ssh_port = env_opts.get("debug_ssh_port") or env_opts.get("upload_ssh_port", SSHDefaults.PORT)
+        ssh_port = env_opts.get("debug_ssh_port") or env_opts.get(
+            "upload_ssh_port", SSHDefaults.PORT
+        )
         ssh_key = env_opts.get("debug_ssh_key") or env_opts.get("upload_ssh_key")
         prog_path = env_opts.get("debug_prog_path", SSHDefaults.UPLOAD_PATH)
         user = SSHDefaults.USER
@@ -1022,9 +1125,7 @@ class Linux_armPlatform(PlatformBase):
         if upload_port:
             try:
                 user, host, prog_path = parse_upload_port(
-                    upload_port,
-                    default_user=SSHDefaults.USER,
-                    default_path=prog_path
+                    upload_port, default_user=SSHDefaults.USER, default_path=prog_path
                 )
             except ValueError:
                 # Fallback: simple extraction
@@ -1041,7 +1142,7 @@ class Linux_armPlatform(PlatformBase):
             build_prog_path = debug_config.build_data.get("prog_path", "")
             if build_prog_path:
                 prog_name = os.path.basename(build_prog_path)
-                prog_path = os.path.join(prog_path.rstrip("/"), prog_name)
+                prog_path = posixpath.join(prog_path.rstrip("/"), prog_name)
 
         return user, host, prog_path, ssh_port, ssh_key
 
@@ -1052,7 +1153,8 @@ class Linux_armPlatform(PlatformBase):
         host: str,
         ssh_port: str,
         ssh_key: str,
-        prog_path: str
+        prog_path: str,
+        strict_host_check: bool = False,
     ) -> None:
         """
         Configure SSH-tunneled gdbserver.
@@ -1071,7 +1173,7 @@ class Linux_armPlatform(PlatformBase):
         # Lazy import to avoid breaking platform loading
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
-        from ssh_utils import SSHConnectionConfig, SSHCommandBuilder
+        from ssh_utils import SSHCommandBuilder, SSHConnectionConfig
 
         if not host:
             raise exception.PlatformioException(
@@ -1088,7 +1190,7 @@ class Linux_armPlatform(PlatformBase):
                 host=host,
                 port=ssh_port,
                 key=ssh_key,
-                strict_host_check=False
+                strict_host_check=strict_host_check,
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
@@ -1108,7 +1210,9 @@ class Linux_armPlatform(PlatformBase):
         # WORKAROUND: _port property doesn't persist between configure_debug_session and reveal_patterns
         # Store in env_options["debug_port"] instead to ensure it's used when substituting $DEBUG_PORT
         debug_config.env_options["debug_port"] = pipe_port
-        debug_config.port = pipe_port  # Also set property in case PlatformIO uses it directly
+        debug_config.port = (
+            pipe_port  # Also set property in case PlatformIO uses it directly
+        )
 
     def _configure_gdb_remote(self, debug_config: dict) -> None:
         """
@@ -1126,10 +1230,7 @@ class Linux_armPlatform(PlatformBase):
         debug_config.port = debug_port
 
     def _build_debug_init_commands(
-        self,
-        debug_tool: str,
-        debug_config: dict,
-        prog_path: str
+        self, debug_tool: str, debug_config: dict, prog_path: str
     ) -> list:
         """
         Build GDB initialization commands.
@@ -1150,16 +1251,22 @@ class Linux_armPlatform(PlatformBase):
         init_cmds = []
 
         if debug_tool == DebugTools.GDBSERVER_SSH:
-            init_cmds.extend([
-                f"target extended-remote {debug_config.port}",
-                f"set remote exec-file {prog_path}",
-                "set sysroot /",
-            ])
+            init_cmds.extend(
+                [
+                    f"target extended-remote {debug_config.port}",
+                    f"set remote exec-file {prog_path}",
+                    "set sysroot /",
+                ]
+            )
         else:
             init_cmds.append(f"target extended-remote {debug_config.port}")
 
         # Add custom init commands from config (from env_options or init_cmds attribute)
-        custom_init = debug_config.env_options.get("debug_init_cmds") or debug_config.init_cmds or []
+        custom_init = (
+            debug_config.env_options.get("debug_init_cmds")
+            or debug_config.init_cmds
+            or []
+        )
         if custom_init:
             init_cmds.extend(custom_init)
 
@@ -1185,27 +1292,48 @@ class Linux_armPlatform(PlatformBase):
         # Get board configuration and determine GDB executable
         board_config = self.board_config(debug_config.env_name)
         # Get architecture from env_options (platformio.ini board_build.arch)
-        target_arch = debug_config.env_options.get("board_build.arch",
-                                                     board_config.get("build.arch", "armv7"))
+        target_arch = debug_config.env_options.get(
+            "board_build.arch", board_config.get("build.arch", "armv7")
+        )
         gdb_path = self._determine_gdb_executable(target_arch)
 
         # Parse connection information
-        user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(
+            debug_config
+        )
 
         # Get debug tool from tool_name attribute or env_options
-        debug_tool = debug_config.tool_name or debug_config.env_options.get("debug_tool", DebugTools.GDBSERVER_SSH)
+        debug_tool = debug_config.tool_name or debug_config.env_options.get(
+            "debug_tool", DebugTools.GDBSERVER_SSH
+        )
 
         # Configure debug server based on tool
         if debug_tool == DebugTools.GDBSERVER_SSH:
-            self._configure_gdbserver_ssh(debug_config, user, host, ssh_port, ssh_key, prog_path)
+            debug_strict_host_check = parse_bool_option(
+                debug_config.env_options.get(
+                    "debug_strict_host_check",
+                    self._get_config_default("debug_strict_host_check", False),
+                )
+            )
+            self._configure_gdbserver_ssh(
+                debug_config,
+                user,
+                host,
+                ssh_port,
+                ssh_key,
+                prog_path,
+                debug_strict_host_check,
+            )
         elif debug_tool == DebugTools.GDB_REMOTE:
             self._configure_gdb_remote(debug_config)
 
         # Override GDB path in build_data (init_cmds, prog_path are read-only properties)
         # Update the build_data dict with our detected GDB executable
         # NOTE: prog_path in build_data is LOCAL path for symbols, don't override it
-        if hasattr(debug_config, 'build_data') and isinstance(debug_config.build_data, dict):
-            debug_config.build_data['gdb_path'] = gdb_path
+        if hasattr(debug_config, "build_data") and isinstance(
+            debug_config.build_data, dict
+        ):
+            debug_config.build_data["gdb_path"] = gdb_path
 
         # Return the configured debug_config object
         # PlatformIO will use our build_data values and server/port configuration
@@ -1240,8 +1368,9 @@ class Linux_armPlatform(PlatformBase):
             return self._add_debug_to_board(result)
         else:
             # All boards
-            return {key: self._add_debug_to_board(value)
-                    for key, value in result.items()}
+            return {
+                key: self._add_debug_to_board(value) for key, value in result.items()
+            }
 
     def _add_debug_to_board(self, board):
         """
@@ -1272,35 +1401,19 @@ class Linux_armPlatform(PlatformBase):
         # Set default debug tools
         debug["tools"] = {
             "gdbserver-ssh": {
-                "server": {
-                    "package": None,
-                    "executable": None,
-                    "arguments": []
-                },
+                "server": {"package": None, "executable": None, "arguments": []},
                 "init_cmds": [
                     "target extended-remote $DEBUG_PORT",
                     "set remote exec-file $PROG_PATH",
-                    "set sysroot /"
+                    "set sysroot /",
                 ],
-                "extra_cmds": [
-                    "break main",
-                    "continue"
-                ]
+                "extra_cmds": ["break main", "continue"],
             },
             "gdb-remote": {
-                "server": {
-                    "package": None,
-                    "executable": None,
-                    "arguments": []
-                },
-                "init_cmds": [
-                    "target extended-remote $DEBUG_PORT"
-                ],
-                "extra_cmds": [
-                    "break main",
-                    "continue"
-                ]
-            }
+                "server": {"package": None, "executable": None, "arguments": []},
+                "init_cmds": ["target extended-remote $DEBUG_PORT"],
+                "extra_cmds": ["break main", "continue"],
+            },
         }
 
         # Set default debug tool
@@ -1357,6 +1470,7 @@ class Linux_armPlatform(PlatformBase):
             if _PLATFORM_DIR not in sys.path:
                 sys.path.insert(0, _PLATFORM_DIR)
             from platform_test_uploader import RemoteTestUploader
+
             return RemoteTestUploader(target, source, env).run()
 
         elif test_transport == TestTransport.MANUAL:

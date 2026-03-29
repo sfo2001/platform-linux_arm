@@ -32,17 +32,18 @@ GC2 Fork: https://github.com/WiringPi/WiringPi
 Original: http://wiringpi.com (deprecated)
 """
 
-from SCons.Script import DefaultEnvironment
-from os.path import isfile, join, isdir
 import sys
+from os.path import isdir, isfile, join
+
+from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
 # Detect WiringPi installation paths
 # Priority: 1) System package, 2) User local build
 wiringpi_search_paths = [
-    "/usr",                           # System package (apt install wiringpi)
-    "/usr/local",                     # Manual installation
+    "/usr",  # System package (apt install wiringpi)
+    "/usr/local",  # Manual installation
 ]
 
 wiringpi_include = None
@@ -53,8 +54,10 @@ for base_path in wiringpi_search_paths:
     lib_path = join(base_path, "lib")
 
     # Check for wiringPi.h header and library
-    if isfile(join(inc_path, "wiringPi.h")) and \
-       (isfile(join(lib_path, "libwiringPi.so")) or isfile(join(lib_path, "libwiringPi.a"))):
+    if isfile(join(inc_path, "wiringPi.h")) and (
+        isfile(join(lib_path, "libwiringPi.so"))
+        or isfile(join(lib_path, "libwiringPi.a"))
+    ):
         wiringpi_include = inc_path
         wiringpi_lib = lib_path
         print("Found WiringPi at: %s" % base_path)
@@ -82,28 +85,10 @@ if not wiringpi_include or not wiringpi_lib:
     env.Exit(1)
 
 env.Replace(
-    CPPFLAGS=[
-        "-O2",
-        "-Wformat=2",
-        "-Wall",
-        "-Winline",
-        "-pipe",
-        "-fPIC"
-    ],
-
-    LIBS=["pthread", "wiringPi"]
+    CPPFLAGS=["-O2", "-Wformat=2", "-Wall", "-Winline", "-pipe", "-fPIC"],
+    LIBS=["pthread", "wiringPi"],
 )
 
 env.Append(
-    CPPDEFINES=[
-        "_GNU_SOURCE"
-    ],
-
-    CPPPATH=[
-        wiringpi_include
-    ],
-
-    LIBPATH=[
-        wiringpi_lib
-    ]
+    CPPDEFINES=["_GNU_SOURCE"], CPPPATH=[wiringpi_include], LIBPATH=[wiringpi_lib]
 )
