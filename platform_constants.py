@@ -21,11 +21,10 @@ and improve code maintainability.
 """
 
 import os
-
 from typing import Final, List
 
 # True when running on Windows; used to select the correct toolchain triple
-_WINDOWS: bool = os.name == 'nt'
+_WINDOWS: bool = os.name == "nt"
 
 
 class SSHDefaults:
@@ -127,10 +126,14 @@ class ToolchainPrefix:
     """
 
     # 64-bit ARM (ARMv8/AArch64) toolchain prefix
-    AARCH64: Final[str] = "aarch64-none-linux-gnu-" if _WINDOWS else "aarch64-linux-gnu-"
+    AARCH64: Final[str] = (
+        "aarch64-none-linux-gnu-" if _WINDOWS else "aarch64-linux-gnu-"
+    )
 
     # 32-bit ARM (ARMv7) toolchain prefix
-    ARMV7: Final[str] = "arm-none-linux-gnueabihf-" if _WINDOWS else "arm-linux-gnueabihf-"
+    ARMV7: Final[str] = (
+        "arm-none-linux-gnueabihf-" if _WINDOWS else "arm-linux-gnueabihf-"
+    )
 
 
 class GDBExecutable:
@@ -143,10 +146,14 @@ class GDBExecutable:
     MULTIARCH: Final[str] = "gdb-multiarch"
 
     # 64-bit ARM GDB
-    AARCH64: Final[str] = "aarch64-none-linux-gnu-gdb" if _WINDOWS else "aarch64-linux-gnu-gdb"
+    AARCH64: Final[str] = (
+        "aarch64-none-linux-gnu-gdb" if _WINDOWS else "aarch64-linux-gnu-gdb"
+    )
 
     # 32-bit ARM GDB
-    ARMV7: Final[str] = "arm-none-linux-gnueabihf-gdb" if _WINDOWS else "arm-linux-gnueabihf-gdb"
+    ARMV7: Final[str] = (
+        "arm-none-linux-gnueabihf-gdb" if _WINDOWS else "arm-linux-gnueabihf-gdb"
+    )
 
 
 class Architecture:

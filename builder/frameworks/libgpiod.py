@@ -80,10 +80,11 @@ References:
 https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/
 """
 
-from SCons.Script import DefaultEnvironment
-from os.path import isfile, join, expanduser
-from os import environ
 import sys
+from os import environ
+from os.path import expanduser, isfile, join
+
+from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
@@ -93,38 +94,44 @@ target_arch = board.get("build.arch", "armv7")
 if env.GetProjectOption("board_build.arch", None):
     target_arch = env.GetProjectOption("board_build.arch")
 
-is_aarch64 = (target_arch == "aarch64")
+is_aarch64 = target_arch == "aarch64"
 
 # Detect libgpiod installation paths
 # Priority: 1) CI workspace (for Windows CI), 2) User local build, 3) System multiarch, 4) System package
 home = expanduser("~")
-workspace = environ.get("GITHUB_WORKSPACE", "")  # CI workspace (Windows CI builds use this)
+workspace = environ.get(
+    "GITHUB_WORKSPACE", ""
+)  # CI workspace (Windows CI builds use this)
 
 # Build architecture-specific search path list
 # Put the target architecture's paths FIRST to avoid finding wrong architecture
 if is_aarch64:
     # 64-bit build: prioritize aarch64 paths
     libgpiod_search_paths = [
-        join(workspace, ".local", "aarch64-linux-gnu") if workspace else "",  # CI workspace (Windows)
-        join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (recommended)
-        "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
-        "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
+        (
+            join(workspace, ".local", "aarch64-linux-gnu") if workspace else ""
+        ),  # CI workspace (Windows)
+        join(home, ".local", "aarch64-linux-gnu"),  # User-built 64-bit (recommended)
+        "/usr/local/aarch64-linux-gnu",  # System-wide build 64-bit
+        "/usr/aarch64-linux-gnu",  # Multiarch package location 64-bit
         join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (fallback)
-        "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
-        "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
-        "/usr",                                        # Native package fallback
+        "/usr/local/arm-linux-gnueabihf",  # System-wide build 32-bit
+        "/usr/arm-linux-gnueabihf",  # Multiarch package location 32-bit
+        "/usr",  # Native package fallback
     ]
 else:
     # 32-bit build: prioritize armhf paths
     libgpiod_search_paths = [
-        join(workspace, ".local", "arm-linux-gnueabihf") if workspace else "",  # CI workspace (Windows)
+        (
+            join(workspace, ".local", "arm-linux-gnueabihf") if workspace else ""
+        ),  # CI workspace (Windows)
         join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (recommended)
-        "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
-        "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
-        join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (fallback)
-        "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
-        "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
-        "/usr",                                        # Native package fallback
+        "/usr/local/arm-linux-gnueabihf",  # System-wide build 32-bit
+        "/usr/arm-linux-gnueabihf",  # Multiarch package location 32-bit
+        join(home, ".local", "aarch64-linux-gnu"),  # User-built 64-bit (fallback)
+        "/usr/local/aarch64-linux-gnu",  # System-wide build 64-bit
+        "/usr/aarch64-linux-gnu",  # Multiarch package location 64-bit
+        "/usr",  # Native package fallback
     ]
 
 libgpiod_include = None
@@ -145,20 +152,24 @@ for base_path in libgpiod_search_paths:
         # Check correct architecture's path first
         if is_aarch64:
             # Building for 64-bit, check aarch64 first
-            if isfile(join(lib_path_multiarch_aarch64, "libgpiod.so")) or \
-               isfile(join(lib_path_multiarch_aarch64, "libgpiod.so.2")) or \
-               isfile(join(lib_path_multiarch_aarch64, "libgpiod.so.1")) or \
-               isfile(join(lib_path_multiarch_aarch64, "libgpiod.a")):
+            if (
+                isfile(join(lib_path_multiarch_aarch64, "libgpiod.so"))
+                or isfile(join(lib_path_multiarch_aarch64, "libgpiod.so.2"))
+                or isfile(join(lib_path_multiarch_aarch64, "libgpiod.so.1"))
+                or isfile(join(lib_path_multiarch_aarch64, "libgpiod.a"))
+            ):
                 libgpiod_include = inc_path
                 libgpiod_lib = lib_path_multiarch_aarch64
                 print("Found libgpiod at: %s (multiarch aarch64)" % base_path)
                 break
         else:
             # Building for 32-bit, check armhf first
-            if isfile(join(lib_path_multiarch_armhf, "libgpiod.so")) or \
-               isfile(join(lib_path_multiarch_armhf, "libgpiod.so.2")) or \
-               isfile(join(lib_path_multiarch_armhf, "libgpiod.so.1")) or \
-               isfile(join(lib_path_multiarch_armhf, "libgpiod.a")):
+            if (
+                isfile(join(lib_path_multiarch_armhf, "libgpiod.so"))
+                or isfile(join(lib_path_multiarch_armhf, "libgpiod.so.2"))
+                or isfile(join(lib_path_multiarch_armhf, "libgpiod.so.1"))
+                or isfile(join(lib_path_multiarch_armhf, "libgpiod.a"))
+            ):
                 libgpiod_include = inc_path
                 libgpiod_lib = lib_path_multiarch_armhf
                 print("Found libgpiod at: %s (multiarch armhf)" % base_path)
@@ -167,10 +178,12 @@ for base_path in libgpiod_search_paths:
         # Check standard lib path as fallback
         # Architecture-specific base paths (e.g., ~/.local/arm-linux-gnueabihf/)
         # provide architecture isolation, so it's safe to check lib/ subdirectory
-        if isfile(join(lib_path, "libgpiod.so")) or \
-           isfile(join(lib_path, "libgpiod.so.2")) or \
-           isfile(join(lib_path, "libgpiod.so.1")) or \
-           isfile(join(lib_path, "libgpiod.a")):
+        if (
+            isfile(join(lib_path, "libgpiod.so"))
+            or isfile(join(lib_path, "libgpiod.so.2"))
+            or isfile(join(lib_path, "libgpiod.so.1"))
+            or isfile(join(lib_path, "libgpiod.a"))
+        ):
             libgpiod_include = inc_path
             libgpiod_lib = lib_path
             print("Found libgpiod at: %s" % base_path)
@@ -184,7 +197,10 @@ if libgpiod_include:
     try:
         with open(join(libgpiod_include, "gpiod.h"), "r") as f:
             header_content = f.read()
-            if "gpiod_request_config" in header_content or "gpiod_line_request_output_flags" in header_content:
+            if (
+                "gpiod_request_config" in header_content
+                or "gpiod_line_request_output_flags" in header_content
+            ):
                 libgpiod_version = "v2"
                 print("Detected libgpiod API version: v2.x")
             else:
@@ -193,7 +209,9 @@ if libgpiod_include:
     except (OSError, UnicodeDecodeError) as e:
         # If we can't detect, assume v1 for backward compatibility
         libgpiod_version = "v1"
-        print(f"Could not detect libgpiod API version ({e.__class__.__name__}), assuming v1.x")
+        print(
+            f"Could not detect libgpiod API version ({e.__class__.__name__}), assuming v1.x"
+        )
 
 if not libgpiod_include or not libgpiod_lib:
     arch_name = "aarch64 (64-bit)" if is_aarch64 else "armhf (32-bit)"
@@ -233,30 +251,13 @@ if not libgpiod_include or not libgpiod_lib:
     )
     env.Exit(1)
 
-env.Replace(
-    CPPFLAGS=[
-        "-O2",
-        "-Wall",
-        "-Winline",
-        "-pipe",
-        "-fPIC"
-    ]
-)
+env.Replace(CPPFLAGS=["-O2", "-Wall", "-Winline", "-pipe", "-fPIC"])
 
 env.Append(
-    CPPDEFINES=[
-        "_GNU_SOURCE"
-    ],
-
-    CPPPATH=[
-        libgpiod_include
-    ],
-
-    LIBPATH=[
-        libgpiod_lib
-    ],
-
-    LIBS=["gpiod"]
+    CPPDEFINES=["_GNU_SOURCE"],
+    CPPPATH=[libgpiod_include],
+    LIBPATH=[libgpiod_lib],
+    LIBS=["gpiod"],
 )
 
 # Add version-specific defines for conditional compilation in user code

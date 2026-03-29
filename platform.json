@@ -52,12 +52,12 @@
   },
   "projectConf": {
     "upload_run_after": {
-      "type": "bool",
+      "type": "boolean",
       "description": "Execute uploaded program immediately after successful upload"
     },
     "upload_run_command": {
       "type": "string",
-      "description": "Custom command to run the uploaded program (overrides default execution)"
+      "description": "Custom command to run the uploaded program (overrides default execution). WARNING: this value is executed as an arbitrary shell command on the remote target."
     },
     "upload_run_timeout": {
       "type": "number",
@@ -88,7 +88,7 @@
       "description": "Additional flags passed to the upload tool (scp/rsync/ssh)"
     },
     "upload_strict_host_check": {
-      "type": "bool",
+      "type": "boolean",
       "description": "Enable SSH strict host key checking for uploads (default: false)"
     },
     "test_transport": {
@@ -96,8 +96,8 @@
       "description": "Test upload transport: ssh or manual (default: ssh)"
     },
     "test_port": {
-      "type": "number",
-      "description": "Port number for test execution on the remote target (default: 22)"
+      "type": "string",
+      "description": "SSH connection string for test execution (format: user@host:/path)"
     },
     "test_ssh_port": {
       "type": "number",
@@ -122,6 +122,14 @@
     "test_ssh_key": {
       "type": "string",
       "description": "Path to SSH private key for test upload and execution"
+    },
+    "test_strict_host_check": {
+      "type": "boolean",
+      "description": "Enable SSH strict host key checking for test operations (default: false)"
+    },
+    "debug_strict_host_check": {
+      "type": "boolean",
+      "description": "Enable SSH strict host key checking for GDB debug sessions (default: false)"
     }
   },
   "debug": {

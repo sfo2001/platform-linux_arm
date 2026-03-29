@@ -19,7 +19,8 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 import pytest
 
 # Add parent directory to path to import platform modules
@@ -53,15 +54,11 @@ def mock_platform_manifest(temp_project_dir):
 def mock_board_config():
     """Create a mock board configuration object."""
     board = Mock()
-    board.manifest = {
-        "build": {
-            "arch": "armv7"
-        }
-    }
-    board.get = Mock(side_effect=lambda key, default=None:
-        board.manifest.get(key.replace("build.", "build.").split(".")[0], {}).get(
-            key.split(".")[-1] if "." in key else key, default
-        )
+    board.manifest = {"build": {"arch": "armv7"}}
+    board.get = Mock(
+        side_effect=lambda key, default=None: board.manifest.get(
+            key.replace("build.", "build.").split(".")[0], {}
+        ).get(key.split(".")[-1] if "." in key else key, default)
     )
     return board
 
@@ -90,9 +87,11 @@ def mock_subprocess_failure():
 def sample_config_file(temp_project_dir):
     """Create a sample .platform-linux_arm.ini config file."""
     config_path = temp_project_dir / ".platform-linux_arm.ini"
-    config_path.write_text("""[defaults]
+    config_path.write_text(
+        """[defaults]
 upload_timeout = 600
 upload_user = testuser
 upload_ssh_port = 2222
-""")
+"""
+    )
     return config_path

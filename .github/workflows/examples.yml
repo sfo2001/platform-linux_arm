@@ -13,10 +13,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
 
@@ -43,7 +43,7 @@ jobs:
           python -m py_compile platform_test_uploader.py
           python -m py_compile builder/main.py
           python -m py_compile builder/frameworks/*.py
-          echo "✅ All Python files have valid syntax"
+          echo "OK: All Python files have valid syntax"
 
   # Build examples on multiple OS
   build:
@@ -80,18 +80,18 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: "recursive"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
 
       # Ubuntu: Cache ARM cross-compilation toolchains
       - name: Cache ARM toolchains (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-ubuntu-toolchains
         with:
           path: |
@@ -119,7 +119,7 @@ jobs:
       # Ubuntu: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-ubuntu-libgpiod
         with:
           path: |
@@ -148,7 +148,7 @@ jobs:
       # Windows: Cache ARM32 toolchain
       - name: Cache ARM32 toolchain (Windows)
         if: matrix.os == 'windows-latest'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-windows-arm32-toolchain
         with:
           path: arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-arm-none-linux-gnueabihf
@@ -161,7 +161,8 @@ jobs:
         run: |
           # Download ARM GNU Toolchain (arm-none-linux-gnueabihf variant works for Linux)
           echo "Downloading ARM GNU Toolchain for Windows..."
-          curl -L -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
+          curl -L --fail -o gcc-arm.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-arm-none-linux-gnueabihf.zip"
+          echo "047e72bcef8f7767691f36929a8c74ef66f717cf6264a31f48dd31bfb067f4c8  gcc-arm.zip" | sha256sum -c || { echo "ERROR: Toolchain checksum failed"; exit 1; }
 
           echo "Extracting toolchain..."
           unzip -q gcc-arm.zip
@@ -190,7 +191,7 @@ jobs:
       # Windows: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (Windows)
         if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-windows-libgpiod
         with:
           path: |
@@ -223,7 +224,7 @@ jobs:
 
           # Convert Windows path to MSYS2 Unix-style path
           if [ -z "$ARM_TOOLCHAIN_DIR" ]; then
-            echo "❌ ERROR: ARM_TOOLCHAIN_DIR not set. Make sure the 'Install ARM toolchains (Windows)' step ran successfully."
+            echo "ERROR: ARM_TOOLCHAIN_DIR not set. Make sure the 'Install ARM toolchains (Windows)' step ran successfully."
             exit 1
           fi
 
@@ -256,7 +257,7 @@ jobs:
       # Windows: Cache ARM64 toolchain
       - name: Cache ARM64 toolchain (Windows)
         if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-windows-arm64-toolchain
         with:
           path: arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-aarch64-none-linux-gnu
@@ -268,7 +269,8 @@ jobs:
         shell: bash
         run: |
           echo "Downloading ARM64 GNU Toolchain for Windows..."
-          curl -L -o gcc-arm64.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-aarch64-none-linux-gnu.zip"
+          curl -L --fail -o gcc-arm64.zip "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-mingw-w64-i686-aarch64-none-linux-gnu.zip"
+          echo "ccca7e520adbc5deb36d53a2b373e28a0c7e21107c487d4f5fd9cc8e0dbf6a11  gcc-arm64.zip" | sha256sum -c || { echo "ERROR: Toolchain checksum failed"; exit 1; }
 
           echo "Extracting ARM64 toolchain..."
           unzip -q gcc-arm64.zip
@@ -294,7 +296,7 @@ jobs:
 
           # Convert Windows path to MSYS2 Unix-style path
           if [ -z "$ARM64_TOOLCHAIN_DIR" ]; then
-            echo "❌ ERROR: ARM64_TOOLCHAIN_DIR not set. Make sure the 'Download ARM64 toolchain (Windows)' step ran successfully."
+            echo "ERROR: ARM64_TOOLCHAIN_DIR not set. Make sure the 'Download ARM64 toolchain (Windows)' step ran successfully."
             exit 1
           fi
 
@@ -327,7 +329,7 @@ jobs:
       # macOS: Cache Homebrew ARM toolchains
       - name: Cache Homebrew ARM toolchains (macOS)
         if: matrix.os == 'macos-latest'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-macos-toolchains
         with:
           path: |
@@ -351,9 +353,9 @@ jobs:
           brew link --force aarch64-unknown-linux-gnu || true
 
           # Verify toolchains are accessible
-          echo "✓ Verifying toolchain installation..."
-          which arm-unknown-linux-gnueabihf-gcc || echo "⚠️  arm-unknown-linux-gnueabihf-gcc not in PATH"
-          which aarch64-unknown-linux-gnu-gcc || echo "⚠️  aarch64-unknown-linux-gnu-gcc not in PATH"
+          echo "Verifying toolchain installation..."
+          which arm-unknown-linux-gnueabihf-gcc || echo "WARNING: arm-unknown-linux-gnueabihf-gcc not in PATH"
+          which aarch64-unknown-linux-gnu-gcc || echo "WARNING: aarch64-unknown-linux-gnu-gcc not in PATH"
 
       # macOS: Install autotools for libgpiod cross-compilation
       - name: Install autotools for libgpiod (macOS)
@@ -364,7 +366,7 @@ jobs:
       # macOS: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (macOS)
         if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-macos-libgpiod
         with:
           path: |
@@ -414,7 +416,7 @@ jobs:
       # recognized".
       - name: Cache lgpio library (32-bit, Ubuntu/macOS)
         if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-lgpio-armhf
         with:
           path: |
@@ -425,7 +427,7 @@ jobs:
       # Cache built lgpio library (64-bit, Ubuntu/macOS)
       - name: Cache lgpio library (64-bit, Ubuntu/macOS)
         if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: cache-lgpio-aarch64
         with:
           path: |

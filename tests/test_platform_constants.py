@@ -15,10 +15,11 @@
 
 """Unit tests for OS-conditional toolchain constants in platform_constants.py."""
 
+import importlib
 import os
 import sys
-import importlib
 from unittest.mock import patch
+
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -31,7 +32,7 @@ class TestToolchainPrefixPosix:
 
     @pytest.fixture(autouse=True)
     def posix_constants(self):
-        with patch.object(os, 'name', 'posix'):
+        with patch.object(os, "name", "posix"):
             importlib.reload(platform_constants)
         yield
         importlib.reload(platform_constants)
@@ -48,7 +49,7 @@ class TestGDBExecutablePosix:
 
     @pytest.fixture(autouse=True)
     def posix_constants(self):
-        with patch.object(os, 'name', 'posix'):
+        with patch.object(os, "name", "posix"):
             importlib.reload(platform_constants)
         yield
         importlib.reload(platform_constants)
@@ -71,7 +72,7 @@ class TestToolchainPrefixWindows:
 
     @pytest.fixture(autouse=True)
     def windows_constants(self):
-        with patch.object(os, 'name', 'nt'):
+        with patch.object(os, "name", "nt"):
             importlib.reload(platform_constants)
         yield
         importlib.reload(platform_constants)
@@ -88,7 +89,7 @@ class TestGDBExecutableWindows:
 
     @pytest.fixture(autouse=True)
     def windows_constants(self):
-        with patch.object(os, 'name', 'nt'):
+        with patch.object(os, "name", "nt"):
             importlib.reload(platform_constants)
         yield
         importlib.reload(platform_constants)
@@ -101,3 +102,6 @@ class TestGDBExecutableWindows:
 
     def test_native_gdb_unchanged(self):
         assert platform_constants.GDBExecutable.NATIVE == "gdb"
+
+    def test_multiarch_gdb_unchanged(self):
+        assert platform_constants.GDBExecutable.MULTIARCH == "gdb-multiarch"

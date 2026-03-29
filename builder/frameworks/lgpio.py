@@ -36,9 +36,10 @@ For Raspberry Pi 1 (original models), set environment variable:
 http://abyz.me.uk/lg/lgpio.html
 """
 
-from SCons.Script import DefaultEnvironment
-from os.path import isfile, join, expanduser
 import sys
+from os.path import expanduser, isfile, join
+
+from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
@@ -48,7 +49,7 @@ target_arch = board.get("build.arch", "armv7")
 if env.GetProjectOption("board_build.arch", None):
     target_arch = env.GetProjectOption("board_build.arch")
 
-is_aarch64 = (target_arch == "aarch64")
+is_aarch64 = target_arch == "aarch64"
 
 # Detect lgpio installation paths
 # Priority: 1) User local build, 2) System-wide build, 3) System package
@@ -60,24 +61,24 @@ home = expanduser("~")
 if is_aarch64:
     # 64-bit build: prioritize aarch64 paths
     lgpio_search_paths = [
-        join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (recommended)
-        "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
-        "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
+        join(home, ".local", "aarch64-linux-gnu"),  # User-built 64-bit (recommended)
+        "/usr/local/aarch64-linux-gnu",  # System-wide build 64-bit
+        "/usr/aarch64-linux-gnu",  # Multiarch package location 64-bit
         join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (fallback)
-        "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
-        "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
-        "/usr",                                        # Native package fallback
+        "/usr/local/arm-linux-gnueabihf",  # System-wide build 32-bit
+        "/usr/arm-linux-gnueabihf",  # Multiarch package location 32-bit
+        "/usr",  # Native package fallback
     ]
 else:
     # 32-bit build: prioritize armhf paths
     lgpio_search_paths = [
         join(home, ".local", "arm-linux-gnueabihf"),  # User-built 32-bit (recommended)
-        "/usr/local/arm-linux-gnueabihf",             # System-wide build 32-bit
-        "/usr/arm-linux-gnueabihf",                   # Multiarch package location 32-bit
-        join(home, ".local", "aarch64-linux-gnu"),    # User-built 64-bit (fallback)
-        "/usr/local/aarch64-linux-gnu",               # System-wide build 64-bit
-        "/usr/aarch64-linux-gnu",                     # Multiarch package location 64-bit
-        "/usr",                                        # Native package fallback
+        "/usr/local/arm-linux-gnueabihf",  # System-wide build 32-bit
+        "/usr/arm-linux-gnueabihf",  # Multiarch package location 32-bit
+        join(home, ".local", "aarch64-linux-gnu"),  # User-built 64-bit (fallback)
+        "/usr/local/aarch64-linux-gnu",  # System-wide build 64-bit
+        "/usr/aarch64-linux-gnu",  # Multiarch package location 64-bit
+        "/usr",  # Native package fallback
     ]
 
 lgpio_include = None
@@ -93,14 +94,18 @@ for base_path in lgpio_search_paths:
         # Check correct architecture's path first
         if is_aarch64:
             # Building for 64-bit, check aarch64 first
-            if isfile(join(lib_path_multiarch_aarch64, "liblgpio.so")) or isfile(join(lib_path_multiarch_aarch64, "liblgpio.so.1")):
+            if isfile(join(lib_path_multiarch_aarch64, "liblgpio.so")) or isfile(
+                join(lib_path_multiarch_aarch64, "liblgpio.so.1")
+            ):
                 lgpio_include = inc_path
                 lgpio_lib = lib_path_multiarch_aarch64
                 print("Found lgpio at: %s (multiarch aarch64)" % base_path)
                 break
         else:
             # Building for 32-bit, check armhf first
-            if isfile(join(lib_path_multiarch_armhf, "liblgpio.so")) or isfile(join(lib_path_multiarch_armhf, "liblgpio.so.1")):
+            if isfile(join(lib_path_multiarch_armhf, "liblgpio.so")) or isfile(
+                join(lib_path_multiarch_armhf, "liblgpio.so.1")
+            ):
                 lgpio_include = inc_path
                 lgpio_lib = lib_path_multiarch_armhf
                 print("Found lgpio at: %s (multiarch armhf)" % base_path)
@@ -109,7 +114,9 @@ for base_path in lgpio_search_paths:
         # Check standard lib path as fallback
         # Architecture-specific base paths (e.g., ~/.local/arm-linux-gnueabihf/)
         # provide architecture isolation, so it's safe to check lib/ subdirectory
-        if isfile(join(lib_path, "liblgpio.so")) or isfile(join(lib_path, "liblgpio.so.1")):
+        if isfile(join(lib_path, "liblgpio.so")) or isfile(
+            join(lib_path, "liblgpio.so.1")
+        ):
             lgpio_include = inc_path
             lgpio_lib = lib_path
             print("Found lgpio at: %s" % base_path)
@@ -139,36 +146,15 @@ if not lgpio_include or not lgpio_lib:
     )
     env.Exit(1)
 
-env.Replace(
-    CPPFLAGS=[
-        "-O2",
-        "-Wall",
-        "-Winline",
-        "-pipe",
-        "-fPIC"
-    ]
-)
+env.Replace(CPPFLAGS=["-O2", "-Wall", "-Winline", "-pipe", "-fPIC"])
 
 env.Append(
-    CPPDEFINES=[
-        "_GNU_SOURCE"
-    ],
-
-    CPPPATH=[
-        lgpio_include,
-        join(env.PioPlatform().get_dir(), "framework-lgpio")
-    ],
-
-    LIBPATH=[
-        lgpio_lib
-    ],
-
-    LIBS=["lgpio"]
+    CPPDEFINES=["_GNU_SOURCE"],
+    CPPPATH=[lgpio_include, join(env.PioPlatform().get_dir(), "framework-lgpio")],
+    LIBPATH=[lgpio_lib],
+    LIBS=["lgpio"],
 )
 
 # Build PWM HAL library
 pwm_hal_src = join(env.PioPlatform().get_dir(), "framework-lgpio", "pwm-hal.c")
-env.BuildSources(
-    join("$BUILD_DIR", "FrameworkLgpioPwmHAL"),
-    pwm_hal_src
-)
+env.BuildSources(join("$BUILD_DIR", "FrameworkLgpioPwmHAL"), pwm_hal_src)

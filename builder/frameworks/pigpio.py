@@ -42,8 +42,9 @@ Supported boards: Raspberry Pi 1, 2, 3, 4, Zero (NOT Pi 5)
 http://abyz.me.uk/rpi/pigpio/
 """
 
-from SCons.Script import DefaultEnvironment
 import sys
+
+from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
@@ -75,23 +76,9 @@ sys.stderr.write(
     "\n"
 )
 
-env.Replace(
-    CPPFLAGS=[
-        "-O2",
-        "-Wall",
-        "-Winline",
-        "-pipe",
-        "-fPIC"
-    ]
-)
+env.Replace(CPPFLAGS=["-O2", "-Wall", "-Winline", "-pipe", "-fPIC"])
 
-env.Append(
-    CPPDEFINES=[
-        "_GNU_SOURCE"
-    ],
-
-    LIBS=["pigpio", "pthread"]
-)
+env.Append(CPPDEFINES=["_GNU_SOURCE"], LIBS=["pigpio", "pthread"])
 
 # Note: pigpio installation is not automated due to deprecation.
 # Users must build from source manually if they really need it.

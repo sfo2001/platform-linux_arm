@@ -64,8 +64,11 @@ test_username = pi
 | `upload_user` | string | `pi` | Default SSH username for upload operations |
 | `upload_ssh_port` | integer | `22` | SSH port for upload connections |
 | `upload_ssh_key` | string | None | Path to SSH private key for upload |
+| `upload_strict_host_check` | bool | `false` | Enable SSH strict host key checking for upload operations |
 | `test_ssh_port` | integer | `22` | SSH port for test connections |
 | `test_ssh_key` | string | None | Path to SSH private key for testing |
+| `test_strict_host_check` | bool | `false` | Enable SSH strict host key checking for test operations |
+| `debug_strict_host_check` | bool | `false` | Enable SSH strict host key checking for GDB debug sessions |
 
 ### Upload Settings
 
