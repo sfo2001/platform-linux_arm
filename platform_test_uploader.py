@@ -219,23 +219,8 @@ class RemoteTestUploader:
                 "  macOS: SCP is pre-installed"
             )
 
-    def build_ssh_command(self, remote_command=None):
-        """
-        Build SSH command with proper authentication.
-
-        Args:
-            remote_command: Optional command to execute on remote host.
-
-        Returns:
-            list: SSH command parts ready for subprocess execution.
-
-        Raises:
-            Exception: If SSH configuration is invalid.
-
-        Note:
-            Automatically configures port, key authentication, and host key verification.
-        """
-        # Create SSH config
+    def _create_ssh_builder(self):
+        """Create SSHCommandBuilder with connection config from environment."""
         strict_host_check = parse_bool_option(
             self.env.GetProjectOption(
                 "test_strict_host_check",
@@ -252,9 +237,25 @@ class RemoteTestUploader:
             )
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e)) from e
+        return SSHCommandBuilder(config)
 
-        # Build SSH command using shared builder
-        builder = SSHCommandBuilder(config)
+    def build_ssh_command(self, remote_command=None):
+        """
+        Build SSH command with proper authentication.
+
+        Args:
+            remote_command: Optional command to execute on remote host.
+
+        Returns:
+            list: SSH command parts ready for subprocess execution.
+
+        Raises:
+            Exception: If SSH configuration is invalid.
+
+        Note:
+            Automatically configures port, key authentication, and host key verification.
+        """
+        builder = self._create_ssh_builder()
         return builder.build_ssh_command(remote_command)
 
     def build_scp_command(self, local_file, remote_file):
@@ -274,26 +275,7 @@ class RemoteTestUploader:
         Note:
             Uses shared SSH configuration (port, key, host verification).
         """
-        # Create SSH config
-        strict_host_check = parse_bool_option(
-            self.env.GetProjectOption(
-                "test_strict_host_check",
-                self._get_config_default("test_strict_host_check", False),
-            )
-        )
-        try:
-            config = SSHConnectionConfig(
-                user=self.user,
-                host=self.host,
-                port=self.ssh_port,
-                key=self.ssh_key,
-                strict_host_check=strict_host_check,
-            )
-        except (ValueError, FileNotFoundError) as e:
-            raise exception.PlatformioException(str(e)) from e
-
-        # Build SCP command using shared builder
-        builder = SSHCommandBuilder(config)
+        builder = self._create_ssh_builder()
         return builder.build_scp_command(local_file, remote_file)
 
     def upload_test_binary(self) -> int:

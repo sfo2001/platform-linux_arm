@@ -66,7 +66,7 @@ class TestGetTargetArch:
         """Falls back to armv7 when board has no arch defined."""
         env = Mock()
         board = Mock()
-        board.get.return_value = "armv7"  # default fallback
+        board.get.side_effect = lambda key, default=None: default
         env.BoardConfig.return_value = board
         env.GetProjectOption.return_value = None
 
