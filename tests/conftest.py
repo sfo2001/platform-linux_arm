@@ -109,18 +109,22 @@ upload_ssh_port = 2222
 @pytest.fixture
 def make_platform(mock_platform_manifest):
     """Factory fixture to create a Linux_armPlatform with standard mocks."""
+
     def _make(manifest=None):
-        with patch("platform_module.PlatformBase.__init__", return_value=None), \
-             patch("platform_module.get_platform_config", return_value=Mock()), \
-             patch("platform_module.Linux_armPlatform._show_welcome_if_needed"):
+        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
+            "platform_module.get_platform_config", return_value=Mock()
+        ), patch("platform_module.Linux_armPlatform._show_welcome_if_needed"):
             from platform_module import Linux_armPlatform
+
             return Linux_armPlatform(manifest or mock_platform_manifest)
+
     return _make
 
 
 @pytest.fixture
 def make_env():
     """Factory fixture to create a mock PlatformIO environment."""
+
     def _make(**overrides):
         defaults = {
             "upload_port": "pi@host:/home/pi/app",
@@ -137,4 +141,5 @@ def make_env():
             side_effect=lambda key, default=None: defaults.get(key, default)
         )
         return env
+
     return _make

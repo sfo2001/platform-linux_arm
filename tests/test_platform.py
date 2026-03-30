@@ -1541,7 +1541,6 @@ class TestParseDebugConnectionInfo:
         assert host == "upload-host"
         assert prog_path == "/app"
 
-
     def test_fallback_at_sign_parsing(self, make_platform):
         """Test fallback parsing when parse_upload_port raises ValueError."""
         platform = make_platform()
@@ -1600,9 +1599,11 @@ class TestShowWelcomeIfNeeded:
 
     def _make_platform_raw(self, mock_platform_manifest):
         """Create platform WITHOUT patching _show_welcome_if_needed."""
-        with patch("platform_module.PlatformBase.__init__", return_value=None), \
-             patch("platform_module.get_platform_config", return_value=Mock()):
+        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
+            "platform_module.get_platform_config", return_value=Mock()
+        ):
             from platform_module import Linux_armPlatform
+
             return Linux_armPlatform(mock_platform_manifest)
 
     @patch("builtins.print")
