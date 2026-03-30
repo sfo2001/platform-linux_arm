@@ -43,10 +43,11 @@ sys.modules["platform_module"] = platform_module
 class TestLinuxArmPlatformInit:
     """Test cases for Linux_armPlatform initialization."""
 
+    @patch("platform_module.Linux_armPlatform._show_welcome_if_needed")
     @patch("platform_module.get_platform_config")
     @patch("platform_module.PlatformBase.__init__")
     def test_init_loads_config(
-        self, mock_base_init, mock_get_config, mock_platform_manifest
+        self, mock_base_init, mock_get_config, mock_welcome, mock_platform_manifest
     ):
         """Test that initialization loads platform configuration."""
         from platform_module import Linux_armPlatform
@@ -1110,43 +1111,18 @@ class TestBuildDebugInitCommands:
 class TestUploadScp:
     """Test cases for _upload_scp method."""
 
-    def _make_platform(self, mock_platform_manifest):
-        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
-            "platform_module.get_platform_config", return_value=Mock()
-        ):
-            from platform_module import Linux_armPlatform
-
-            return Linux_armPlatform(mock_platform_manifest)
-
-    def _make_env(self, **overrides):
-        defaults = {
-            "upload_port": "pi@host:/home/pi/app",
-            "upload_ssh_port": None,
-            "upload_ssh_key": None,
-            "upload_flags": None,
-            "upload_strict_host_check": None,
-            "upload_timeout": None,
-            "upload_run_after": False,
-        }
-        defaults.update(overrides)
-        env = Mock()
-        env.GetProjectOption = Mock(
-            side_effect=lambda key, default=None: defaults.get(key, default)
-        )
-        return env
-
     @patch("platform_module.subprocess.run")
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_successful_upload_returns_zero(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         result = platform._upload_scp(Mock(), [source_mock], env)
         assert result == 0
@@ -1156,14 +1132,14 @@ class TestUploadScp:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_failure_raises_exception(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=1)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="SCP upload failed"):
             platform._upload_scp(Mock(), [source_mock], env)
@@ -1172,16 +1148,16 @@ class TestUploadScp:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_timeout_raises_exception(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         import subprocess
 
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="scp", timeout=120)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="timeout"):
             platform._upload_scp(Mock(), [source_mock], env)
@@ -1196,15 +1172,16 @@ class TestUploadScp:
         mock_check_tool,
         mock_run,
         mock_run_remote,
-        mock_platform_manifest,
+        make_platform,
+        make_env,
     ):
         mock_run.return_value = Mock(returncode=0)
         mock_run_remote.return_value = 0
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env(upload_run_after="yes")
+        env = make_env(upload_run_after="yes")
 
         result = platform._upload_scp(Mock(), [source_mock], env)
         assert result == 0
@@ -1214,14 +1191,14 @@ class TestUploadScp:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_run_after_false_skips_run_remote(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env(upload_run_after=False)
+        env = make_env(upload_run_after=False)
 
         with patch.object(platform, "_run_remote_command") as mock_remote:
             result = platform._upload_scp(Mock(), [source_mock], env)
@@ -1232,43 +1209,18 @@ class TestUploadScp:
 class TestUploadRsync:
     """Test cases for _upload_rsync method."""
 
-    def _make_platform(self, mock_platform_manifest):
-        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
-            "platform_module.get_platform_config", return_value=Mock()
-        ):
-            from platform_module import Linux_armPlatform
-
-            return Linux_armPlatform(mock_platform_manifest)
-
-    def _make_env(self, **overrides):
-        defaults = {
-            "upload_port": "pi@host:/home/pi/app",
-            "upload_ssh_port": None,
-            "upload_ssh_key": None,
-            "upload_flags": None,
-            "upload_strict_host_check": None,
-            "upload_timeout": None,
-            "upload_run_after": False,
-        }
-        defaults.update(overrides)
-        env = Mock()
-        env.GetProjectOption = Mock(
-            side_effect=lambda key, default=None: defaults.get(key, default)
-        )
-        return env
-
     @patch("platform_module.subprocess.run")
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_successful_upload_returns_zero(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         result = platform._upload_rsync(Mock(), [source_mock], env)
         assert result == 0
@@ -1278,14 +1230,14 @@ class TestUploadRsync:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_failure_raises_exception(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=1)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="Rsync upload failed"):
             platform._upload_rsync(Mock(), [source_mock], env)
@@ -1294,16 +1246,16 @@ class TestUploadRsync:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_timeout_raises_exception(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         import subprocess
 
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="rsync", timeout=120)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="timeout"):
             platform._upload_rsync(Mock(), [source_mock], env)
@@ -1318,15 +1270,16 @@ class TestUploadRsync:
         mock_check_tool,
         mock_run,
         mock_run_remote,
-        mock_platform_manifest,
+        make_platform,
+        make_env,
     ):
         mock_run.return_value = Mock(returncode=0)
         mock_run_remote.return_value = 0
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env(upload_run_after="yes")
+        env = make_env(upload_run_after="yes")
 
         result = platform._upload_rsync(Mock(), [source_mock], env)
         assert result == 0
@@ -1336,44 +1289,19 @@ class TestUploadRsync:
 class TestUploadSsh:
     """Test cases for _upload_ssh method."""
 
-    def _make_platform(self, mock_platform_manifest):
-        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
-            "platform_module.get_platform_config", return_value=Mock()
-        ):
-            from platform_module import Linux_armPlatform
-
-            return Linux_armPlatform(mock_platform_manifest)
-
-    def _make_env(self, **overrides):
-        defaults = {
-            "upload_port": "pi@host:/home/pi/app",
-            "upload_ssh_port": None,
-            "upload_ssh_key": None,
-            "upload_flags": None,
-            "upload_strict_host_check": None,
-            "upload_timeout": None,
-            "upload_run_after": False,
-        }
-        defaults.update(overrides)
-        env = Mock()
-        env.GetProjectOption = Mock(
-            side_effect=lambda key, default=None: defaults.get(key, default)
-        )
-        return env
-
     @patch("builtins.open", mock_open(read_data=b"\x00\x01\x02"))
     @patch("platform_module.subprocess.run")
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_successful_upload_returns_zero(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         result = platform._upload_ssh(Mock(), [source_mock], env)
         assert result == 0
@@ -1384,14 +1312,14 @@ class TestUploadSsh:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_failure_raises_exception(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=1)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="SSH upload failed"):
             platform._upload_ssh(Mock(), [source_mock], env)
@@ -1401,16 +1329,16 @@ class TestUploadSsh:
     @patch("platform_module.Linux_armPlatform._check_upload_tool")
     @patch("builtins.print")
     def test_upload_timeout_raises_exception(
-        self, mock_print, mock_check_tool, mock_run, mock_platform_manifest
+        self, mock_print, mock_check_tool, mock_run, make_platform, make_env
     ):
         import subprocess
 
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="ssh", timeout=120)
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="timeout"):
             platform._upload_ssh(Mock(), [source_mock], env)
@@ -1426,15 +1354,16 @@ class TestUploadSsh:
         mock_check_tool,
         mock_run,
         mock_run_remote,
-        mock_platform_manifest,
+        make_platform,
+        make_env,
     ):
         mock_run.return_value = Mock(returncode=0)
         mock_run_remote.return_value = 0
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/binary"
-        env = self._make_env(upload_run_after="yes")
+        env = make_env(upload_run_after="yes")
 
         result = platform._upload_ssh(Mock(), [source_mock], env)
         assert result == 0
@@ -1444,35 +1373,14 @@ class TestUploadSsh:
 class TestRunRemoteCommand:
     """Test cases for _run_remote_command method."""
 
-    def _make_platform(self, mock_platform_manifest):
-        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
-            "platform_module.get_platform_config", return_value=Mock()
-        ):
-            from platform_module import Linux_armPlatform
-
-            return Linux_armPlatform(mock_platform_manifest)
-
-    def _make_env(self, **overrides):
-        defaults = {
-            "upload_strict_host_check": None,
-            "upload_run_command": None,
-            "upload_run_timeout": None,
-        }
-        defaults.update(overrides)
-        env = Mock()
-        env.GetProjectOption = Mock(
-            side_effect=lambda key, default=None: defaults.get(key, default)
-        )
-        return env
-
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
     def test_successful_run_returns_zero(
-        self, mock_print, mock_run, mock_platform_manifest
+        self, mock_print, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
-        env = self._make_env()
+        platform = make_platform()
+        env = make_env()
 
         result = platform._run_remote_command(
             "pi", "host", "22", None, "/home/pi/app", env
@@ -1482,11 +1390,11 @@ class TestRunRemoteCommand:
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
     def test_nonzero_exit_code_returned(
-        self, mock_print, mock_run, mock_platform_manifest
+        self, mock_print, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=42)
-        platform = self._make_platform(mock_platform_manifest)
-        env = self._make_env()
+        platform = make_platform()
+        env = make_env()
 
         result = platform._run_remote_command(
             "pi", "host", "22", None, "/home/pi/app", env
@@ -1496,13 +1404,13 @@ class TestRunRemoteCommand:
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
     def test_timeout_raises_exception(
-        self, mock_print, mock_run, mock_platform_manifest
+        self, mock_print, mock_run, make_platform, make_env
     ):
         import subprocess
 
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="ssh", timeout=300)
-        platform = self._make_platform(mock_platform_manifest)
-        env = self._make_env()
+        platform = make_platform()
+        env = make_env()
 
         with pytest.raises(exception.PlatformioException, match="timeout"):
             platform._run_remote_command("pi", "host", "22", None, "/home/pi/app", env)
@@ -1510,11 +1418,11 @@ class TestRunRemoteCommand:
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
     def test_custom_run_command_used(
-        self, mock_print, mock_run, mock_platform_manifest
+        self, mock_print, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
-        env = self._make_env(upload_run_command="sudo /opt/myapp --daemon")
+        platform = make_platform()
+        env = make_env(upload_run_command="sudo /opt/myapp --daemon")
 
         platform._run_remote_command("pi", "host", "22", None, "/home/pi/app", env)
 
@@ -1525,11 +1433,11 @@ class TestRunRemoteCommand:
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
     def test_directory_path_appends_program_name(
-        self, mock_print, mock_run, mock_platform_manifest
+        self, mock_print, mock_run, make_platform, make_env
     ):
         mock_run.return_value = Mock(returncode=0)
-        platform = self._make_platform(mock_platform_manifest)
-        env = self._make_env()
+        platform = make_platform()
+        env = make_env()
 
         source_mock = Mock()
         source_mock.__str__ = lambda self: "/local/build/myapp"
@@ -1547,16 +1455,8 @@ class TestRunRemoteCommand:
 class TestParseDebugConnectionInfo:
     """Test _parse_debug_connection_info extracts connection details correctly."""
 
-    def _make_platform(self, mock_platform_manifest):
-        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
-            "platform_module.get_platform_config", return_value=Mock()
-        ):
-            from platform_module import Linux_armPlatform
-
-            return Linux_armPlatform(mock_platform_manifest)
-
-    def test_parses_full_upload_port(self, mock_platform_manifest):
-        platform = self._make_platform(mock_platform_manifest)
+    def test_parses_full_upload_port(self, make_platform):
+        platform = make_platform()
 
         debug_config = Mock()
         debug_config.env_options = {
@@ -1572,10 +1472,10 @@ class TestParseDebugConnectionInfo:
         assert host == "myhost.local"
         assert prog_path == "/opt/myapp"
 
-    def test_defaults_when_minimal_config(self, mock_platform_manifest):
+    def test_defaults_when_minimal_config(self, make_platform):
         from platform_constants import SSHDefaults
 
-        platform = self._make_platform(mock_platform_manifest)
+        platform = make_platform()
 
         debug_config = Mock()
         debug_config.env_options = {}
@@ -1590,8 +1490,8 @@ class TestParseDebugConnectionInfo:
         assert ssh_port == SSHDefaults.PORT
         assert ssh_key is None
 
-    def test_directory_path_appends_program_name(self, mock_platform_manifest):
-        platform = self._make_platform(mock_platform_manifest)
+    def test_directory_path_appends_program_name(self, make_platform):
+        platform = make_platform()
 
         debug_config = Mock()
         debug_config.env_options = {
@@ -1605,8 +1505,8 @@ class TestParseDebugConnectionInfo:
 
         assert prog_path == "/home/pi/bin/myapp"
 
-    def test_custom_ssh_port_and_key(self, mock_platform_manifest):
-        platform = self._make_platform(mock_platform_manifest)
+    def test_custom_ssh_port_and_key(self, make_platform):
+        platform = make_platform()
 
         debug_config = Mock()
         debug_config.env_options = {
@@ -1623,8 +1523,8 @@ class TestParseDebugConnectionInfo:
         assert ssh_port == "2222"
         assert ssh_key == "/home/user/.ssh/custom_key"
 
-    def test_upload_port_takes_precedence_over_debug_port(self, mock_platform_manifest):
-        platform = self._make_platform(mock_platform_manifest)
+    def test_upload_port_takes_precedence_over_debug_port(self, make_platform):
+        platform = make_platform()
 
         debug_config = Mock()
         debug_config.env_options = {
