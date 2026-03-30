@@ -205,6 +205,9 @@ Frameworks
     * - :ref:`framework_pigpio`
       - pigpio is a feature-rich C library for Raspberry Pi GPIO control with microsecond timing, PWM, and servo support (Pi 1-4, not Pi 5 compatible)
 
+    * - :ref:`framework_libgpiod`
+      - libgpiod is the official Linux kernel GPIO library using the character device interface (/dev/gpiochip*). Works across all Linux ARM SBCs with kernel-enforced GPIO exclusivity
+
     * - :ref:`framework_wiringpi`
       - WiringPi is a GPIO access library written in C for the BCM2835+ used in the Raspberry Pi. Now maintained by GC2 (Grazer Computer Club) with Raspberry Pi 5 support (GCLK function not supported on Pi 5)
 
@@ -216,10 +219,12 @@ Framework Comparison
 
     * - Feature
       - lgpio
+      - libgpiod
       - pigpio
       - WiringPi
       - Bare-metal
     * - **Pi 5 Support**
+      - Yes
       - Yes
       - No
       - Limited (no GCLK)
@@ -229,7 +234,9 @@ Framework Comparison
       - Yes
       - Yes
       - Yes
+      - Yes
     * - **Cross-compilation**
+      - Yes
       - Yes
       - Yes
       - No
@@ -238,24 +245,29 @@ Framework Comparison
       - Full
       - Full
       - Full
+      - Full
       - Manual
     * - **PWM**
       - Basic
+      - No
       - Advanced
       - Basic
       - Manual
     * - **I2C/SPI/Serial**
       - Yes
+      - No
       - Yes
       - Yes
       - Manual
     * - **Precise Timing**
+      - Standard
       - Standard
       - Microsecond
       - Standard
       - Standard
     * - **Maintenance Status**
       - Active
+      - Active (kernel)
       - Active
       - Maintenance Mode
       - N/A
@@ -264,6 +276,7 @@ Framework Comparison
 
 * **For new projects:** Use **lgpio** - modern, actively maintained, works on all Raspberry Pi models including Pi 5
 * **For Raspberry Pi 5:** Use **lgpio** only - the only framework fully compatible with Pi 5's RP1 I/O controller
+* **For cross-SBC portability:** Use **libgpiod** - the official kernel GPIO interface, works on any Linux ARM board (Raspberry Pi, Orange Pi, Rock Pi, etc.)
 * **For precise timing and advanced PWM (Pi 1-4):** Use **pigpio** for microsecond timing accuracy, complex PWM patterns, and servo control
 * **For legacy compatibility (Pi 1-4):** Use **WiringPi** only if maintaining existing projects (cross-compilation not supported)
 * **For maximum portability:** Use **bare-metal** - direct system calls work on all boards
@@ -323,6 +336,65 @@ lgpio is Joan's modern successor to pigpio, using the ``/dev/gpiochip`` kernel i
         }
 
         lgGpiochipClose(h);
+        return 0;
+    }
+
+libgpiod Framework
+^^^^^^^^^^^^^^^^^^
+
+**Status:** Active (Linux kernel project) | **Pi 5:** Compatible | **Cross-SBC:** Yes
+
+libgpiod is the official Linux kernel GPIO character device library. Unlike lgpio and pigpio which are Raspberry Pi-specific, libgpiod works on any Linux ARM board with a modern kernel (4.8+) that exposes ``/dev/gpiochip*`` devices.
+
+**Key Features:**
+
+* GPIO read/write via kernel character device interface
+* Line events (edge detection) with timestamps
+* Bulk GPIO operations (read/write multiple lines atomically)
+* Kernel-enforced GPIO exclusivity (prevents conflicts)
+* Works on any Linux ARM SBC (Raspberry Pi, Orange Pi, Rock Pi, etc.)
+
+**Advantages:**
+
+* Vendor-neutral — works on any board with kernel GPIO support
+* Official kernel interface, future-proof
+* Clean C API with line request model
+* Cross-compilation supported
+
+**Limitations:**
+
+* No built-in PWM, I2C, SPI, or serial wrappers (GPIO only)
+* Slightly more verbose API than lgpio/pigpio
+
+**Basic Usage:**
+
+.. code-block:: c
+
+    #include <stdio.h>
+    #include <gpiod.h>
+    #include <unistd.h>
+
+    #define GPIO_PIN 23
+
+    int main() {
+        struct gpiod_chip *chip = gpiod_chip_open("/dev/gpiochip0");
+        if (!chip) {
+            printf("Failed to open gpiochip0\n");
+            return 1;
+        }
+
+        struct gpiod_line *line = gpiod_chip_get_line(chip, GPIO_PIN);
+        gpiod_line_request_output(line, "blink", 0);
+
+        // Blink LED
+        for (int i = 0; i < 10; i++) {
+            gpiod_line_set_value(line, 1);  // HIGH
+            sleep(1);
+            gpiod_line_set_value(line, 0);  // LOW
+            sleep(1);
+        }
+
+        gpiod_chip_close(chip);
         return 0;
     }
 
@@ -533,7 +605,7 @@ For Pi 5 migration, pigpio code needs to be converted to lgpio:
 System Dependencies
 ~~~~~~~~~~~~~~~~~~~
 
-Each framework requires system libraries on the target Raspberry Pi:
+Each framework requires system libraries on the target board:
 
 **lgpio:**
 
@@ -541,6 +613,13 @@ Each framework requires system libraries on the target Raspberry Pi:
 
     sudo apt update
     sudo apt install liblgpio-dev liblgpio1
+
+**libgpiod:**
+
+.. code-block:: bash
+
+    sudo apt update
+    sudo apt install libgpiod-dev libgpiod2 gpiod
 
 **pigpio:**
 
@@ -586,49 +665,66 @@ Raspberry Pi
       - BCM2835
       - 700MHz
       - 512MB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_2b`
       - BCM2836
       - 900MHz
       - 1GB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_3b`
       - BCM2837
       - 1200MHz
       - 1GB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_4b`
       - BCM2711
       - 1500MHz
       - 1-8GB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_400`
       - BCM2711
       - 1800MHz
       - 4GB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_5`
       - BCM2712
       - 2400MHz
       - 4-16GB
-      - lgpio, wiringpi (limited)
+      - lgpio, libgpiod, wiringpi (limited)
     * - :ref:`board_linux_arm_raspberrypi_cm4`
       - BCM2711
       - 1500MHz
       - 1-8GB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_zero`
       - BCM2835
       - 1000MHz
       - 512MB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
     * - :ref:`board_linux_arm_raspberrypi_zero2w`
       - BCM2837
       - 1000MHz
       - 512MB
-      - lgpio, pigpio, wiringpi
+      - lgpio, libgpiod, pigpio, wiringpi
 
 .. note::
     * **Raspberry Pi 5:** pigpio is NOT compatible. WiringPi has limited support (GCLK function not available). Use lgpio for full Pi 5 compatibility.
     * **64-bit support:** Pi 3B, 4B, 400, 5, CM4, and Zero 2W support both 32-bit (ARMv7) and 64-bit (AArch64) builds.
     * **Architecture:** Set ``board_build.arch = aarch64`` in platformio.ini for 64-bit builds. Default is 32-bit (armv7).
+
+Orange Pi
+~~~~~~~~~
+
+.. list-table::
+    :header-rows:  1
+
+    * - Name
+      - MCU
+      - Frequency
+      - RAM
+      - Frameworks
+    * - :ref:`board_linux_arm_orangepi_zero`
+      - Allwinner H2+
+      - 1200MHz
+      - 512MB
+      - lgpio, libgpiod, pigpio, wiringpi
