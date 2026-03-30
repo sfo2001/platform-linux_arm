@@ -105,3 +105,34 @@ class TestGDBExecutableWindows:
 
     def test_multiarch_gdb_unchanged(self):
         assert platform_constants.GDBExecutable.MULTIARCH == "gdb-multiarch"
+
+
+class TestStaticConstants:
+    """Test platform-critical constant values that must not drift."""
+
+    def test_ssh_defaults_port(self):
+        assert platform_constants.SSHDefaults.PORT == 22
+
+    def test_ssh_defaults_user(self):
+        assert platform_constants.SSHDefaults.USER == "pi"
+
+    def test_exit_code_marker(self):
+        assert platform_constants.TestConstants.EXIT_CODE_MARKER == "__EXIT_CODE__:"
+
+    def test_debug_tools_default(self):
+        assert platform_constants.DebugTools.DEFAULT == "gdbserver-ssh"
+
+    def test_debug_tools_gdb_remote(self):
+        assert platform_constants.DebugTools.GDB_REMOTE == "gdb-remote"
+
+    def test_upload_protocol_all_contains_four(self):
+        assert len(platform_constants.UploadProtocol.ALL) == 4
+        assert "scp" in platform_constants.UploadProtocol.ALL
+        assert "rsync" in platform_constants.UploadProtocol.ALL
+        assert "ssh" in platform_constants.UploadProtocol.ALL
+        assert "manual" in platform_constants.UploadProtocol.ALL
+
+    def test_timeouts_are_positive_ints(self):
+        for attr in ["UPLOAD", "UPLOAD_RUN", "TEST_UPLOAD", "TEST_EXECUTION", "CHMOD"]:
+            value = getattr(platform_constants.Timeouts, attr)
+            assert isinstance(value, int) and value > 0, f"Timeouts.{attr} = {value}"

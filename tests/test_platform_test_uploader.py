@@ -503,7 +503,7 @@ class TestBuildTestCommand:
         uploader = self._make_uploader(mock_config, remote_path="/tmp/prog")
 
         cmd = uploader._build_test_command()
-        assert cmd.startswith("/tmp/prog;")
+        assert cmd == '/tmp/prog; echo "__EXIT_CODE__:$?"'
 
 
 if __name__ == "__main__":
