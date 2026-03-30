@@ -1,0 +1,38 @@
+{
+  "build": {
+    "arch": "aarch64",
+    "extra_flags": "-DRADXA -DRADXA_ROCK3A",
+    "f_cpu": "2000000000L",
+    "mcu": "rk3568"
+  },
+  "debug": {
+    "default_tool": "gdbserver-ssh",
+    "tools": {
+      "gdb-remote": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      },
+      "gdbserver-ssh": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      }
+    }
+  },
+  "frameworks": [
+    "lgpio",
+    "libgpiod"
+  ],
+  "name": "Radxa ROCK 3A",
+  "upload": {
+    "maximum_ram_size": 8589934592,
+    "maximum_size": 8589934592
+  },
+  "url": "https://radxa.com/products/rock3/3a/",
+  "vendor": "Radxa"
+}

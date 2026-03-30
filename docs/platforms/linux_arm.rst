@@ -728,3 +728,54 @@ Orange Pi
       - 1200MHz
       - 512MB
       - lgpio, libgpiod, pigpio, wiringpi
+
+BeagleBone
+~~~~~~~~~~
+
+.. list-table::
+    :header-rows:  1
+
+    * - Name
+      - MCU
+      - Frequency
+      - RAM
+      - Frameworks
+    * - :ref:`board_linux_arm_beaglebone_black`
+      - AM3358
+      - 1000MHz
+      - 512MB
+      - lgpio, libgpiod
+
+Khadas
+~~~~~~
+
+.. list-table::
+    :header-rows:  1
+
+    * - Name
+      - MCU
+      - Frequency
+      - RAM
+      - Frameworks
+    * - :ref:`board_linux_arm_khadas_vim3`
+      - Amlogic A311D
+      - 2200MHz
+      - 2-4GB
+      - lgpio, libgpiod
+
+Radxa
+~~~~~
+
+.. list-table::
+    :header-rows:  1
+
+    * - Name
+      - MCU
+      - Frequency
+      - RAM
+      - Frameworks
+    * - :ref:`board_linux_arm_radxa_rock3a`
+      - RK3568
+      - 2000MHz
+      - 2-8GB
+      - lgpio, libgpiod

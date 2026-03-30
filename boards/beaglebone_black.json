@@ -1,0 +1,38 @@
+{
+  "build": {
+    "arch": "armv7",
+    "extra_flags": "-DBEAGLEBONE -DBEAGLEBONE_BLACK",
+    "f_cpu": "1000000000L",
+    "mcu": "am3358"
+  },
+  "debug": {
+    "default_tool": "gdbserver-ssh",
+    "tools": {
+      "gdb-remote": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      },
+      "gdbserver-ssh": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      }
+    }
+  },
+  "frameworks": [
+    "lgpio",
+    "libgpiod"
+  ],
+  "name": "BeagleBone Black",
+  "upload": {
+    "maximum_ram_size": 536870912,
+    "maximum_size": 4294967296
+  },
+  "url": "https://www.beagleboard.org/boards/beaglebone-black",
+  "vendor": "BeagleBoard.org"
+}

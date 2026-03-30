@@ -1,0 +1,38 @@
+{
+  "build": {
+    "arch": "aarch64",
+    "extra_flags": "-DKHADAS -DKHADAS_VIM3",
+    "f_cpu": "2200000000L",
+    "mcu": "amlogic_a311d"
+  },
+  "debug": {
+    "default_tool": "gdbserver-ssh",
+    "tools": {
+      "gdb-remote": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      },
+      "gdbserver-ssh": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      }
+    }
+  },
+  "frameworks": [
+    "lgpio",
+    "libgpiod"
+  ],
+  "name": "Khadas VIM3",
+  "upload": {
+    "maximum_ram_size": 4294967296,
+    "maximum_size": 4294967296
+  },
+  "url": "https://www.khadas.com/vim3",
+  "vendor": "Khadas"
+}
