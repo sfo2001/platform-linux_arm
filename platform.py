@@ -205,7 +205,9 @@ class Linux_armPlatform(PlatformBase):
             )
         except (OSError, ValueError):
             homepage = "https://github.com/platformio/platform-linux_arm"
-        vscode_doc_url = f"{homepage.rstrip('/')}/blob/develop/docs/VSCODE.md"
+        _version = _manifest.get("version", "develop")
+        _ref = f"v{_version}" if _version != "develop" else "develop"
+        vscode_doc_url = f"{homepage.rstrip('/')}/blob/{_ref}/docs/VSCODE.md"
 
         # Show welcome message
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
