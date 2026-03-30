@@ -1645,28 +1645,241 @@ class TestShowWelcomeIfNeeded:
         assert any("Welcome" in c for c in print_calls)
 
 
-class TestPosixPathUsage:
-    """Verify remote paths always use forward slashes (posixpath, not os.path)."""
+class TestGetBoards:
+    """Test get_boards method adds debug configuration to boards."""
 
-    def test_posixpath_join_produces_forward_slashes(self):
-        import posixpath
+    def test_all_boards_returns_dict_with_debug(self, make_platform):
+        """get_boards(id_=None) adds debug to every board in the dict."""
+        platform = make_platform()
 
-        result = posixpath.join("/home/pi/", "program")
-        assert "\\" not in result
-        assert result == "/home/pi/program"
+        board_a = Mock()
+        board_a.manifest = {"build": {"arch": "armv7"}}
+        board_b = Mock()
+        board_b.manifest = {"build": {"arch": "aarch64"}}
 
-    def test_posixpath_join_without_trailing_slash(self):
-        import posixpath
+        with patch(
+            "platform_module.PlatformBase.get_boards",
+            return_value={"a": board_a, "b": board_b},
+        ):
+            result = platform.get_boards()
 
-        result = posixpath.join("/home/pi", "program")
-        assert result == "/home/pi/program"
+        assert isinstance(result, dict)
+        assert "a" in result
+        assert "b" in result
+        assert "debug" in result["a"].manifest
+        assert "debug" in result["b"].manifest
 
-    def test_posixpath_join_with_rstrip(self):
-        """Mirrors usage in _parse_debug_connection_info: posixpath.join(path.rstrip('/'), name)."""
-        import posixpath
+    def test_single_board_returns_board_with_debug(self, make_platform):
+        """get_boards(id_='board') returns a single board with debug added."""
+        platform = make_platform()
 
-        result = posixpath.join("/home/pi/".rstrip("/"), "program")
-        assert result == "/home/pi/program"
+        board = Mock()
+        board.manifest = {"build": {"arch": "armv7"}}
+
+        with patch(
+            "platform_module.PlatformBase.get_boards",
+            return_value=board,
+        ):
+            result = platform.get_boards(id_="raspberrypi_4b")
+
+        assert "debug" in result.manifest
+        assert "gdbserver-ssh" in result.manifest["debug"]["tools"]
+
+    def test_empty_result_passes_through(self, make_platform):
+        """get_boards returns falsy result unchanged."""
+        platform = make_platform()
+
+        with patch(
+            "platform_module.PlatformBase.get_boards",
+            return_value=None,
+        ):
+            result = platform.get_boards()
+
+        assert result is None
+
+
+class TestOnTestUpload:
+    """Test on_test_upload method dispatches test transports correctly."""
+
+    def test_ssh_transport_delegates_to_remote_uploader(self, make_platform):
+        """SSH transport delegates to RemoteTestUploader.run()."""
+        platform = make_platform()
+
+        env = Mock()
+        env.GetProjectOption = Mock(return_value="ssh")
+        target = Mock()
+        source = [Mock()]
+
+        mock_uploader = Mock()
+        mock_uploader.run.return_value = 0
+
+        with patch(
+            "platform_test_uploader.RemoteTestUploader", return_value=mock_uploader
+        ):
+            result = platform.on_test_upload(target, source, env)
+
+        assert result == 0
+        mock_uploader.run.assert_called_once()
+
+    def test_manual_transport_prints_instructions_returns_zero(self, make_platform):
+        """Manual transport prints instructions and returns 0."""
+        platform = make_platform()
+
+        env = Mock()
+        env.GetProjectOption = Mock(return_value="manual")
+        target = Mock()
+        source = [Mock(spec=str)]
+
+        result = platform.on_test_upload(target, source, env)
+
+        assert result == 0
+
+    def test_unknown_transport_raises(self, make_platform):
+        """Unknown transport raises PlatformioException."""
+        platform = make_platform()
+
+        env = Mock()
+        env.GetProjectOption = Mock(return_value="invalid_transport")
+        target = Mock()
+        source = [Mock()]
+
+        with pytest.raises(
+            exception.PlatformioException, match="Unknown test_transport"
+        ):
+            platform.on_test_upload(target, source, env)
+
+
+class TestConfigureGdbserverSshDirect:
+    """Test _configure_gdbserver_ssh method directly."""
+
+    def test_host_none_raises(self, make_platform):
+        """Missing host raises PlatformioException."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {}
+
+        with pytest.raises(
+            exception.PlatformioException, match="debug_port or upload_port"
+        ):
+            platform._configure_gdbserver_ssh(
+                debug_config,
+                user="pi",
+                host=None,
+                ssh_port="22",
+                ssh_key=None,
+                prog_path="/tmp/app",
+            )
+
+    def test_valid_config_sets_pipe_port(self, make_platform):
+        """Valid config sets debug_config.port to SSH pipe command."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {}
+
+        platform._configure_gdbserver_ssh(
+            debug_config,
+            user="pi",
+            host="myhost",
+            ssh_port="22",
+            ssh_key=None,
+            prog_path="/tmp/app",
+        )
+
+        assert debug_config.port.startswith("| ")
+        assert "ssh" in debug_config.port
+        assert "myhost" in debug_config.port
+        assert debug_config.env_options["debug_port"] == debug_config.port
+
+    def test_strict_host_check_omits_disable_options(self, make_platform):
+        """strict_host_check=True omits StrictHostKeyChecking=no (SSH defaults to strict)."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {}
+
+        platform._configure_gdbserver_ssh(
+            debug_config,
+            user="pi",
+            host="myhost",
+            ssh_port="22",
+            ssh_key=None,
+            prog_path="/tmp/app",
+            strict_host_check=True,
+        )
+
+        assert "StrictHostKeyChecking" not in debug_config.port
+
+    def test_no_strict_host_check_disables_verification(self, make_platform):
+        """strict_host_check=False (default) adds StrictHostKeyChecking=no."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {}
+
+        platform._configure_gdbserver_ssh(
+            debug_config,
+            user="pi",
+            host="myhost",
+            ssh_port="22",
+            ssh_key=None,
+            prog_path="/tmp/app",
+        )
+
+        assert "StrictHostKeyChecking" in debug_config.port
+
+
+class TestRemotePathConstruction:
+    """Verify remote paths use forward slashes via posixpath in actual platform methods."""
+
+    def test_directory_path_with_trailing_slash_appends_binary_name(
+        self, make_platform
+    ):
+        """_parse_debug_connection_info appends program name to directory paths."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {
+            "upload_port": "pi@host:/home/pi/bin/",
+        }
+        debug_config.build_data = {"prog_path": "/local/build/myapp"}
+
+        _, _, prog_path, _, _ = platform._parse_debug_connection_info(debug_config)
+
+        assert prog_path == "/home/pi/bin/myapp"
+        assert "\\" not in prog_path
+
+    def test_path_without_trailing_slash_used_as_is(self, make_platform):
+        """_parse_debug_connection_info uses non-directory path directly."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {
+            "upload_port": "pi@host:/home/pi/myapp",
+        }
+        debug_config.build_data = {}
+
+        _, _, prog_path, _, _ = platform._parse_debug_connection_info(debug_config)
+
+        assert prog_path == "/home/pi/myapp"
+
+    def test_directory_path_with_no_build_data_keeps_trailing_slash(
+        self, make_platform
+    ):
+        """Directory path without build metadata stays as-is (no program name to append)."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {
+            "upload_port": "pi@host:/home/pi/bin/",
+        }
+        debug_config.build_data = {"prog_path": ""}
+
+        _, _, prog_path, _, _ = platform._parse_debug_connection_info(debug_config)
+
+        # No program name available, path stays with trailing slash
+        assert prog_path == "/home/pi/bin/"
 
 
 if __name__ == "__main__":
