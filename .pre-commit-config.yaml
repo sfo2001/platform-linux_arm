@@ -38,7 +38,7 @@ repos:
       - id: black
         language_version: python3
         args: ['--line-length=100']
-        files: ^(builder/|platform\.py)
+        files: \.py$
 
   # Python code linting
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -46,7 +46,7 @@ repos:
     hooks:
       - id: ruff
         args: ['--fix', '--exit-non-zero-on-fix']
-        files: ^(builder/|platform\.py)
+        files: \.py$
 
   # Python import sorting
   - repo: https://github.com/pycqa/isort
@@ -54,7 +54,7 @@ repos:
     hooks:
       - id: isort
         args: ['--profile=black', '--line-length=100']
-        files: ^(builder/|platform\.py)
+        files: \.py$
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
