@@ -305,7 +305,7 @@ class Linux_armPlatform(PlatformBase):
             "pioframework", []
         ):
             raise exception.PlatformioException(
-                "PlatformIO temporary does not support cross-compilation "
+                "PlatformIO temporarily does not support cross-compilation "
                 "for WiringPi framework. Please use PIO Core directly on "
                 "Raspberry Pi"
             )
@@ -553,7 +553,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Build SCP command using shared builder
         builder = SSHCommandBuilder(config)
-        extra_flags = upload_flags.split() if upload_flags else None
+        extra_flags = shlex.split(upload_flags) if upload_flags else None
         cmd = builder.build_scp_command(str(source[0]), path, extra_flags=extra_flags)
 
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH

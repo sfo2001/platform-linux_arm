@@ -203,7 +203,7 @@ class SSHCommandBuilder:
         # Flags
         flags = flags if flags is not None else RsyncDefaults.FLAGS
         if flags:
-            cmd.extend(flags.split())
+            cmd.extend(shlex.split(flags))
 
         # SSH options
         ssh_opts = ["-p", str(self.config.port)]
