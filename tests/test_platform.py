@@ -1542,6 +1542,108 @@ class TestParseDebugConnectionInfo:
         assert prog_path == "/app"
 
 
+    def test_fallback_at_sign_parsing(self, make_platform):
+        """Test fallback parsing when parse_upload_port raises ValueError."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {
+            "upload_port": "pi@somehost",
+        }
+        debug_config.build_data = {}
+
+        with patch("ssh_utils.parse_upload_port", side_effect=ValueError("bad")):
+            user, host, prog_path, ssh_port, ssh_key = (
+                platform._parse_debug_connection_info(debug_config)
+            )
+
+        assert user == "pi"
+        assert host == "somehost"
+
+    def test_fallback_host_only_no_at(self, make_platform):
+        """Test fallback parsing for host-only format without @ sign."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {
+            "upload_port": "myhost:3333",
+        }
+        debug_config.build_data = {}
+
+        with patch("ssh_utils.parse_upload_port", side_effect=ValueError("bad")):
+            user, host, prog_path, ssh_port, ssh_key = (
+                platform._parse_debug_connection_info(debug_config)
+            )
+
+        assert host == "myhost"
+
+    def test_debug_port_used_when_no_upload_port(self, make_platform):
+        """Test debug_port is used when upload_port is not set."""
+        platform = make_platform()
+
+        debug_config = Mock()
+        debug_config.env_options = {
+            "debug_port": "pi@debug-host:/debug-app",
+        }
+        debug_config.build_data = {}
+
+        user, host, prog_path, ssh_port, ssh_key = (
+            platform._parse_debug_connection_info(debug_config)
+        )
+
+        assert host == "debug-host"
+        assert prog_path == "/debug-app"
+
+
+class TestShowWelcomeIfNeeded:
+    """Test _show_welcome_if_needed first-run welcome message."""
+
+    def _make_platform_raw(self, mock_platform_manifest):
+        """Create platform WITHOUT patching _show_welcome_if_needed."""
+        with patch("platform_module.PlatformBase.__init__", return_value=None), \
+             patch("platform_module.get_platform_config", return_value=Mock()):
+            from platform_module import Linux_armPlatform
+            return Linux_armPlatform(mock_platform_manifest)
+
+    @patch("builtins.print")
+    @patch("os.path.exists", return_value=False)
+    @patch("pathlib.Path.touch")
+    def test_first_run_shows_message(
+        self, mock_touch, mock_exists, mock_print, mock_platform_manifest
+    ):
+        platform = self._make_platform_raw(mock_platform_manifest)
+        platform._show_welcome_if_needed()
+
+        # Should have printed the welcome banner
+        print_calls = [str(c) for c in mock_print.call_args_list]
+        assert any("Welcome" in c for c in print_calls)
+        assert mock_touch.called
+
+    @patch("builtins.print")
+    @patch("os.path.exists", return_value=True)
+    def test_second_run_skips_message(
+        self, mock_exists, mock_print, mock_platform_manifest
+    ):
+        platform = self._make_platform_raw(mock_platform_manifest)
+        platform._show_welcome_if_needed()
+
+        # Should NOT print anything when marker exists
+        mock_print.assert_not_called()
+
+    @patch("builtins.print")
+    @patch("os.path.exists", return_value=False)
+    @patch("pathlib.Path.touch", side_effect=OSError("permission denied"))
+    def test_marker_write_failure_still_shows_message(
+        self, mock_touch, mock_exists, mock_print, mock_platform_manifest
+    ):
+        platform = self._make_platform_raw(mock_platform_manifest)
+        platform._show_welcome_if_needed()
+
+        # Should still show message even if marker file can't be written
+        print_calls = [str(c) for c in mock_print.call_args_list]
+        assert any("Welcome" in c for c in print_calls)
+
+
 class TestPosixPathUsage:
     """Verify remote paths always use forward slashes (posixpath, not os.path)."""
 
