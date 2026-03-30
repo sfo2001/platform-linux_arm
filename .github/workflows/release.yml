@@ -79,7 +79,7 @@ jobs:
             COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
           else
             echo "Generating changelog from $PREVIOUS_TAG to ${{ steps.version.outputs.tag }}"
-            COMMITS=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --reverse)
+            COMMITS=$(git log "$PREVIOUS_TAG"..HEAD --pretty=format:"- %s (%h)" --reverse)
           fi
 
           # Create changelog file
@@ -147,13 +147,18 @@ jobs:
           **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...${{ steps.version.outputs.tag }}
           EOF
 
-          # Substitute $COMMITS placeholder using Python to safely handle
+          # Substitute placeholders using Python to safely handle
           # shell metacharacters (/, &, \n) that would break sed substitution
+          export COMMITS
+          export PREVIOUS_TAG
           python3 -c "
 import os
 content = open('RELEASE_CHANGELOG.md').read()
 commits = os.environ.get('COMMITS', '')
-open('RELEASE_CHANGELOG.md', 'w').write(content.replace('\$COMMITS', commits))
+prev_tag = os.environ.get('PREVIOUS_TAG', '')
+content = content.replace('\$COMMITS', commits)
+content = content.replace('\$PREVIOUS_TAG', prev_tag)
+open('RELEASE_CHANGELOG.md', 'w').write(content)
 "
 
       - name: Install PlatformIO Core
