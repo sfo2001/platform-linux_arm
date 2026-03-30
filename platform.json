@@ -155,7 +155,7 @@
           "arguments": []
         },
         "init_cmds": [
-          "target extended-remote | ssh -T $DEBUG_PORT gdbserver - $PROG_PATH",
+          "target extended-remote $DEBUG_PORT",
           "set remote exec-file $PROG_PATH",
           "set sysroot /",
           "file $PROG_PATH"

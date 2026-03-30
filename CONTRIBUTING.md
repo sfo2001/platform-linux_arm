@@ -453,13 +453,14 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 - `config`: Platform configuration file support
 - `debug`: GDB/SSH remote debugging
 - `docs`: Documentation
-- `frameworks`: Framework support (lgpio, pigpio, wiringpi)
+- `frameworks`: Framework support (lgpio, libgpiod, pigpio, wiringpi)
 - `lgpio`: lgpio-specific changes
 - `monitor`: SSH serial monitor
 - `onboarding`: First-run welcome and setup
 - `pigpio`: pigpio-specific changes
 - `platform`: Platform core changes
 - `scripts`: Build and setup scripts
+- `security`: Security policy and hardening (host key verification, injection prevention)
 - `test`: Remote test execution
 - `toolchain`: Cross-compilation toolchain selection
 - `upload`: Remote deploy (scp/rsync/ssh)
