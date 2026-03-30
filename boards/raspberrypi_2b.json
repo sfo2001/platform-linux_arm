@@ -24,10 +24,10 @@
     }
   },
   "frameworks": [
-    "wiringpi",
     "lgpio",
     "libgpiod",
-    "pigpio"
+    "pigpio",
+    "wiringpi"
   ],
   "name": "Raspberry Pi 2 Model B",
   "upload": {

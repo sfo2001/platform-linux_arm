@@ -25,10 +25,10 @@
     }
   },
   "frameworks": [
-    "wiringpi",
     "lgpio",
     "libgpiod",
-    "pigpio"
+    "pigpio",
+    "wiringpi"
   ],
   "name": "Orange Pi Zero",
   "upload": {

@@ -24,10 +24,10 @@
     }
   },
   "frameworks": [
-    "wiringpi",
     "lgpio",
     "libgpiod",
-    "pigpio"
+    "pigpio",
+    "wiringpi"
   ],
   "name": "Raspberry Pi Zero 2 W",
   "upload": {
