@@ -79,6 +79,8 @@ env.Replace(
     RANLIB="${_BINPREFIX}ranlib",
     SIZETOOL="${_BINPREFIX}size",
     SIZEPRINTCMD="$SIZETOOL $SOURCES",
+    # Linux executables have no extension (override Windows default of .exe)
+    PROGSUFFIX="",
 )
 
 # Detect if we're cross-compiling (not native ARM Linux)
@@ -86,30 +88,36 @@ systype = get_systype()
 is_native = SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systype
 
 if not is_native:
-    from utils import get_target_arch
+    from utils import get_target_arch, get_toolchain_prefix
 
     target_arch = get_target_arch(env)
 
     # Pi 4/5 with 64-bit OS use aarch64 architecture
     if target_arch == Architecture.AARCH64:
-        env.Replace(_BINPREFIX=ToolchainPrefix.AARCH64)
+        prefix = get_toolchain_prefix(Architecture.AARCH64)
+        env.Replace(_BINPREFIX=prefix)
         print("Cross-compiling for ARM Linux (AArch64/ARMv8 64-bit)")
-        print(f"Using toolchain prefix: {ToolchainPrefix.AARCH64}")
+        print(f"Using toolchain prefix: {prefix}")
         print("Ensure toolchain is installed:")
         print("  Linux:   sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu")
         print("  macOS:   brew tap messense/macos-cross-toolchains")
         print("           brew install aarch64-unknown-linux-gnu")
+        print("  Windows: Download from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads")
+        print("           (aarch64-none-linux-gnu variant)")
     else:
         # Default: 32-bit ARMv7 (backward compatible)
-        env.Replace(_BINPREFIX=ToolchainPrefix.ARMV7)
+        prefix = get_toolchain_prefix(Architecture.ARMV7)
+        env.Replace(_BINPREFIX=prefix)
         print("Cross-compiling for ARM Linux (ARMv7 32-bit)")
-        print(f"Using toolchain prefix: {ToolchainPrefix.ARMV7}")
+        print(f"Using toolchain prefix: {prefix}")
         print("Ensure toolchain is installed:")
         print(
             "  Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf"
         )
         print("  macOS:   brew tap messense/macos-cross-toolchains")
         print("           brew install arm-unknown-linux-gnueabihf")
+        print("  Windows: Download from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads")
+        print("           (arm-none-linux-gnueabihf variant)")
 
 #
 # Target: Build executable program

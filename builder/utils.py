@@ -14,6 +14,45 @@
 
 """Shared utilities for PlatformIO builder scripts."""
 
+import shutil
+
+from platform_constants import Architecture, ToolchainPrefix
+
+
+def get_toolchain_prefix(arch):
+    """Find an available toolchain prefix for the target architecture.
+
+    Probes PATH for known toolchain prefixes, preferring the platform default
+    but falling back to alternatives (e.g. ARM official SDK on a system that
+    only has the apt-packaged toolchain, or vice versa).
+
+    Args:
+        arch: Target architecture (Architecture.AARCH64 or Architecture.ARMV7).
+
+    Returns:
+        str: The first toolchain prefix whose gcc is found in PATH,
+             or the platform default if none found.
+    """
+    if arch == Architecture.AARCH64:
+        candidates = [
+            ToolchainPrefix.AARCH64,
+            # Opposite vendor convention as fallback
+            "aarch64-linux-gnu-" if ToolchainPrefix.AARCH64.startswith("aarch64-none")
+            else "aarch64-none-linux-gnu-",
+        ]
+    else:
+        candidates = [
+            ToolchainPrefix.ARMV7,
+            "arm-linux-gnueabihf-" if ToolchainPrefix.ARMV7.startswith("arm-none")
+            else "arm-none-linux-gnueabihf-",
+        ]
+
+    for prefix in candidates:
+        if shutil.which(prefix + "gcc"):
+            return prefix
+
+    return candidates[0]
+
 
 def get_target_arch(env):
     """Detect target architecture from board config with user override.
