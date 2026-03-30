@@ -4,6 +4,25 @@
     "f_cpu": "1000000000L",
     "mcu": "bcm2710"
   },
+  "debug": {
+    "default_tool": "gdbserver-ssh",
+    "tools": {
+      "gdb-remote": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      },
+      "gdbserver-ssh": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      }
+    }
+  },
   "frameworks": [
     "wiringpi",
     "lgpio",
@@ -16,24 +35,5 @@
     "maximum_size": 536870912
   },
   "url": "https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/",
-  "vendor": "Raspberry Pi",
-  "debug": {
-    "default_tool": "gdbserver-ssh",
-    "tools": {
-      "gdbserver-ssh": {
-        "server": {
-          "package": null,
-          "executable": null,
-          "arguments": []
-        }
-      },
-      "gdb-remote": {
-        "server": {
-          "package": null,
-          "executable": null,
-          "arguments": []
-        }
-      }
-    }
-  }
+  "vendor": "Raspberry Pi"
 }
