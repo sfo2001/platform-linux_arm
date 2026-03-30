@@ -46,7 +46,6 @@ Example Usage:
 
 See Also:
     - Issue #73: Add Configuration File Support
-    - CLAUDE.md: Project documentation
 """
 
 import configparser

@@ -24,7 +24,7 @@ This document provides guidance for developers working on the platform-linux_arm
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/sfo2001/platform-linux_arm.git
+   git clone https://github.com/platformio/platform-linux_arm.git
    cd platform-linux_arm
    ```
 
@@ -470,9 +470,9 @@ mypy platform.py
 
 ## Getting Help
 
-- **Issues**: https://github.com/sfo2001/platform-linux_arm/issues
-- **Discussions**: https://github.com/sfo2001/platform-linux_arm/discussions
-- **Wiki**: https://github.com/sfo2001/platform-linux_arm/wiki
+- **Issues**: https://github.com/platformio/platform-linux_arm/issues
+- **Discussions**: https://github.com/platformio/platform-linux_arm/discussions
+- **Wiki**: https://github.com/platformio/platform-linux_arm/wiki
 
 ---
 
