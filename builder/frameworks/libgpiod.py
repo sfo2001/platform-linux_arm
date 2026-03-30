@@ -88,12 +88,9 @@ from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
-# Detect target architecture (same logic as builder/main.py)
-board = env.BoardConfig()
-target_arch = board.get("build.arch", "armv7")
-if env.GetProjectOption("board_build.arch", None):
-    target_arch = env.GetProjectOption("board_build.arch")
+from utils import get_target_arch
 
+target_arch = get_target_arch(env)
 is_aarch64 = target_arch == "aarch64"
 
 # Detect libgpiod installation paths
