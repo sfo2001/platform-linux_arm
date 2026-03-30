@@ -13,10 +13,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: '3.11'
 
@@ -80,18 +80,18 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           submodules: "recursive"
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.11"
 
       # Ubuntu: Cache ARM cross-compilation toolchains
       - name: Cache ARM toolchains (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-ubuntu-toolchains
         with:
           path: |
@@ -119,7 +119,7 @@ jobs:
       # Ubuntu: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-ubuntu-libgpiod
         with:
           path: |
@@ -148,7 +148,7 @@ jobs:
       # Windows: Cache ARM32 toolchain
       - name: Cache ARM32 toolchain (Windows)
         if: matrix.os == 'windows-latest'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-windows-arm32-toolchain
         with:
           path: arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-arm-none-linux-gnueabihf
@@ -191,7 +191,7 @@ jobs:
       # Windows: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (Windows)
         if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-windows-libgpiod
         with:
           path: |
@@ -257,7 +257,7 @@ jobs:
       # Windows: Cache ARM64 toolchain
       - name: Cache ARM64 toolchain (Windows)
         if: matrix.os == 'windows-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-windows-arm64-toolchain
         with:
           path: arm-gnu-toolchain-13.2.Rel1-mingw-w64-i686-aarch64-none-linux-gnu
@@ -329,7 +329,7 @@ jobs:
       # macOS: Cache Homebrew ARM toolchains
       - name: Cache Homebrew ARM toolchains (macOS)
         if: matrix.os == 'macos-latest'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-macos-toolchains
         with:
           path: |
@@ -366,7 +366,7 @@ jobs:
       # macOS: Cache built libgpiod libraries
       - name: Cache libgpiod libraries (macOS)
         if: matrix.os == 'macos-latest' && contains(matrix.example, 'libgpiod')
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-macos-libgpiod
         with:
           path: |
@@ -416,7 +416,7 @@ jobs:
       # recognized".
       - name: Cache lgpio library (32-bit, Ubuntu/macOS)
         if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-lgpio-armhf
         with:
           path: |
@@ -427,7 +427,7 @@ jobs:
       # Cache built lgpio library (64-bit, Ubuntu/macOS)
       - name: Cache lgpio library (64-bit, Ubuntu/macOS)
         if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-lgpio-aarch64
         with:
           path: |
