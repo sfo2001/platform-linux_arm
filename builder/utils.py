@@ -37,14 +37,20 @@ def get_toolchain_prefix(arch):
         candidates = [
             ToolchainPrefix.AARCH64,
             # Opposite vendor convention as fallback
-            "aarch64-linux-gnu-" if ToolchainPrefix.AARCH64.startswith("aarch64-none")
-            else "aarch64-none-linux-gnu-",
+            (
+                "aarch64-linux-gnu-"
+                if ToolchainPrefix.AARCH64.startswith("aarch64-none")
+                else "aarch64-none-linux-gnu-"
+            ),
         ]
     else:
         candidates = [
             ToolchainPrefix.ARMV7,
-            "arm-linux-gnueabihf-" if ToolchainPrefix.ARMV7.startswith("arm-none")
-            else "arm-none-linux-gnueabihf-",
+            (
+                "arm-linux-gnueabihf-"
+                if ToolchainPrefix.ARMV7.startswith("arm-none")
+                else "arm-none-linux-gnueabihf-"
+            ),
         ]
 
     for prefix in candidates:

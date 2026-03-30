@@ -102,7 +102,9 @@ if not is_native:
         print("  Linux:   sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu")
         print("  macOS:   brew tap messense/macos-cross-toolchains")
         print("           brew install aarch64-unknown-linux-gnu")
-        print("  Windows: Download from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads")
+        print(
+            "  Windows: Download from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads"
+        )
         print("           (aarch64-none-linux-gnu variant)")
     else:
         # Default: 32-bit ARMv7 (backward compatible)
@@ -116,7 +118,9 @@ if not is_native:
         )
         print("  macOS:   brew tap messense/macos-cross-toolchains")
         print("           brew install arm-unknown-linux-gnueabihf")
-        print("  Windows: Download from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads")
+        print(
+            "  Windows: Download from https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads"
+        )
         print("           (arm-none-linux-gnueabihf variant)")
 
 #
