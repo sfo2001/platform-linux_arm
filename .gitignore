@@ -45,3 +45,9 @@ Thumbs.db
 # Claude Code session exports
 conversation.txt
 conversation.md
+
+# Backup and note files
+*.bak
+NOTES.md
+AI_NOTES.md
+AUDIT*.md

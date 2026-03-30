@@ -86,14 +86,9 @@ systype = get_systype()
 is_native = SystemType.LINUX_ARM in systype or SystemType.LINUX_AARCH64 in systype
 
 if not is_native:
-    # Detect target architecture from board configuration
-    board = env.BoardConfig()
-    target_arch = board.get("build.arch", Architecture.ARMV7)
+    from utils import get_target_arch
 
-    # Check if user explicitly set architecture via board_build.arch in platformio.ini
-    # This takes precedence over board definition
-    if env.GetProjectOption("board_build.arch", None):
-        target_arch = env.GetProjectOption("board_build.arch")
+    target_arch = get_target_arch(env)
 
     # Pi 4/5 with 64-bit OS use aarch64 architecture
     if target_arch == Architecture.AARCH64:

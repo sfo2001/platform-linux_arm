@@ -30,8 +30,8 @@ _WINDOWS: bool = os.name == "nt"
 class SSHDefaults:
     """Default values for SSH connections and operations."""
 
-    # Default SSH port
-    PORT: Final[str] = "22"
+    # Default SSH port (int to match platform.json "number" type)
+    PORT: Final[int] = 22
 
     # Default SSH username for Raspberry Pi and similar SBCs
     USER: Final[str] = "pi"
@@ -200,7 +200,8 @@ class SSHOptions:
     STRICT_HOST_KEY_CHECKING_NO: Final[str] = "StrictHostKeyChecking=no"
 
     # Don't save host keys (for automated deployments)
-    USER_KNOWN_HOSTS_FILE_NULL: Final[str] = "UserKnownHostsFile=/dev/null"
+    # Uses os.devnull for cross-platform compatibility (/dev/null on Unix, nul on Windows)
+    USER_KNOWN_HOSTS_FILE_NULL: Final[str] = f"UserKnownHostsFile={os.devnull}"
 
     # Reduce SSH output verbosity
     LOG_LEVEL_ERROR: Final[str] = "LogLevel=ERROR"

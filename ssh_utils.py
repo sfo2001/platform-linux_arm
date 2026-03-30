@@ -22,7 +22,7 @@ with proper shell escaping and error handling.
 
 import os
 import shlex
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 
 class SSHConnectionConfig:
@@ -32,7 +32,7 @@ class SSHConnectionConfig:
         self,
         user: str,
         host: str,
-        port: Optional[str] = None,
+        port: Optional[Union[str, int]] = None,
         key: Optional[str] = None,
         strict_host_check: bool = False,
     ):
@@ -42,7 +42,7 @@ class SSHConnectionConfig:
         Args:
             user: SSH username
             host: Remote hostname or IP address
-            port: SSH port (default: "22")
+            port: SSH port (default: 22)
             key: Path to SSH private key file (optional)
             strict_host_check: Enable strict host key checking (default: False)
         """

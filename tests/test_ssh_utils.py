@@ -37,7 +37,7 @@ class TestSSHConnectionConfig:
 
         assert config.user == "testuser"
         assert config.host == "testhost"
-        assert config.port == "22"
+        assert config.port == 22
         assert config.key is None
         assert config.strict_host_check is False
 

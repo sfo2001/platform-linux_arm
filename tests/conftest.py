@@ -15,16 +15,25 @@
 
 """Shared pytest fixtures for platform-linux_arm tests."""
 
+import importlib.util
 import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 # Add parent directory to path to import platform modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import platform.py module explicitly to avoid conflict with stdlib platform module
+_platform_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "platform.py"
+)
+spec = importlib.util.spec_from_file_location("platform_module", _platform_path)
+platform_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(platform_module)
 
 
 @pytest.fixture
@@ -95,3 +104,42 @@ upload_ssh_port = 2222
 """
     )
     return config_path
+
+
+@pytest.fixture
+def make_platform(mock_platform_manifest):
+    """Factory fixture to create a Linux_armPlatform with standard mocks."""
+
+    def _make(manifest=None):
+        with patch("platform_module.PlatformBase.__init__", return_value=None), patch(
+            "platform_module.get_platform_config", return_value=Mock()
+        ), patch("platform_module.Linux_armPlatform._show_welcome_if_needed"):
+            from platform_module import Linux_armPlatform
+
+            return Linux_armPlatform(manifest or mock_platform_manifest)
+
+    return _make
+
+
+@pytest.fixture
+def make_env():
+    """Factory fixture to create a mock PlatformIO environment."""
+
+    def _make(**overrides):
+        defaults = {
+            "upload_port": "pi@host:/home/pi/app",
+            "upload_ssh_port": None,
+            "upload_ssh_key": None,
+            "upload_flags": None,
+            "upload_strict_host_check": None,
+            "upload_timeout": None,
+            "upload_run_after": False,
+        }
+        defaults.update(overrides)
+        env = Mock()
+        env.GetProjectOption = Mock(
+            side_effect=lambda key, default=None: defaults.get(key, default)
+        )
+        return env
+
+    return _make
