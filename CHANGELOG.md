@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `debug_strict_host_check` option for strict SSH host key checking during GDB debug sessions
+- Arduino Uno Q board (`arduino_uno_q`) — Qualcomm QRB2210 AArch64 SBC, standard Arduino form factor
+- `arduino-bridge` framework — C++ MsgPack-RPC client for calling STM32U585 MCU firmware via arduino-router Unix socket
+- `examples/arduino-uno-q-hello` — bare-metal AArch64 hello-world example for Arduino Uno Q
+- `examples/arduino-bridge-blink` — LED blink example using arduino-bridge with MCU companion sketch
+- `scripts/setup-mraa-cross.sh` — MRAA cross-compilation script for AArch64
 
 ### Fixed
 - `actions/setup-python` was incorrectly pinned to `actions/upload-artifact` SHA

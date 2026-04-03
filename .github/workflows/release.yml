@@ -79,7 +79,7 @@ jobs:
             COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
           else
             echo "Generating changelog from $PREVIOUS_TAG to ${{ steps.version.outputs.tag }}"
-            COMMITS=$(git log "$PREVIOUS_TAG"..HEAD --pretty=format:"- %s (%h)" --reverse)
+            COMMITS=$(git log "${PREVIOUS_TAG}"..HEAD --pretty=format:"- %s (%h)" --reverse)
           fi
 
           # Create changelog file
@@ -117,6 +117,7 @@ jobs:
           - Raspberry Pi 400
           - Raspberry Pi Compute Module 4
           - Raspberry Pi Zero / Zero 2W
+          - Arduino Uno Q (QRB2210 AArch64 + STM32U585, requires arduino-router daemon)
 
           ## Supported Frameworks
 
@@ -124,6 +125,7 @@ jobs:
           - **pigpio**: Legacy GPIO daemon (Pi 1-4 only, deprecated)
           - **WiringPi**: Community GC2 fork (legacy compatibility)
           - **Bare-metal**: Framework-less C/C++ applications
+          - **arduino-bridge**: MsgPack-RPC client for Arduino Uno Q (requires arduino-router daemon)
 
           ## Cross-Compilation Support
 

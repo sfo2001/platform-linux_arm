@@ -1,0 +1,37 @@
+{
+  "build": {
+    "arch": "aarch64",
+    "extra_flags": "-DARDUINO_UNO_Q -DQUALCOMM_QRB2210",
+    "f_cpu": "2000000000L",
+    "mcu": "qrb2210"
+  },
+  "debug": {
+    "default_tool": "gdbserver-ssh",
+    "tools": {
+      "gdb-remote": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      },
+      "gdbserver-ssh": {
+        "server": {
+          "arguments": [],
+          "executable": null,
+          "package": null
+        }
+      }
+    }
+  },
+  "frameworks": [
+    "arduino-bridge"
+  ],
+  "name": "Arduino Uno Q",
+  "upload": {
+    "maximum_ram_size": 2147483648,
+    "maximum_size": 17179869184
+  },
+  "url": "https://docs.arduino.cc/hardware/uno-q/",
+  "vendor": "Arduino"
+}

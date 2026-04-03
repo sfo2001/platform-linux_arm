@@ -16,7 +16,7 @@
     "type": "git",
     "url": "https://github.com/sfo2001/platform-linux_arm.git"
   },
-  "version": "1.8.0",
+  "version": "1.9.0",
   "frameworks": {
     "libgpiod": {
       "script": "builder/frameworks/libgpiod.py",
@@ -41,6 +41,12 @@
       "description": "pigpio is a feature-rich C library for Raspberry Pi GPIO control with microsecond timing, PWM, and servo support (Pi 1-4, not Pi 5 compatible)",
       "url": "http://abyz.me.uk/rpi/pigpio/",
       "title": "pigpio"
+    },
+    "arduino-bridge": {
+      "script": "builder/frameworks/arduino_bridge.py",
+      "description": "arduino-bridge provides a C++ MsgPack-RPC client library for the Arduino Uno Q. MCU firmware registers arbitrary methods via Bridge.provide(name, cb); Linux C++ calls them via Bridge.call(name, params) over the arduino-router Unix socket. Requires arduino-router daemon (pre-installed on Uno Q Debian image).",
+      "url": "https://github.com/arduino/arduino-router",
+      "title": "arduino-bridge (Arduino Uno Q)"
     }
   },
   "packages": {

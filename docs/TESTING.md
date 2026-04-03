@@ -32,6 +32,8 @@ This document provides a comprehensive testing matrix for the platform-linux_arm
 |---------|-----------|---------------|--------------|--------|
 | `baremetal-hello` | None | Pi 3B, 4B, 400, CM4, Zero 2W | 32-bit (armv7) | Yes - Passing |
 | `lgpio-blink` | lgpio | Pi 3B, 400, CM4, Zero 2W, Pi 5 (64-bit) | 32-bit + 64-bit | Yes - Passing |
+| `arduino-uno-q-hello` | None (bare-metal) | Arduino Uno Q (QRB2210) | 64-bit (AArch64) | Build only — no hardware in CI |
+| `arduino-bridge-blink` | arduino-bridge | Arduino Uno Q (QRB2210) | 64-bit (AArch64) | Build only — no hardware in CI |
 
 #### Not Tested in CI
 
@@ -40,6 +42,7 @@ This document provides a comprehensive testing matrix for the platform-linux_arm
 | `pigpio-blink` | Deprecated framework, no CI setup | Manual testing on Pi 1-4 |
 | `wiringpi-blink` | Requires native Pi hardware (no cross-compilation) | Manual testing on physical hardware |
 | `wiringpi-serial` | Requires native Pi hardware (no cross-compilation) | Manual testing on physical hardware |
+| `arduino-bridge-blink` (runtime) | Requires Arduino Uno Q hardware + arduino-router daemon | Community testing on physical hardware |
 
 ### CI Build Process
 

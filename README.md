@@ -11,8 +11,8 @@ Linux ARM platform enables building native applications for ARM-based Linux syst
 - Cross-compilation from Linux x86_64, macOS (Intel/ARM), and Windows
 - Native compilation on ARM Linux systems
 - Remote workflows: automated deployment, testing, and debugging over SSH
-- Multiple GPIO frameworks: lgpio (Pi 5 compatible), pigpio, WiringPi
-- Board support: Raspberry Pi 1-5, Pi 400, CM4, Zero/Zero 2W, Orange Pi Zero
+- Multiple GPIO frameworks: lgpio (Pi 5 compatible), pigpio, WiringPi, arduino-bridge (Arduino Uno Q)
+- Board support: Raspberry Pi 1-5, Pi 400, CM4, Zero/Zero 2W, Orange Pi Zero, Arduino Uno Q
 - Architecture support: 32-bit (ARMv7) and 64-bit (AArch64)
 
 ## Documentation
@@ -156,6 +156,7 @@ Recent Security Improvements (v1.7.1):
 | `raspberrypi_zero` | Raspberry Pi Zero | lgpio, wiringpi | ARMv6 (32-bit) |
 | `raspberrypi_zero2w` | Raspberry Pi Zero 2 W | lgpio, pigpio, wiringpi | ARMv8 (32/64-bit) |
 | `orangepi_zero` | Orange Pi Zero (H2+/H3) | lgpio | ARMv7 (32-bit) |
+| `arduino_uno_q` | Arduino Uno Q (QRB2210) | arduino-bridge | AArch64 (64-bit) |
 
 **Note:** pigpio is not compatible with Raspberry Pi 5. Use lgpio for Pi 5.
 

@@ -236,6 +236,34 @@ board = raspberrypi_4b
 
 **Examples:** See `examples/baremetal-hello/`, `examples/baremetal-uart/`
 
+---
+
+### arduino-bridge: Arduino Uno Q Only
+
+The `arduino-bridge` framework provides MsgPack-RPC communication between the QRB2210
+Linux application processor and the STM32U585 MCU on the Arduino Uno Q. It is **not** a
+generic GPIO framework and does not apply to Raspberry Pi or other SBCs.
+
+**Requirements:**
+- Arduino Uno Q hardware
+- `arduino-router` daemon running (`systemctl status arduino-router`)
+- MRAA cross-compiled for AArch64 (`scripts/setup-mraa-cross.sh`)
+
+**Use case:** Call user-defined methods registered by MCU firmware; GPIO pin names are
+free-form strings agreed between MCU sketch (`Bridge.provide()`) and Linux client
+(`Bridge.call()`).
+
+**Status:** Community testing — not validated on physical hardware by maintainer.
+
+**Example:** See `examples/arduino-bridge-blink/`
+
+```ini
+[env:arduino_uno_q]
+platform = linux_arm
+board = arduino_uno_q
+framework = arduino-bridge
+```
+
 ## Board-Framework Compatibility Matrix
 
 | Board | libgpiod | lgpio | pigpio | WiringPi | Bare-metal |
@@ -250,6 +278,7 @@ board = raspberrypi_4b
 | Orange Pi Zero | Yes | Partial (Untested) | No | No | Yes |
 | Rock Pi 4 | Yes | Partial (Untested) | No | No | Yes |
 | Odroid N2 | Yes | Partial (Untested) | No | No | Yes |
+| Arduino Uno Q | No | No | No | No | arduino-bridge only |
 
 ## Multi-Protocol Development Strategies
 
