@@ -15,7 +15,7 @@ Linux ARM is a Unix-like and mostly POSIX-compliant computer operating system (O
 
 * Cross-compilation support from Linux x86_64, macOS (Intel/ARM), and Windows
 * Native compilation on ARM Linux systems
-* Support for Raspberry Pi 1-5, Pi 400, Compute Module 4, and Zero/Zero 2W
+* Support for Raspberry Pi 1-5, Pi 400, Compute Module 4, Zero/Zero 2W, and Arduino Uno Q
 * Modern GPIO frameworks: lgpio (Pi 5 compatible) and pigpio
 * Legacy WiringPi framework for compatibility
 * Bare-metal C/C++ application support
@@ -36,6 +36,8 @@ Examples are listed from `Linux ARM development platform repository <https://git
 * `pigpio-blink <https://github.com/platformio/platform-linux_arm/tree/master/examples/pigpio-blink?utm_source=platformio.org&utm_medium=docs>`_ - LED blink using pigpio framework
 * `wiringpi-blink <https://github.com/platformio/platform-linux_arm/tree/master/examples/wiringpi-blink?utm_source=platformio.org&utm_medium=docs>`_ - LED blink using WiringPi framework
 * `wiringpi-serial <https://github.com/platformio/platform-linux_arm/tree/master/examples/wiringpi-serial?utm_source=platformio.org&utm_medium=docs>`_ - Serial communication using WiringPi
+* `arduino-uno-q-hello <https://github.com/platformio/platform-linux_arm/tree/master/examples/arduino-uno-q-hello?utm_source=platformio.org&utm_medium=docs>`_ - Bare-metal AArch64 hello-world for Arduino Uno Q (QRB2210)
+* `arduino-bridge-blink <https://github.com/platformio/platform-linux_arm/tree/master/examples/arduino-bridge-blink?utm_source=platformio.org&utm_medium=docs>`_ - LED blink via arduino-bridge framework (requires arduino-router daemon and MCU companion sketch)
 
 Configuration
 -------------
@@ -210,6 +212,9 @@ Frameworks
 
     * - :ref:`framework_wiringpi`
       - WiringPi is a GPIO access library written in C for the BCM2835+ used in the Raspberry Pi. Now maintained by GC2 (Grazer Computer Club) with Raspberry Pi 5 support (GCLK function not supported on Pi 5)
+
+    * - :ref:`framework_arduino_bridge`
+      - arduino-bridge is a C++ MsgPack-RPC client library for the Arduino Uno Q. Communicates with STM32U585 MCU firmware via the arduino-router Unix socket. Requires the arduino-router daemon (pre-installed on stock Arduino Uno Q images).
 
 Framework Comparison
 ~~~~~~~~~~~~~~~~~~~~
@@ -779,3 +784,26 @@ Radxa
       - 2000MHz
       - 2-8GB
       - lgpio, libgpiod
+
+Arduino
+~~~~~~~
+
+.. _board_linux_arm_arduino_uno_q:
+
+.. list-table::
+    :header-rows:  1
+
+    * - Name
+      - MCU
+      - Frequency
+      - RAM
+      - Frameworks
+    * - :ref:`board_linux_arm_arduino_uno_q`
+      - QRB2210 (Dragonwing)
+      - 2000MHz
+      - 2-4GB
+      - arduino-bridge
+
+.. note::
+    * **Arduino Uno Q:** GPIO/PWM/ADC access requires the arduino-bridge framework and the arduino-router daemon. Standard Linux GPIO frameworks (lgpio, libgpiod, pigpio, WiringPi) are **not supported** — Arduino header pins are owned by the STM32U585 MCU, not the QRB2210 Linux side.
+    * **Community testing notice:** No hardware was available to the maintainer during initial porting. Please report validation results, corrections, and firmware compatibility issues.
