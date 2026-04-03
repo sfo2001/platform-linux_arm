@@ -6,6 +6,7 @@ on:
       - master
       - develop
       - 'claude/**'
+      - 'feature/**'
   pull_request:
 
 jobs:
@@ -45,6 +46,16 @@ jobs:
           python -m py_compile builder/frameworks/*.py
           echo "OK: All Python files have valid syntax"
 
+      - name: Run Python unit tests
+        run: |
+          pip install -r requirements-dev.txt platformio
+          pytest tests/ -v
+
+      - name: ShellCheck scripts
+        run: |
+          sudo apt-get install -y shellcheck
+          shellcheck scripts/setup-mraa-cross.sh
+
   # Build examples on multiple OS
   build:
     runs-on: ${{ matrix.os }}
@@ -61,12 +72,22 @@ jobs:
           - examples/libgpiod-blink
           - examples/libgpiod-blink-v2
           - examples/libgpiod-button
+          - examples/arduino-uno-q-hello
+          - examples/arduino-bridge-blink
           # Note: wiringpi/pigpio examples excluded - require system libraries
           # that don't support cross-compilation (libraries must be on build host)
         exclude:
           # Exclude lgpio on Windows (complex cross-compile setup)
           - os: windows-latest
             example: examples/lgpio-blink
+
+          # Exclude arduino-uno-q-hello on Windows (AArch64 cross-compile not configured for Windows CI)
+          - os: windows-latest
+            example: examples/arduino-uno-q-hello
+
+          # Exclude arduino-bridge-blink on Windows (MRAA CMake cross-compile not configured for Windows CI)
+          - os: windows-latest
+            example: examples/arduino-bridge-blink
 
           # Exclude libgpiod-blink-v2 on ALL platforms (requires v2 API, CI builds v1)
           # Note: CI builds libgpiod v1.x to support majority of examples (blink + button)
@@ -477,6 +498,85 @@ jobs:
           INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
           ./scripts/setup-lgpio-cross.sh
 
+      # Ubuntu: Cache MRAA library (aarch64)
+      - name: Cache MRAA library (aarch64, Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'arduino-bridge')
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        id: cache-mraa-aarch64
+        with:
+          path: ~/.local/aarch64-linux-gnu
+          key: ${{ runner.os }}-mraa-aarch64-${{ hashFiles('scripts/setup-mraa-cross.sh') }}
+
+      # Ubuntu: Install cmake for MRAA cross-compilation
+      - name: Install cmake for MRAA (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'arduino-bridge') && steps.cache-mraa-aarch64.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake
+
+      # Ubuntu: Install msgpack-cxx headers
+      - name: Install libmsgpack-cxx-dev (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'arduino-bridge')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmsgpack-cxx-dev
+
+      # Ubuntu: Build MRAA for AArch64 cross-compilation
+      - name: Build MRAA for ARM 64-bit (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'arduino-bridge') && steps.cache-mraa-aarch64.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "Building MRAA library for AArch64..."
+          CROSS_PREFIX=aarch64-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          ./scripts/setup-mraa-cross.sh
+
+      # Ubuntu: Verify MRAA artifacts exist after build/cache restore
+      - name: Verify MRAA artifacts (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'arduino-bridge')
+        run: |
+          ls "$HOME/.local/aarch64-linux-gnu/lib/libmraa.so" || \
+          ls "$HOME/.local/aarch64-linux-gnu/lib/libmraa.so.2" || \
+          { echo "ERROR: libmraa.so not found — MRAA build may have failed"; exit 1; }
+          ls "$HOME/.local/aarch64-linux-gnu/include/mraa.hpp" || \
+          ls "$HOME/.local/aarch64-linux-gnu/include/mraa/mraa.hpp" || \
+          { echo "ERROR: mraa.hpp not found — MRAA build may have failed"; exit 1; }
+          echo "MRAA artifacts verified."
+
+      # macOS: Cache MRAA library (aarch64)
+      - name: Cache MRAA library (aarch64, macOS)
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'arduino-bridge')
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+        id: cache-mraa-aarch64-macos
+        with:
+          path: ~/.local/aarch64-linux-gnu
+          key: ${{ runner.os }}-mraa-aarch64-${{ hashFiles('scripts/setup-mraa-cross.sh') }}
+
+      # macOS: Install cmake and msgpack for MRAA
+      - name: Install cmake and msgpack (macOS)
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'arduino-bridge')
+        run: |
+          brew install cmake msgpack-cxx
+
+      # macOS: Build MRAA for AArch64 cross-compilation
+      - name: Build MRAA for ARM 64-bit (macOS)
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'arduino-bridge') && steps.cache-mraa-aarch64-macos.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          echo "Building MRAA library for AArch64 on macOS..."
+          CROSS_PREFIX=aarch64-unknown-linux-gnu- \
+          INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+          ./scripts/setup-mraa-cross.sh
+
+      # macOS: Verify MRAA artifacts exist after build/cache restore
+      - name: Verify MRAA artifacts (macOS)
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'arduino-bridge')
+        run: |
+          ls "$HOME/.local/aarch64-linux-gnu/lib/libmraa.so" || \
+          ls "$HOME/.local/aarch64-linux-gnu/lib/libmraa.so.2" || \
+          { echo "ERROR: libmraa.so not found — MRAA build may have failed"; exit 1; }
+          echo "MRAA artifacts verified."
+
       - name: Install PlatformIO Core
         run: pip install -U platformio
 
@@ -484,4 +584,22 @@ jobs:
         run: pio pkg install --global --platform symlink://.
 
       - name: Build example
-        run: pio run -d ${{ matrix.example }}
+        shell: bash
+        env:
+          EXAMPLE_PATH: ${{ matrix.example }}
+        run: pio run -d "$EXAMPLE_PATH"
+
+  cpp-tests:
+    name: C++ unit tests (ArduinoBridge)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libmsgpack-dev cmake
+
+      - name: Build
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Run
+        run: cmake --build build --target test_arduino_bridge && ./build/test_arduino_bridge

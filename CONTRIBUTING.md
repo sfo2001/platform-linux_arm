@@ -99,6 +99,27 @@ INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 ./scripts/setup-lgpio-cross.sh
 ```
 
+### 5. Set Up MRAA for Cross-Compilation (arduino-bridge, Optional)
+
+If you plan to test or develop the `arduino-bridge` framework examples:
+
+```bash
+# Linux (Ubuntu/Debian)
+sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu cmake
+CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh
+
+# macOS (Homebrew)
+brew tap messense/macos-cross-toolchains
+brew install aarch64-unknown-linux-gnu cmake
+CROSS_PREFIX=aarch64-unknown-linux-gnu- \
+INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
+./scripts/setup-mraa-cross.sh
+```
+
+Installs MRAA v2.2.0 to `$HOME/.local/aarch64-linux-gnu/`. See
+[`docs/boards/arduino_uno_q.md`](docs/boards/arduino_uno_q.md) for full prerequisites
+and the arduino-router runtime setup.
+
 ---
 
 ## How to Contribute
@@ -466,6 +487,8 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 - `upload`: Remote deploy (scp/rsync/ssh)
 - `vscode`: VS Code integration
 - `wiringpi`: wiringpi-specific changes
+- `arduino-bridge`: arduino-bridge framework and Arduino Uno Q board changes
+- `examples`: Example project additions, updates, and companion sketches
 
 ### Examples
 

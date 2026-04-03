@@ -51,3 +51,13 @@ conversation.md
 NOTES.md
 AI_NOTES.md
 AUDIT*.md
+
+# Debian packages (not for version control — install at build time)
+*.deb
+
+# AI agentic workflow scaffolding (internal tooling, not for upstream)
+docs/superpowers/
+MEMORY/
+
+# CMake build output
+build/
