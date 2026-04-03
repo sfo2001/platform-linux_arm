@@ -5,7 +5,7 @@ All notable changes to the platform-linux_arm project will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.9.0] - 2026-04-03
 
 ### Changed
 - `test_port` type corrected from `number` to `string` (supports `user@host:/path` format)
