@@ -23,13 +23,13 @@ If you discover a security vulnerability in platform-linux_arm, please report it
 
 | Version | Supported |
 | ------- | --------- |
-| 1.7.x   | Yes       |
-| 1.6.x   | Yes       |
-| < 1.6   | No        |
+| 1.9.x   | Yes       |
+| 1.8.x   | Yes       |
+| < 1.8   | No        |
 
 ## Security Features
 
-See [SECURITY.md](SECURITY.md) for security documentation, including:
+See [docs/SECURITY.md](docs/SECURITY.md) for security documentation, including:
 
 - Command injection protection
 - Timeout protection against DoS attacks
@@ -45,7 +45,7 @@ See [SECURITY.md](SECURITY.md) for security documentation, including:
 - Added security documentation
 - Enhanced SSH security features
 
-For detailed security audit history, see [SECURITY.md](SECURITY.md#security-audit-history).
+For detailed security audit history, see [docs/SECURITY.md](docs/SECURITY.md#security-audit-history).
 
 ## Security Best Practices
 
@@ -57,7 +57,7 @@ When using this platform:
 - Use dedicated SSH keys for different environments
 - Never commit credentials or private keys to version control
 
-For complete security guidelines, see [SECURITY.md](SECURITY.md).
+For complete security guidelines, see [docs/SECURITY.md](docs/SECURITY.md).
 
 ## License
 
