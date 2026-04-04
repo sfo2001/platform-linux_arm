@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `examples/arduino-uno-q-hello` — bare-metal AArch64 hello-world example for Arduino Uno Q
 - `examples/arduino-bridge-blink` — LED blink example using arduino-bridge with MCU companion sketch
 - `scripts/setup-mraa-cross.sh` — MRAA cross-compilation script for AArch64
+- `setup-mraa` PlatformIO custom target in `arduino-bridge` framework — run `pio run --target setup-mraa` from any arduino-bridge project to cross-compile and install MRAA without invoking the script manually
 
 ### Fixed
 - `actions/setup-python` was incorrectly pinned to `actions/upload-artifact` SHA

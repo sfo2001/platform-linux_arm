@@ -41,11 +41,16 @@ https://github.com/eclipse/mraa
 https://github.com/arduino/arduino-router
 """
 
+import os
+import shutil
+import subprocess
 import sys
 from os.path import expanduser, isfile, join
 
-from SCons.Script import DefaultEnvironment
-from utils import get_target_arch
+from SCons.Script import COMMAND_LINE_TARGETS, DefaultEnvironment
+from utils import get_target_arch, get_toolchain_prefix
+
+from platform_constants import Architecture
 
 env = DefaultEnvironment()
 
@@ -90,10 +95,96 @@ def _find_msgpack(home):
     return None
 
 
+# --------------------------------------------------------------------------
+# setup-mraa custom target
+#
+# Registered BEFORE any env.Exit() calls so it is always available, even
+# when MRAA is not yet installed. Developers can run:
+#
+#   pio run --target setup-mraa
+#
+# from any arduino-bridge example directory to cross-compile and install
+# MRAA without manually invoking scripts/setup-mraa-cross.sh.
+# --------------------------------------------------------------------------
+
+
+def _mraa_setup_action(target, source, env):
+    """Cross-compile and install MRAA for AArch64 via setup-mraa-cross.sh.
+
+    Returns non-zero to signal failure to SCons — do NOT call env.Exit() here.
+    SCons action functions communicate failure via return code, not env.Exit().
+    """
+    if sys.platform == "win32":
+        sys.stderr.write(
+            "ERROR: setup-mraa is not supported on Windows.\n"
+            "Use WSL2 (Ubuntu) to cross-compile MRAA for AArch64.\n"
+        )
+        return 1
+
+    if not shutil.which("cmake"):
+        sys.stderr.write(
+            "ERROR: cmake not found. Install it first:\n"
+            "  Linux:  sudo apt install cmake\n"
+            "  macOS:  brew install cmake\n"
+        )
+        return 1
+
+    prefix = get_toolchain_prefix(Architecture.AARCH64)
+    install_dir = join(expanduser("~"), ".local", "aarch64-linux-gnu")
+    platform_dir = env.PioPlatform().get_dir()
+    script = join(platform_dir, "scripts", "setup-mraa-cross.sh")
+
+    print("\nSetting up MRAA for AArch64 cross-compilation...")
+    print(f"  CROSS_PREFIX: {prefix}")
+    print(f"  INSTALL_DIR:  {install_dir}")
+    print(f"  Script:       {script}")
+    print()
+
+    # Pass only required variables — do not forward CI secrets or tokens.
+    _passthrough = ("PATH", "HOME", "TMPDIR", "TEMP", "LANG", "LC_ALL")
+    env_vars = {k: os.environ[k] for k in _passthrough if k in os.environ}
+    env_vars["CROSS_PREFIX"] = prefix
+    env_vars["INSTALL_DIR"] = install_dir
+
+    try:
+        result = subprocess.run(
+            ["bash", script], env=env_vars, cwd=platform_dir, timeout=600
+        )
+    except subprocess.TimeoutExpired:
+        sys.stderr.write(
+            "\nMRAA setup timed out after 10 minutes.\n"
+            "Check your network connection and cmake installation, then retry.\n"
+        )
+        return 1
+
+    if result.returncode == 0:
+        print("\nMRAA setup complete. You can now build arduino-bridge projects.")
+    else:
+        sys.stderr.write(
+            f"\nMRAA setup failed (exit code {result.returncode}).\n"
+            "Check the output above for details.\n"
+        )
+    return result.returncode
+
+
+env.AddCustomTarget(
+    "setup-mraa",
+    None,
+    [_mraa_setup_action],
+    title="Setup MRAA",
+    description="Cross-compile and install MRAA for AArch64 (arduino-bridge framework)",
+)
+
+# When setup-mraa is the only requested target, skip framework configuration —
+# MRAA may not be installed yet, so the checks below would fail. Exact-match
+# is intentional: mixing setup-mraa with build targets (e.g. "setup-mraa upload")
+# is not a supported workflow and should fall through to the normal MRAA check.
+_SETUP_ONLY = list(COMMAND_LINE_TARGETS) == ["setup-mraa"]
+
 # Arduino Uno Q is AArch64-only. The arduino-bridge framework is not supported
 # on 32-bit ARM targets.
 target_arch = get_target_arch(env)
-if target_arch != "aarch64":
+if not _SETUP_ONLY and target_arch != "aarch64":
     sys.stderr.write(
         "ERROR: arduino-bridge framework is only supported on AArch64 targets.\n"
         "The Arduino Uno Q uses a Qualcomm QRB2210 (AArch64). "
@@ -101,57 +192,61 @@ if target_arch != "aarch64":
     )
     env.Exit(1)
 
-home = expanduser("~")
+if not _SETUP_ONLY:
+    home = expanduser("~")
 
-mraa_include, mraa_lib = _find_mraa(home)
+    mraa_include, mraa_lib = _find_mraa(home)
 
-if not mraa_include or not mraa_lib:
-    sys.stderr.write(
-        "ERROR: MRAA library not found for AArch64!\n"
-        "\n"
-        "The arduino-bridge framework requires MRAA cross-compiled for AArch64.\n"
-        "\n"
-        "To install:\n"
-        "  sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu cmake\n"
-        "  CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh\n"
-        "\n"
-        "  (macOS) brew tap messense/macos-cross-toolchains\n"
-        "  (macOS) brew install aarch64-unknown-linux-gnu cmake\n"
-        "  (macOS) CROSS_PREFIX=aarch64-unknown-linux-gnu- "
-        "INSTALL_DIR=$HOME/.local/aarch64-linux-gnu ./scripts/setup-mraa-cross.sh\n"
-        "\n"
-        "See docs/boards/arduino_uno_q.md for complete instructions.\n"
+    if not mraa_include or not mraa_lib:
+        sys.stderr.write(
+            "ERROR: MRAA library not found for AArch64!\n"
+            "\n"
+            "The arduino-bridge framework requires MRAA cross-compiled for AArch64.\n"
+            "\n"
+            "Quick fix — run the setup target from your project directory:\n"
+            "  pio run --target setup-mraa\n"
+            "\n"
+            "Or manually:\n"
+            "  sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu cmake\n"
+            "  CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh\n"
+            "\n"
+            "  (macOS) brew tap messense/macos-cross-toolchains\n"
+            "  (macOS) brew install aarch64-unknown-linux-gnu cmake\n"
+            "  (macOS) CROSS_PREFIX=aarch64-unknown-linux-gnu- "
+            "INSTALL_DIR=$HOME/.local/aarch64-linux-gnu ./scripts/setup-mraa-cross.sh\n"
+            "\n"
+            "See docs/boards/arduino_uno_q.md for complete instructions.\n"
+        )
+        env.Exit(1)
+
+    # Find msgpack-cxx headers (header-only, installed via libmsgpack-cxx-dev)
+    # Required for ArduinoBridgeImpl.cpp serialization
+    msgpack_include = _find_msgpack(home)
+
+    if not msgpack_include:
+        sys.stderr.write(
+            "ERROR: msgpack-cxx headers not found!\n"
+            "\n"
+            "Install with:\n"
+            "  sudo apt install libmsgpack-cxx-dev  (Ubuntu/Debian)\n"
+            "  brew install msgpack-cxx           (macOS)\n"
+            "\n"
+        )
+        env.Exit(1)
+
+    framework_dir = join(env.PioPlatform().get_dir(), "framework-arduino-bridge")
+
+    env.Replace(CPPFLAGS=["-O2", "-Wall", "-std=c++17", "-pipe", "-fPIC"])
+
+    # Suppress Boost dependency in msgpack-cxx headers (set by arduino_bridge.py via CPPDEFINES).
+    # Listed here so the file compiles correctly in IDEs without the PlatformIO env.
+    env.Append(CPPDEFINES=["MSGPACK_NO_BOOST"])
+
+    env.Append(
+        CPPPATH=[mraa_include, msgpack_include, framework_dir],
+        LIBPATH=[mraa_lib],
+        LIBS=["mraa"],
     )
-    env.Exit(1)
 
-# Find msgpack-cxx headers (header-only, installed via libmsgpack-cxx-dev)
-# Required for ArduinoBridgeImpl.cpp serialization
-msgpack_include = _find_msgpack(home)
-
-if not msgpack_include:
-    sys.stderr.write(
-        "ERROR: msgpack-cxx headers not found!\n"
-        "\n"
-        "Install with:\n"
-        "  sudo apt install libmsgpack-cxx-dev  (Ubuntu/Debian)\n"
-        "  brew install msgpack-cxx           (macOS)\n"
-        "\n"
-    )
-    env.Exit(1)
-
-framework_dir = join(env.PioPlatform().get_dir(), "framework-arduino-bridge")
-
-env.Replace(CPPFLAGS=["-O2", "-Wall", "-std=c++17", "-pipe", "-fPIC"])
-
-# Suppress Boost dependency in msgpack-cxx headers (set by arduino_bridge.py via CPPDEFINES).
-# Listed here so the file compiles correctly in IDEs without the PlatformIO env.
-env.Append(CPPDEFINES=["MSGPACK_NO_BOOST"])
-
-env.Append(
-    CPPPATH=[mraa_include, msgpack_include, framework_dir],
-    LIBPATH=[mraa_lib],
-    LIBS=["mraa"],
-)
-
-# Build the ArduinoBridge C++ MsgPack-RPC client library
-env.BuildSources(join("$BUILD_DIR", "FrameworkArduinoBridge"), framework_dir)
+    # Build the ArduinoBridge C++ MsgPack-RPC client library
+    env.BuildSources(join("$BUILD_DIR", "FrameworkArduinoBridge"), framework_dir)

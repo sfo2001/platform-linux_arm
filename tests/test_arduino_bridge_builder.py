@@ -17,6 +17,7 @@
 
 import importlib.util
 import os
+import subprocess
 import types
 from unittest.mock import patch
 
@@ -32,20 +33,34 @@ _FRAMEWORK_PATH = os.path.join(
 )
 
 
-def _load_helpers():
-    """Load _find_mraa and _find_msgpack without triggering SCons execution."""
+def _make_scons_stub(arch="aarch64", command_line_targets=None):
+    """Build SCons + utils stubs needed by arduino_bridge.py."""
 
     class _FakeEnv:
         def Exit(self, code):
             raise SystemExit(code)
 
+        def AddCustomTarget(self, *args, **kwargs):
+            pass
+
     scons_stub = types.ModuleType("SCons")
     scons_script_stub = types.ModuleType("SCons.Script")
     scons_script_stub.DefaultEnvironment = _FakeEnv
+    scons_script_stub.COMMAND_LINE_TARGETS = (
+        command_line_targets if command_line_targets is not None else []
+    )
     scons_stub.Script = scons_script_stub
 
     utils_stub = types.ModuleType("utils")
-    utils_stub.get_target_arch = lambda env: "aarch64"
+    utils_stub.get_target_arch = lambda env: arch
+    utils_stub.get_toolchain_prefix = lambda arch: "aarch64-linux-gnu-"
+
+    return scons_stub, scons_script_stub, utils_stub
+
+
+def _load_helpers():
+    """Load _find_mraa and _find_msgpack without triggering SCons execution."""
+    scons_stub, scons_script_stub, utils_stub = _make_scons_stub()
 
     with patch.dict(
         "sys.modules",
@@ -69,20 +84,11 @@ def _load_helpers():
         return mod
 
 
-def _load_module_with_arch(arch):
+def _load_module_with_arch(arch, command_line_targets=None):
     """Reload the module with a specific target architecture, capturing SystemExit."""
-
-    class _FakeEnv:
-        def Exit(self, code):
-            raise SystemExit(code)
-
-    scons_stub = types.ModuleType("SCons")
-    scons_script_stub = types.ModuleType("SCons.Script")
-    scons_script_stub.DefaultEnvironment = _FakeEnv
-    scons_stub.Script = scons_script_stub
-
-    utils_stub = types.ModuleType("utils")
-    utils_stub.get_target_arch = lambda env: arch
+    scons_stub, scons_script_stub, utils_stub = _make_scons_stub(
+        arch=arch, command_line_targets=command_line_targets
+    )
 
     with patch.dict(
         "sys.modules",
@@ -255,3 +261,172 @@ class TestModuleGuards:
         assert exc.code == 1
         captured = capsys.readouterr()
         assert "mraa" in captured.err.lower()
+
+    def test_mraa_not_found_error_mentions_setup_target(self, capsys):
+        """MRAA missing error message mentions 'pio run --target setup-mraa'."""
+        with patch("os.path.isfile", return_value=False):
+            _, exc = _load_module_with_arch("aarch64")
+        assert exc is not None
+        captured = capsys.readouterr()
+        assert "setup-mraa" in captured.err
+
+
+class TestSetupMraaTarget:
+    """Test the setup-mraa custom target and _SETUP_ONLY bypass."""
+
+    def test_setup_only_bypasses_arch_guard(self):
+        """With COMMAND_LINE_TARGETS=['setup-mraa'], non-aarch64 arch does not exit."""
+        _, exc = _load_module_with_arch("armv7", command_line_targets=["setup-mraa"])
+        assert exc is None, "setup-mraa target should bypass the arch guard"
+
+    def test_setup_only_bypasses_mraa_check(self):
+        """With COMMAND_LINE_TARGETS=['setup-mraa'], missing MRAA does not exit."""
+        with patch("os.path.isfile", return_value=False):
+            _, exc = _load_module_with_arch(
+                "aarch64", command_line_targets=["setup-mraa"]
+            )
+        assert exc is None, "setup-mraa target should bypass the MRAA check"
+
+    def test_setup_only_flag_set_when_target_matches(self):
+        """_SETUP_ONLY is True when COMMAND_LINE_TARGETS is exactly ['setup-mraa']."""
+        with patch("os.path.isfile", return_value=False):
+            mod, exc = _load_module_with_arch(
+                "aarch64", command_line_targets=["setup-mraa"]
+            )
+        assert exc is None
+        assert mod is not None
+        assert mod._SETUP_ONLY is True
+
+    def test_setup_only_false_for_normal_build(self):
+        """Normal build without MRAA exits; _SETUP_ONLY bypass does not apply."""
+        with patch("os.path.isfile", return_value=False):
+            _, exc = _load_module_with_arch("aarch64", command_line_targets=[])
+        # MRAA not found → module exits; the point is that setup-mraa bypass did NOT fire
+        assert (
+            exc is not None
+        ), "Expected SystemExit when MRAA missing and no setup target"
+        assert exc.code == 1
+
+    def test_setup_only_false_when_mixed_targets(self):
+        """_SETUP_ONLY is False when setup-mraa is combined with other targets."""
+        with patch("os.path.isfile", return_value=False):
+            _, exc = _load_module_with_arch(
+                "aarch64", command_line_targets=["setup-mraa", "upload"]
+            )
+        # Mixed targets should not bypass — MRAA check triggers exit
+        assert exc is not None, "Mixed targets should not bypass MRAA check"
+
+    def test_setup_only_bypasses_msgpack_check(self):
+        """With COMMAND_LINE_TARGETS=['setup-mraa'], missing msgpack does not exit."""
+        # Make MRAA headers appear to exist, but msgpack absent
+        mraa_hpp = os.path.join(
+            os.path.expanduser("~"),
+            ".local",
+            "aarch64-linux-gnu",
+            "include",
+            "mraa",
+            "mraa.hpp",
+        )
+        mraa_lib = os.path.join(
+            os.path.expanduser("~"),
+            ".local",
+            "aarch64-linux-gnu",
+            "lib",
+            "libmraa.so",
+        )
+        present = {mraa_hpp, mraa_lib}
+        with patch("os.path.isfile", side_effect=lambda p: p in present):
+            _, exc = _load_module_with_arch(
+                "aarch64", command_line_targets=["setup-mraa"]
+            )
+        assert exc is None, "setup-mraa target should bypass the msgpack check"
+
+
+class TestMraaSetupAction:
+    """Unit tests for _mraa_setup_action — all five execution branches."""
+
+    def _make_mock_env(self, platform_dir):
+        """Build a minimal mock PlatformIO env for _mraa_setup_action."""
+
+        class _FakePlatform:
+            def get_dir(self):
+                return str(platform_dir)
+
+        class _FakeEnv:
+            def PioPlatform(self):
+                return _FakePlatform()
+
+        return _FakeEnv()
+
+    def _get_action(self):
+        """Load _mraa_setup_action from a setup-mraa module load."""
+        with patch("os.path.isfile", return_value=False):
+            mod, _ = _load_module_with_arch(
+                "aarch64", command_line_targets=["setup-mraa"]
+            )
+        assert mod is not None, "Module must load under setup-mraa target"
+        return mod._mraa_setup_action
+
+    def test_windows_returns_error(self, capsys, tmp_path):
+        """Returns 1 and prints error on Windows (sys.platform == 'win32')."""
+        action = self._get_action()
+        env = self._make_mock_env(tmp_path)
+        with patch("sys.platform", "win32"):
+            result = action([], [], env)
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "windows" in captured.err.lower() or "wsl" in captured.err.lower()
+
+    def test_cmake_missing_returns_error(self, capsys, tmp_path):
+        """Returns 1 and prints error when cmake is not found in PATH."""
+        action = self._get_action()
+        env = self._make_mock_env(tmp_path)
+        with patch("sys.platform", "linux"), patch("shutil.which", return_value=None):
+            result = action([], [], env)
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "cmake" in captured.err.lower()
+
+    def test_subprocess_success_returns_zero(self, capsys, tmp_path):
+        """Returns 0 and prints success message when subprocess exits cleanly."""
+        action = self._get_action()
+        env = self._make_mock_env(tmp_path)
+        mock_result = type("R", (), {"returncode": 0})()
+        with (
+            patch("sys.platform", "linux"),
+            patch("shutil.which", return_value="/usr/bin/cmake"),
+            patch("subprocess.run", return_value=mock_result),
+        ):
+            result = action([], [], env)
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "complete" in captured.out.lower()
+
+    def test_subprocess_failure_returns_nonzero(self, capsys, tmp_path):
+        """Returns non-zero exit code and prints failure message on script error."""
+        action = self._get_action()
+        env = self._make_mock_env(tmp_path)
+        mock_result = type("R", (), {"returncode": 2})()
+        with (
+            patch("sys.platform", "linux"),
+            patch("shutil.which", return_value="/usr/bin/cmake"),
+            patch("subprocess.run", return_value=mock_result),
+        ):
+            result = action([], [], env)
+        assert result == 2
+        captured = capsys.readouterr()
+        assert "failed" in captured.err.lower()
+
+    def test_subprocess_timeout_returns_error(self, capsys, tmp_path):
+        """Returns 1 and prints timeout message when subprocess times out."""
+        action = self._get_action()
+        env = self._make_mock_env(tmp_path)
+        with (
+            patch("sys.platform", "linux"),
+            patch("shutil.which", return_value="/usr/bin/cmake"),
+            patch("subprocess.run", side_effect=subprocess.TimeoutExpired("bash", 600)),
+        ):
+            result = action([], [], env)
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "timed out" in captured.err.lower()
