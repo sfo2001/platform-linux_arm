@@ -1,6 +1,7 @@
 # Contributing to platform-linux_arm
 
-Thank you for your interest in contributing to the platform-linux_arm project! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to the platform-linux_arm project!
+This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -19,7 +20,9 @@ Thank you for your interest in contributing to the platform-linux_arm project! T
 
 ## Code of Conduct
 
-This project adheres to the PlatformIO [Code of Conduct](https://github.com/platformio/.github/blob/develop/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project adheres to the PlatformIO
+[Code of Conduct](https://github.com/platformio/.github/blob/develop/CODE_OF_CONDUCT.md).
+By participating, you are expected to uphold this code.
 
 ---
 
@@ -30,11 +33,13 @@ This project adheres to the PlatformIO [Code of Conduct](https://github.com/plat
 Before contributing, ensure you have:
 
 1. **PlatformIO Core** installed (version 5.0 or later)
+
    ```bash
    pip install -U platformio
    ```
 
 2. **ARM Cross-Compilation Toolchain** (for testing cross-compilation)
+
    ```bash
    # Linux
    sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
@@ -47,6 +52,7 @@ Before contributing, ensure you have:
    ```
 
 3. **Git** for version control
+
    ```bash
    git --version
    ```
@@ -85,7 +91,23 @@ pio pkg install --global --platform symlink://.
 
 This allows you to make changes to the platform code and immediately test them without reinstalling.
 
-### 4. Set Up lgpio for Cross-Compilation (Optional)
+### 4. Install Dev Dependencies and Pre-commit Hooks
+
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+> **Note (repo-specific):** This repo has a `platform.py` at the root (the PlatformIO
+> platform entry point). Python's `-m` flag adds the current directory to `sys.path`,
+> which causes `platform.py` to shadow the stdlib `platform` module when pre-commit
+> runs. Patch the generated hook once after installation to avoid this:
+>
+> ```bash
+> sed -i 's|exec "\$INSTALL_PYTHON" -mpre_commit|exec env PYTHONSAFEPATH=1 "$INSTALL_PYTHON" -mpre_commit|' .git/hooks/pre-commit
+> ```
+
+### 5. Set Up lgpio for Cross-Compilation (Optional)
 
 If you plan to test lgpio framework examples:
 
@@ -129,6 +151,7 @@ We welcome various types of contributions:
 ### Bug Reports
 
 If you find a bug, please open an issue with:
+
 - Clear, descriptive title
 - Steps to reproduce the issue
 - Expected vs actual behavior
@@ -138,6 +161,7 @@ If you find a bug, please open an issue with:
 ### Feature Requests
 
 For new features or enhancements:
+
 - Describe the feature and its use case
 - Explain why it would be valuable
 - Provide examples if possible
@@ -145,6 +169,7 @@ For new features or enhancements:
 ### Documentation Improvements
 
 Documentation improvements are always welcome:
+
 - Fix typos or clarify instructions
 - Add examples or use cases
 - Update outdated information
@@ -268,16 +293,19 @@ pio run -e raspberrypi_4b_64bit
 If you have Raspberry Pi hardware:
 
 1. **Build on your development machine:**
+
    ```bash
    pio run -e raspberrypi_4b
    ```
 
 2. **Transfer binary to Raspberry Pi:**
+
    ```bash
    scp .pio/build/raspberrypi_4b/program pi@raspberrypi.local:~
    ```
 
 3. **Run on Raspberry Pi:**
+
    ```bash
    ssh pi@raspberrypi.local
    chmod +x program
@@ -292,6 +320,7 @@ If you have Raspberry Pi hardware:
 ### CI/CD Testing
 
 Our GitHub Actions CI automatically tests:
+
 - Cross-compilation on Ubuntu (Linux x86_64)
 - `baremetal-hello` example for multiple boards
 - `lgpio-blink` example for multiple boards (32-bit and 64-bit)
@@ -321,6 +350,7 @@ git checkout -b fix/lgpio-architecture-detection
 ### 3. Update Documentation
 
 If your changes affect:
+
 - **User-facing behavior**: Update `docs/platforms/linux_arm.rst`
 - **Testing status**: Update `docs/TESTING.md`
 - **Breaking changes**: Update `CHANGELOG.md`
@@ -408,6 +438,7 @@ def configure_cross_compiler(env, target_arch):
 ### reStructuredText Documentation
 
 - **Headings**: Use consistent heading hierarchy
+
   ```rst
   Title (H1)
   ==========
@@ -418,12 +449,15 @@ def configure_cross_compiler(env, target_arch):
   Subsection (H3)
   ~~~~~~~~~~~~~~~
   ```
+
 - **Code blocks**: Always specify language
+
   ```rst
   .. code-block:: bash
 
      pio run
   ```
+
 - **Tables**: Use list-table for complex tables
 - **Line length**: Soft limit of 100 characters
 
@@ -431,11 +465,13 @@ def configure_cross_compiler(env, target_arch):
 
 - **Headings**: Use ATX-style headings (`#`, `##`, etc.)
 - **Code blocks**: Always specify language
+
   ````markdown
   ```bash
   pio run
   ```
   ````
+
 - **Links**: Use reference-style links for repeated URLs
 - **Line length**: Soft limit of 100 characters
 
@@ -447,7 +483,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 
 ### Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 [optional body]
@@ -492,7 +528,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 
 ### Examples
 
-```
+```text
 feat(boards): add Raspberry Pi 400 board definition
 
 Add board definition for Raspberry Pi 400 with BCM2711 SoC.
@@ -501,7 +537,7 @@ Includes support for lgpio, pigpio, and wiringpi frameworks.
 Closes #123
 ```
 
-```
+```text
 fix(lgpio): correct multiarch library detection for aarch64
 
 The library path detection was failing on 64-bit systems.
@@ -511,7 +547,7 @@ Now checks both /usr/lib/aarch64-linux-gnu and
 Fixes #456
 ```
 
-```
+```text
 docs: update testing matrix with Pi 5 compatibility notes
 
 Clarified that pigpio does NOT work on Pi 5 due to RP1 I/O
@@ -556,6 +592,7 @@ The contributor is responsible for the correctness of what they submit.
 ### Recognition
 
 Contributors are recognized in:
+
 - Git commit history
 - Release notes (CHANGELOG.md)
 - Project documentation
@@ -591,13 +628,15 @@ git push origin feature/my-new-feature
 
 ## License
 
-By contributing to this project, you agree that your contributions will be licensed under the Apache License 2.0, the same license as the project.
+By contributing to this project, you agree that your contributions will be
+licensed under the Apache License 2.0, the same license as the project.
 
 ---
 
 ## Questions?
 
 If you have questions about contributing, please:
+
 1. Check this guide thoroughly
 2. Search existing issues and discussions
 3. Open a new issue with the "question" label
