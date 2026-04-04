@@ -156,6 +156,10 @@ CROSS_PREFIX=aarch64-linux-gnu- INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 
 **MRAA** (required for `arduino-bridge` framework):
 ```bash
+# Recommended — auto-detects toolchain, from any arduino-bridge project directory:
+pio run --target setup-mraa
+
+# Or manually:
 CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh           # AArch64
 ```
 
@@ -265,8 +269,8 @@ Follows [Conventional Commits](https://www.conventionalcommits.org/).
 ## Common Gotchas
 
 **MRAA not found during arduino-bridge build**
-Run `CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh` from the repo root
-before building any `arduino-bridge` example.
+Run `pio run --target setup-mraa` from the example directory (auto-detects toolchain).
+Or manually: `CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh` from the repo root.
 
 **Wrong architecture library picked**
 `get_target_arch()` checks `board_build.arch` from `platformio.ini` before the board

@@ -24,7 +24,11 @@ The Linux host process calls MCU methods defined in the companion Arduino sketch
 
 ### Build-time (on development machine)
 
-1. **MRAA cross-compiled for AArch64:**
+1. **MRAA cross-compiled for AArch64** — use the PlatformIO target (recommended):
+   ```bash
+   pio run --target setup-mraa
+   ```
+   Or manually:
    ```bash
    CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh
    ```
@@ -134,7 +138,8 @@ Arduino Uno Q (AArch64 Linux)
 - Override socket path: `ARDUINO_ROUTER_SOCKET=/path/to/sock ./bridge_blink`
 
 **`MRAA not found` during build**
-- Run `CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh` from the repo root
+- Run `pio run --target setup-mraa` from this directory (recommended)
+- Or manually: `CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh` from the repo root
 
 ## References
 

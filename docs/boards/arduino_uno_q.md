@@ -198,7 +198,19 @@ int main() {
 
 ### Setup: cross-compile MRAA
 
-The arduino-bridge framework requires MRAA to be cross-compiled for AArch64:
+The arduino-bridge framework requires MRAA to be cross-compiled for AArch64.
+
+**Option A — PlatformIO target (recommended):**
+
+```bash
+# From any arduino-bridge example directory
+pio run --target setup-mraa
+```
+
+Auto-detects the AArch64 toolchain prefix and installs to
+`~/.local/aarch64-linux-gnu/`.
+
+**Option B — Manual:**
 
 ```bash
 # Ubuntu/Debian cross-compile host
