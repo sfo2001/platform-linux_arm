@@ -21,6 +21,13 @@ We are committed to making participation in this project a welcoming experience 
 
 Instances of unacceptable behaviour may be reported by opening a private security advisory or contacting the maintainer directly. All reports will be reviewed and addressed.
 
+## AI-Assisted Contributions
+
+AI-assisted contributions are welcome. We treat them as first-class citizens — what matters
+is that the contributor understands the change, has reviewed the output, and stands behind it.
+Please disclose AI assistance in the PR description. See `CONTRIBUTING.md` for the full
+checklist.
+
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.
