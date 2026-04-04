@@ -522,20 +522,9 @@ controller. Added recommendation to use lgpio instead.
 
 ## AI-Assisted Contributions
 
-AI-assisted PRs are welcome — built with Claude, Codex, Copilot, or any other tool.
-We treat them as first-class contributions. We just ask for transparency so reviewers
-know what to look for.
-
-**Checklist for AI-assisted PRs:**
-
-- [ ] Disclose AI assistance in the PR description (tool used, scope)
-- [ ] Confirm you have reviewed and understand the generated code
-- [ ] Note the degree of testing (untested / lightly tested / fully tested)
-- [ ] Remove AI co-author trailers (`Co-Authored-By: Claude ...`) from commits before submitting
-- [ ] If hardware was involved, note whether it was tested on real hardware or build-only
-
-AI-generated code is held to the same review standard as human-authored code.
-The contributor is responsible for the correctness of what they submit.
+Commits generated or assisted by AI tools (e.g., Claude Code) must be disclosed in the PR
+description. Remove AI co-author trailers (`Co-Authored-By: Claude ...`) from commits before
+submitting to upstream.
 
 ---
 
