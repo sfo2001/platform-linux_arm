@@ -218,6 +218,76 @@ pio pkg install --global --platform symlink://.
 pio run -e raspberrypi_4b_upload --target upload
 ```
 
+### Agent-Driven Dev Loop
+
+The `dev-loop` target chains build → upload → monitor in one command
+with structured JSON output. Designed for AI agent iteration loops.
+
+```bash
+# Run complete dev loop
+pio run --target dev-loop
+
+# With specific environment
+pio run -e raspberrypi_4b_upload --target dev-loop
+```
+
+**Configuration** in `platformio.ini`:
+
+```ini
+[env:raspberrypi_4b_upload]
+platform = linux_arm
+board = raspberrypi_4b
+upload_protocol = scp
+upload_port = pi@raspberrypi.local:/home/pi/myapp
+dev_loop_monitor_timeout = 30   ; seconds (default: 30)
+upload_run_command = ./myapp --flag  ; optional: custom remote command
+```
+
+> **Security:** `upload_run_command` is passed verbatim through the remote shell.
+> Shell metacharacters (`;`, `&&`, `|`, backticks) in its value will execute arbitrary
+> commands on the remote host. Only set values you authored — never derive this option
+> from untrusted external input.
+
+**Structured JSON output** — extract between `--- DEV_LOOP_RESULT ---` delimiters:
+
+```json
+{
+  "schema_version": "1",
+  "phases": {
+    "build": { "status": "pass" },
+    "upload": { "status": "pass", "error": null },
+    "monitor": {
+      "status": "pass",
+      "exit_code": 0,
+      "timed_out": false,
+      "timeout_seconds": 30,
+      "output": "Hello from ARM!\n"
+    }
+  },
+  "overall_status": "pass",
+  "failure_phase": null,
+  "elapsed_seconds": 18.4,
+  "timestamp_iso": "2026-04-05T14:23:11+02:00"
+}
+```
+
+The JSON is also written to `.pio/build/<env>/dev-loop-result.json`.
+
+**Agent parsing guidance:**
+
+- Extract JSON between the two `--- DEV_LOOP_RESULT ---` lines
+- Check `overall_status` first: `"pass"` or `"fail"`
+- If `"fail"`, check `failure_phase` (`"upload"` or `"monitor"`)
+- `phases.monitor.status` has three possible values: `"pass"`, `"fail"`, `"timeout"`
+- `monitor.timed_out == true` means program ran for the full timeout; `status` will be `"timeout"` (not `"fail"`)
+- If upload phase fails, `phases.monitor` is omitted (never ran)
+
+**Error handling:**
+
+- On SSH failure: `failure_phase` is `"upload"`, check `phases.upload.error`
+- Do not retry faster than every 5 seconds (avoids SSH connection storms)
+- The dev loop is idempotent — binary is overwritten on each upload
+
 ---
 
 ## Testing

@@ -1,10 +1,14 @@
 # Configuration File Support
 
-The Linux ARM platform supports configuration files to set global defaults, reducing duplication across projects and simplifying project configuration.
+The Linux ARM platform supports configuration files to set global
+defaults, reducing duplication across projects and simplifying
+project configuration.
 
 ## Overview
 
-Instead of repeating configuration in every project's `platformio.ini`, you can define defaults in `.platform-linux_arm.ini` files that are automatically loaded by the platform.
+Instead of repeating configuration in every project's `platformio.ini`,
+you can define defaults in `.platform-linux_arm.ini` files that are
+automatically loaded by the platform.
 
 ### Benefits
 
@@ -31,6 +35,7 @@ Configuration values are resolved in the following order (highest to lowest prio
 4. **Hard-coded defaults**: Platform's built-in default values
 
 **Example**: If `upload_timeout` is set in all locations:
+
 - `platformio.ini`: `upload_timeout = 600` ← **Used**
 - Project-local config: `upload_timeout = 400`
 - Global config: `upload_timeout = 300`
@@ -88,6 +93,19 @@ test_username = pi
 | `test_upload_timeout` | integer | `300` | Test binary upload timeout (seconds) |
 | `test_timeout` | integer | `600` | Test execution timeout (seconds) |
 
+### Dev Loop Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `dev_loop_monitor_timeout` | integer | `30` | Timeout for remote program monitoring during dev-loop (seconds) |
+
+> **Tip:** For production environments, set
+> `upload_strict_host_check = true` to enable SSH host key
+> verification during dev-loop uploads.
+
+See [`AGENTS.md`](../AGENTS.md) for the full dev-loop usage guide, JSON schema
+reference, and agent integration patterns.
+
 ## Usage Examples
 
 ### Example 1: Global Configuration
@@ -103,6 +121,7 @@ nano ~/.platformio/.platform-linux_arm.ini
 ```
 
 **~/.platformio/.platform-linux_arm.ini:**
+
 ```ini
 [defaults]
 # My Raspberry Pi uses a custom SSH port
@@ -118,6 +137,7 @@ upload_user = pi
 ```
 
 **Project platformio.ini** (minimal configuration):
+
 ```ini
 [env:raspberrypi_4b]
 platform = linux_arm
@@ -132,6 +152,7 @@ upload_port = raspberrypi.local:/home/pi/myapp
 Use different settings for a specific project:
 
 **~/.platformio/.platform-linux_arm.ini** (global defaults):
+
 ```ini
 [defaults]
 upload_user = pi
@@ -139,6 +160,7 @@ upload_timeout = 300
 ```
 
 **.platform-linux_arm.ini** (project-local, overrides global):
+
 ```ini
 [defaults]
 # This project uses a different user
@@ -149,6 +171,7 @@ upload_timeout = 600
 ```
 
 **platformio.ini** (can still override everything):
+
 ```ini
 [env:raspberrypi_4b]
 platform = linux_arm
@@ -164,6 +187,7 @@ upload_timeout = 900
 Set up SSH key authentication globally:
 
 **~/.platformio/.platform-linux_arm.ini:**
+
 ```ini
 [defaults]
 upload_ssh_key = ~/.ssh/raspberry_pi_key
@@ -178,6 +202,7 @@ Now all projects automatically use SSH key authentication without needing to spe
 For continuous integration environments with slower connections:
 
 **.platform-linux_arm.ini** (in project root, committed to git):
+
 ```ini
 [defaults]
 # CI/CD environments may need longer timeouts
@@ -195,6 +220,7 @@ test_path = /tmp/ci_test
 Manage different device configurations using project-local configs:
 
 **Project A** (Raspberry Pi 4):
+
 ```bash
 # .platform-linux_arm.ini
 [defaults]
@@ -204,6 +230,7 @@ upload_path = /home/pi/app_a
 ```
 
 **Project B** (Orange Pi):
+
 ```bash
 # .platform-linux_arm.ini
 [defaults]
@@ -217,16 +244,19 @@ upload_path = /opt/app_b
 ### Global Configuration
 
 1. Create the PlatformIO configuration directory:
+
    ```bash
    mkdir -p ~/.platformio
    ```
 
 2. Copy the example configuration:
+
    ```bash
    cp .platform-linux_arm.ini.example ~/.platformio/.platform-linux_arm.ini
    ```
 
 3. Edit the configuration:
+
    ```bash
    nano ~/.platformio/.platform-linux_arm.ini
    ```
@@ -234,16 +264,19 @@ upload_path = /opt/app_b
 ### Project-Local Configuration
 
 1. Copy the example to your project root:
+
    ```bash
    cp .platform-linux_arm.ini.example .platform-linux_arm.ini
    ```
 
 2. Edit as needed:
+
    ```bash
    nano .platform-linux_arm.ini
    ```
 
 3. *(Optional)* Add to version control if you want to share with team:
+
    ```bash
    git add .platform-linux_arm.ini
    git commit -m "Add platform configuration"
@@ -259,6 +292,7 @@ python3 platform_config.py
 ```
 
 This will display:
+
 - Loaded configuration files
 - All active configuration values
 - Search paths
@@ -268,6 +302,7 @@ This will display:
 If you have existing projects with repeated configuration, you can easily migrate:
 
 **Before** (duplicated in every project):
+
 ```ini
 # Project 1: platformio.ini
 [env]
@@ -283,6 +318,7 @@ upload_ssh_port = 22
 ```
 
 **After** (DRY with global config):
+
 ```ini
 # ~/.platformio/.platform-linux_arm.ini (once)
 [defaults]

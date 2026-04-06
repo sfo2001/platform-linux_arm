@@ -57,6 +57,11 @@ Run all tests:
 pytest
 ```
 
+> **Important:** Always use `pytest` (the console script), not `python -m pytest`.
+> Running `python -m pytest` from the project root causes Python to add the current
+> directory to `sys.path`, making `platform.py` shadow the stdlib `platform` module
+> before pytest even reads `pytest.ini`. The `pytest` command avoids this.
+
 Run with verbose output:
 
 ```bash
@@ -68,6 +73,11 @@ Run specific test file:
 ```bash
 pytest tests/test_platform.py -v
 ```
+
+> **Note:** `tests/test_dev_loop.py` uses `importlib.util.spec_from_file_location` to load
+> `platform.py` directly instead of a standard import. This is required because `platform` is
+> a Python stdlib module name — a normal `import platform` would shadow the project file.
+> This pattern is specific to `test_dev_loop.py`; other test files use `conftest.py` fixtures.
 
 Run specific test class:
 
@@ -450,6 +460,7 @@ platform-linux_arm/
 │   │   └── pwm-hal-sysfs-stub.h   # Stub control interface
 │   ├── conftest.py             # Shared pytest fixtures
 │   ├── test_platform.py        # Platform tests
+│   ├── test_dev_loop.py        # Dev-loop feature tests
 │   ├── test_ssh_utils.py       # SSH utilities tests
 │   ├── test_platform_config.py # Config tests
 │   └── test_pwm_hal.c          # PWM HAL C unit tests (CMake/ctest)

@@ -535,6 +535,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 - `ci`: CI/CD configuration
 - `config`: Platform configuration file support
 - `debug`: GDB/SSH remote debugging
+- `dev-loop`: Dev-loop composite build/upload/monitor target and result schema
 - `docs`: Documentation
 - `frameworks`: Framework support (lgpio, libgpiod, pigpio, wiringpi)
 - `lgpio`: lgpio-specific changes
