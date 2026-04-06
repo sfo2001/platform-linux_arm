@@ -77,7 +77,7 @@ repos:
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        args: ['--convention=google', '--add-ignore=D100,D104,D105,D107']
+        args: ['--convention=google', '--add-ignore=D100,D104,D105,D107,D212']
         files: ^(builder/|platform\.py)
 
 # Configuration
