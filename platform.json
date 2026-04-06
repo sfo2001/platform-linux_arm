@@ -136,6 +136,10 @@
     "debug_strict_host_check": {
       "type": "boolean",
       "description": "Enable SSH strict host key checking for GDB debug sessions (default: false)"
+    },
+    "dev_loop_monitor_timeout": {
+      "type": "integer",
+      "description": "Timeout in seconds for remote program monitoring during dev-loop (default: 30)"
     }
   },
   "debug": {

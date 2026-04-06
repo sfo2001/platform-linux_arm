@@ -251,6 +251,54 @@ env.AddCustomTarget(
 )
 
 #
+# Target: Dev loop (build + upload + monitor with structured output)
+#
+
+
+def _dev_loop_handler(target, source, env) -> int:
+    """
+    Handle dev-loop target: build → upload → monitor cycle.
+
+    Runs a complete development iteration with structured JSON output
+    for AI agent consumption. Build is handled by SCons dependency
+    resolution; this handler orchestrates upload and monitor phases.
+
+    Args:
+        target: Build target.
+        source: List of source files (binary path).
+        env: SCons environment object.
+
+    Returns:
+        int: Exit code (0 = all phases passed, non-zero = failure).
+
+    See Also:
+        - Linux_armPlatform.on_dev_loop: Platform dev-loop implementation
+    """
+    platform = env.PioPlatform()
+    if hasattr(platform, "on_dev_loop"):
+        return platform.on_dev_loop(target, source, env)
+
+    from platform_constants import UIConstants
+
+    separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+    print("\n" + separator)
+    print("DEV LOOP NOT SUPPORTED")
+    print(separator)
+    print("\nThis platform version does not support the dev-loop target.")
+    print(separator + "\n")
+    return 1
+
+
+env.AddCustomTarget(
+    name="dev-loop",
+    dependencies=target_bin,
+    actions=_dev_loop_handler,
+    title="Dev Loop",
+    description="Build, upload, and monitor in one step (agent-friendly)",
+    always_build=True,
+)
+
+#
 # Default targets
 #
 
