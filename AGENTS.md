@@ -290,6 +290,48 @@ The JSON is also written to `.pio/build/<env>/dev-loop-result.json`.
 
 ---
 
+## Branch Workflow
+
+`develop` and `main` are **protected branches**. Direct pushes are rejected.
+CI must be green before any branch can merge into `develop`.
+
+### Rules (no exceptions)
+
+1. **Never commit directly to `develop` or `main`** — even for a one-liner.
+2. **Never use `--no-verify`** — hook failures are signals, not noise. If a hook
+   fails, fix the root cause. Bypassing it hides toolchain drift that will break CI.
+3. **Verify toolchain parity before starting any work:**
+
+   ```bash
+   pre-commit run --all-files
+   ```
+
+   If this fails on a clean checkout, fix the toolchain mismatch first as a
+   separate commit before making any product changes.
+4. **Branch naming:** `fix/NNN-short-description`, `feat/NNN-short-description`,
+   `chore/description`, `style/description` — where NNN is the issue number if one exists.
+5. **CI must pass on the branch** before merging into `develop`.
+
+### Workflow
+
+```bash
+git checkout develop && git pull
+git checkout -b fix/119-pwm-init-sentinel    # branch off develop
+pre-commit run --all-files                   # verify toolchain is clean
+# ... make changes, commit (hooks must pass) ...
+git push -u origin fix/119-pwm-init-sentinel
+# wait for CI green, then merge
+```
+
+### Why this matters
+
+A broken toolchain on `develop` (e.g. mismatched black line-length between
+pre-commit and CI) is invisible until CI runs. Working through a branch means CI
+catches the problem on the branch before develop is touched. A dirty develop
+history is the cost of skipping this step.
+
+---
+
 ## Testing
 
 ### Python Unit Tests
@@ -338,10 +380,12 @@ Follows [Conventional Commits](https://www.conventionalcommits.org/).
 | `ci` | GitHub Actions workflows |
 | `config` | Platform config file support |
 | `debug` | GDB/SSH remote debugging |
+| `dev-loop` | Dev-loop composite build/upload/monitor target |
 | `docs` | Documentation |
 | `examples` | Example projects |
 | `frameworks` | Framework support (generic) |
 | `lgpio` | lgpio-specific changes |
+| `pwm-hal` | PWM HAL (`framework-lgpio/pwm-hal.c`) changes |
 | `libgpiod` | libgpiod-specific changes |
 | `monitor` | SSH serial monitor |
 | `onboarding` | First-run welcome and setup |
