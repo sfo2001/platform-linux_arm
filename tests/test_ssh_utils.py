@@ -17,15 +17,15 @@
 
 import os
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 # Add parent directory to path to import ssh_utils
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from platform_constants import SSHDefaults, SSHOptions
-from ssh_utils import SSHCommandBuilder, SSHConnectionConfig, parse_upload_port
+from platform_constants import SSHDefaults, SSHOptions  # noqa: E402
+from ssh_utils import SSHCommandBuilder, SSHConnectionConfig, parse_upload_port  # noqa: E402
 
 
 class TestSSHConnectionConfig:
@@ -77,9 +77,7 @@ class TestSSHConnectionConfig:
         mock_expanduser.return_value = "/home/user/.ssh/id_rsa"
         mock_exists.return_value = True
 
-        config = SSHConnectionConfig(
-            user="testuser", host="testhost", key="~/.ssh/id_rsa"
-        )
+        config = SSHConnectionConfig(user="testuser", host="testhost", key="~/.ssh/id_rsa")
 
         # Should not raise any exception
         config.validate()
@@ -114,9 +112,7 @@ class TestSSHConnectionConfig:
         mock_expanduser.return_value = "/home/user/.ssh/missing_key"
         mock_exists.return_value = False
 
-        config = SSHConnectionConfig(
-            user="testuser", host="testhost", key="~/.ssh/missing_key"
-        )
+        config = SSHConnectionConfig(user="testuser", host="testhost", key="~/.ssh/missing_key")
 
         with pytest.raises(
             FileNotFoundError, match="SSH key not found: /home/user/.ssh/missing_key"
@@ -130,9 +126,7 @@ class TestSSHConnectionConfig:
         mock_expanduser.return_value = "/home/user/.ssh/id_rsa"
         mock_exists.return_value = True
 
-        config = SSHConnectionConfig(
-            user="testuser", host="testhost", key="~/.ssh/id_rsa"
-        )
+        config = SSHConnectionConfig(user="testuser", host="testhost", key="~/.ssh/id_rsa")
 
         config.validate()
         mock_expanduser.assert_called_once_with("~/.ssh/id_rsa")
@@ -192,9 +186,7 @@ class TestSSHCommandBuilder:
         mock_expanduser.return_value = "/home/user/.ssh/id_rsa"
         mock_exists.return_value = True
 
-        config = SSHConnectionConfig(
-            user="pi", host="raspberrypi.local", key="~/.ssh/id_rsa"
-        )
+        config = SSHConnectionConfig(user="pi", host="raspberrypi.local", key="~/.ssh/id_rsa")
         builder = SSHCommandBuilder(config)
 
         cmd = builder.build_ssh_command()
@@ -240,9 +232,7 @@ class TestSSHCommandBuilder:
     @patch("os.path.exists")
     def test_build_ssh_command_with_strict_host_checking(self, mock_exists):
         """Test SSH command with strict host checking enabled."""
-        config = SSHConnectionConfig(
-            user="pi", host="raspberrypi.local", strict_host_check=True
-        )
+        config = SSHConnectionConfig(user="pi", host="raspberrypi.local", strict_host_check=True)
         builder = SSHCommandBuilder(config)
 
         cmd = builder.build_ssh_command()
@@ -274,14 +264,10 @@ class TestSSHCommandBuilder:
         mock_expanduser.return_value = "/home/user/.ssh/id_rsa"
         mock_exists.return_value = True
 
-        config = SSHConnectionConfig(
-            user="pi", host="raspberrypi.local", key="~/.ssh/id_rsa"
-        )
+        config = SSHConnectionConfig(user="pi", host="raspberrypi.local", key="~/.ssh/id_rsa")
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_scp_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_scp_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         assert "-i" in cmd
         assert "/home/user/.ssh/id_rsa" in cmd
@@ -292,9 +278,7 @@ class TestSSHCommandBuilder:
         config = SSHConnectionConfig(user="pi", host="raspberrypi.local", port="2222")
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_scp_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_scp_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         assert "-P" in cmd  # SCP uses -P for port
         port_idx = cmd.index("-P")
@@ -321,9 +305,7 @@ class TestSSHCommandBuilder:
         config = SSHConnectionConfig(user="pi", host="raspberrypi.local")
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_scp_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_scp_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         # Find -P flag
         assert "-P" in cmd
@@ -355,14 +337,10 @@ class TestSSHCommandBuilder:
         mock_expanduser.return_value = "/home/user/.ssh/id_rsa"
         mock_exists.return_value = True
 
-        config = SSHConnectionConfig(
-            user="pi", host="raspberrypi.local", key="~/.ssh/id_rsa"
-        )
+        config = SSHConnectionConfig(user="pi", host="raspberrypi.local", key="~/.ssh/id_rsa")
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_rsync_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_rsync_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         # Find the -e flag and check SSH command contains key
         e_idx = cmd.index("-e")
@@ -391,9 +369,7 @@ class TestSSHCommandBuilder:
         config = SSHConnectionConfig(user="pi", host="raspberrypi.local")
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_rsync_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_rsync_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         e_idx = cmd.index("-e")
         ssh_cmd = cmd[e_idx + 1]
@@ -404,14 +380,10 @@ class TestSSHCommandBuilder:
     @patch("os.path.exists")
     def test_build_rsync_command_with_strict_host_checking(self, mock_exists):
         """Test rsync command omits host key suppression when strict checking enabled."""
-        config = SSHConnectionConfig(
-            user="pi", host="raspberrypi.local", strict_host_check=True
-        )
+        config = SSHConnectionConfig(user="pi", host="raspberrypi.local", strict_host_check=True)
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_rsync_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_rsync_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         e_idx = cmd.index("-e")
         ssh_cmd = cmd[e_idx + 1]
@@ -424,9 +396,7 @@ class TestSSHCommandBuilder:
         config = SSHConnectionConfig(user="pi", host="raspberrypi.local", port="2222")
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_rsync_command(
-            local_path="/tmp/program", remote_path="/home/pi/program"
-        )
+        cmd = builder.build_rsync_command(local_path="/tmp/program", remote_path="/home/pi/program")
 
         # Find the -e flag
         e_idx = cmd.index("-e")
@@ -483,9 +453,7 @@ class TestParseUploadPort:
 
     def test_parse_with_custom_default_path(self):
         """Test parsing with custom default path."""
-        user, host, path = parse_upload_port(
-            "pi@raspberrypi.local", default_path="/home/pi/myapp"
-        )
+        user, host, path = parse_upload_port("pi@raspberrypi.local", default_path="/home/pi/myapp")
 
         assert user == "pi"
         assert host == "raspberrypi.local"
@@ -513,9 +481,7 @@ class TestParseUploadPort:
 
     def test_parse_complex_path(self):
         """Test parsing with complex path containing special characters."""
-        user, host, path = parse_upload_port(
-            "pi@raspberrypi.local:/home/pi/my app/program"
-        )
+        user, host, path = parse_upload_port("pi@raspberrypi.local:/home/pi/my app/program")
 
         assert user == "pi"
         assert host == "raspberrypi.local"
@@ -557,9 +523,7 @@ class TestSSHCommandBuilderIntegration:
         )
         builder = SSHCommandBuilder(config)
 
-        cmd = builder.build_ssh_command(
-            remote_command="systemctl restart app", extra_opts=["-v"]
-        )
+        cmd = builder.build_ssh_command(remote_command="systemctl restart app", extra_opts=["-v"])
 
         assert cmd[0] == "ssh"
         assert "-p" in cmd

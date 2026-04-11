@@ -50,7 +50,6 @@ Author: PlatformIO
 License: Apache 2.0
 """
 
-import os
 import sys
 
 from platformio.public import get_systype  # requires PlatformIO >= 6.0
@@ -66,7 +65,7 @@ if platform_dir not in sys.path:
     sys.path.insert(0, platform_dir)
 
 # Import platform_constants after sys.path is configured
-from platform_constants import Architecture, SystemType, ToolchainPrefix
+from platform_constants import Architecture, SystemType  # noqa: E402
 
 env.Replace(
     _BINPREFIX="",
@@ -113,9 +112,7 @@ if not is_native:
         print("Cross-compiling for ARM Linux (ARMv7 32-bit)")
         print(f"Using toolchain prefix: {prefix}")
         print("Ensure toolchain is installed:")
-        print(
-            "  Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf"
-        )
+        print("  Linux:   sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf")
         print("  macOS:   brew tap messense/macos-cross-toolchains")
         print("           brew install arm-unknown-linux-gnueabihf")
         print(

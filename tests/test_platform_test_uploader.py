@@ -9,7 +9,7 @@ import importlib.util
 import os
 import subprocess
 import sys
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from platformio import exception
@@ -56,9 +56,7 @@ class TestRemoteTestUploaderInit:
     """Test __init__ sets up expected attributes."""
 
     @patch("platform_test_uploader.get_platform_config")
-    def test_init_sets_default_attributes(
-        self, mock_get_config, mock_config, basic_env
-    ):
+    def test_init_sets_default_attributes(self, mock_get_config, mock_config, basic_env):
         mock_get_config.return_value = mock_config
 
         uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=basic_env)
@@ -71,9 +69,7 @@ class TestRemoteTestUploaderInit:
         assert uploader._config is mock_config
 
     @patch("platform_test_uploader.get_platform_config")
-    def test_init_calls_get_platform_config(
-        self, mock_get_config, mock_config, basic_env
-    ):
+    def test_init_calls_get_platform_config(self, mock_get_config, mock_config, basic_env):
         mock_get_config.return_value = mock_config
 
         RemoteTestUploader(target=Mock(), source=[Mock()], env=basic_env)
@@ -139,9 +135,7 @@ class TestUploadTestBinary:
     """Test upload_test_binary delegates to subprocess correctly."""
 
     def _make_uploader(self, mock_config):
-        with patch(
-            "platform_test_uploader.get_platform_config", return_value=mock_config
-        ):
+        with patch("platform_test_uploader.get_platform_config", return_value=mock_config):
             env = _make_env(test_port="pi@host:/tmp/prog")
             source_mock = Mock()
             source_mock.__str__ = lambda self: "/local/testbinary"
@@ -182,9 +176,7 @@ class TestUploadTestBinary:
         failed.stderr = "Connection refused"
 
         with patch("subprocess.run", return_value=failed):
-            with pytest.raises(
-                exception.PlatformioException, match="Failed to upload test binary"
-            ):
+            with pytest.raises(exception.PlatformioException, match="Failed to upload test binary"):
                 uploader.upload_test_binary()
 
     @patch("platform_test_uploader.get_platform_config")
@@ -204,9 +196,7 @@ class TestStrictHostCheck:
     """Test strict host check option flows through to SSH/SCP commands."""
 
     @patch("platform_test_uploader.get_platform_config")
-    def test_ssh_command_includes_strict_checking_when_enabled(
-        self, mock_get_config, mock_config
-    ):
+    def test_ssh_command_includes_strict_checking_when_enabled(self, mock_get_config, mock_config):
         mock_get_config.return_value = mock_config
         env = _make_env(
             test_port="pi@host:/tmp/prog",
@@ -219,9 +209,7 @@ class TestStrictHostCheck:
         assert "StrictHostKeyChecking=no" not in cmd
 
     @patch("platform_test_uploader.get_platform_config")
-    def test_ssh_command_disables_strict_checking_by_default(
-        self, mock_get_config, mock_config
-    ):
+    def test_ssh_command_disables_strict_checking_by_default(self, mock_get_config, mock_config):
         mock_get_config.return_value = mock_config
         env = _make_env(test_port="pi@host:/tmp/prog")
         uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=env)
@@ -231,9 +219,7 @@ class TestStrictHostCheck:
         assert "StrictHostKeyChecking=no" in cmd
 
     @patch("platform_test_uploader.get_platform_config")
-    def test_scp_command_includes_strict_checking_when_enabled(
-        self, mock_get_config, mock_config
-    ):
+    def test_scp_command_includes_strict_checking_when_enabled(self, mock_get_config, mock_config):
         mock_get_config.return_value = mock_config
         env = _make_env(
             test_port="pi@host:/tmp/prog",
@@ -305,9 +291,7 @@ class TestCheckSSHAvailable:
         uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=basic_env)
 
         with patch("shutil.which", return_value=None):
-            with pytest.raises(
-                exception.PlatformioException, match="SSH is not installed"
-            ):
+            with pytest.raises(exception.PlatformioException, match="SSH is not installed"):
                 uploader.check_ssh_available()
 
     @patch("platform_test_uploader.get_platform_config")
@@ -319,9 +303,7 @@ class TestCheckSSHAvailable:
             return "/usr/bin/ssh" if cmd == "ssh" else None
 
         with patch("shutil.which", side_effect=which_side_effect):
-            with pytest.raises(
-                exception.PlatformioException, match="SCP is not installed"
-            ):
+            with pytest.raises(exception.PlatformioException, match="SCP is not installed"):
                 uploader.check_ssh_available()
 
     @patch("platform_test_uploader.get_platform_config")
@@ -337,9 +319,7 @@ class TestExtractExitCode:
     """Test _extract_exit_code parses marker lines correctly."""
 
     def _make_uploader(self, mock_config):
-        with patch(
-            "platform_test_uploader.get_platform_config", return_value=mock_config
-        ):
+        with patch("platform_test_uploader.get_platform_config", return_value=mock_config):
             env = _make_env(test_port="pi@host:/tmp/prog")
             uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=env)
         return uploader
@@ -373,9 +353,7 @@ class TestCollectTestOutput:
     """Test _collect_test_output timeout/drain and happy path."""
 
     def _make_uploader(self, mock_config):
-        with patch(
-            "platform_test_uploader.get_platform_config", return_value=mock_config
-        ):
+        with patch("platform_test_uploader.get_platform_config", return_value=mock_config):
             env = _make_env(test_port="pi@host:/tmp/prog")
             uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=env)
         uploader.user = "pi"
@@ -422,9 +400,7 @@ class TestExecuteTestBinary:
     """Test execute_test_binary delegates to Popen and streams output."""
 
     def _make_uploader(self, mock_config):
-        with patch(
-            "platform_test_uploader.get_platform_config", return_value=mock_config
-        ):
+        with patch("platform_test_uploader.get_platform_config", return_value=mock_config):
             env = _make_env(test_port="pi@host:/tmp/prog")
             uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=env)
         uploader.user = "pi"
@@ -456,9 +432,7 @@ class TestBuildTestCommand:
     """Test _build_test_command constructs safe remote commands."""
 
     def _make_uploader(self, mock_config, remote_path="/tmp/prog"):
-        with patch(
-            "platform_test_uploader.get_platform_config", return_value=mock_config
-        ):
+        with patch("platform_test_uploader.get_platform_config", return_value=mock_config):
             env = _make_env(test_port="pi@host:/tmp/prog")
             uploader = RemoteTestUploader(target=Mock(), source=[Mock()], env=env)
         uploader.remote_path = remote_path
@@ -486,9 +460,7 @@ class TestBuildTestCommand:
         assert "'/tmp/my program'" in cmd
 
     @patch("platform_test_uploader.get_platform_config")
-    def test_path_with_shell_metacharacters_is_quoted(
-        self, mock_get_config, mock_config
-    ):
+    def test_path_with_shell_metacharacters_is_quoted(self, mock_get_config, mock_config):
         """Shell metacharacters in paths are neutralized by quoting."""
         mock_get_config.return_value = mock_config
         uploader = self._make_uploader(mock_config, remote_path="/tmp/prog;rm -rf /")

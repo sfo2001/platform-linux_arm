@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-WiringPi (GC2 Fork)
+WiringPi (GC2 Fork).
 
 WiringPi is a GPIO access library written in C for the BCM2835+ used in the
 Raspberry Pi. It's designed to be familiar to people who have used the Arduino
@@ -33,7 +33,7 @@ Original: http://wiringpi.com (deprecated)
 """
 
 import sys
-from os.path import isdir, isfile, join
+from os.path import isfile, join
 
 from SCons.Script import DefaultEnvironment
 
@@ -55,8 +55,7 @@ for base_path in wiringpi_search_paths:
 
     # Check for wiringPi.h header and library
     if isfile(join(inc_path, "wiringPi.h")) and (
-        isfile(join(lib_path, "libwiringPi.so"))
-        or isfile(join(lib_path, "libwiringPi.a"))
+        isfile(join(lib_path, "libwiringPi.so")) or isfile(join(lib_path, "libwiringPi.a"))
     ):
         wiringpi_include = inc_path
         wiringpi_lib = lib_path
@@ -89,6 +88,4 @@ env.Replace(
     LIBS=["pthread", "wiringPi"],
 )
 
-env.Append(
-    CPPDEFINES=["_GNU_SOURCE"], CPPPATH=[wiringpi_include], LIBPATH=[wiringpi_lib]
-)
+env.Append(CPPDEFINES=["_GNU_SOURCE"], CPPPATH=[wiringpi_include], LIBPATH=[wiringpi_lib])

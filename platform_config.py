@@ -181,9 +181,7 @@ class PlatformConfig:
             return {}
 
         except (configparser.Error, OSError, IOError) as e:
-            logging.debug(
-                "Config file parse error (continuing with empty config): %s", e
-            )
+            logging.debug("Config file parse error (continuing with empty config): %s", e)
             return {}
 
     def _load_config_files(self):
@@ -316,11 +314,11 @@ if __name__ == "__main__":
     loaded_files = config.get_loaded_files()
 
     if loaded_files:
-        print(f"\nLoaded configuration files:")
+        print("\nLoaded configuration files:")
         for file_path in loaded_files:
             print(f"  - {file_path}")
 
-        print(f"\nConfiguration values:")
+        print("\nConfiguration values:")
         all_config = config.get_all()
         if all_config:
             for key, value in sorted(all_config.items()):
@@ -329,9 +327,9 @@ if __name__ == "__main__":
             print("  (no configuration found)")
     else:
         print("\nNo configuration files found.")
-        print(f"\nSearched locations:")
+        print("\nSearched locations:")
         print(f"  - {config._global_path}")
         print(f"  - {config._project_path}")
-        print(f"\nCreate a configuration file to set defaults:")
-        print(f"  mkdir -p ~/.platformio")
+        print("\nCreate a configuration file to set defaults:")
+        print("  mkdir -p ~/.platformio")
         print(f"  nano ~/.platformio/{PlatformConfig.CONFIG_FILENAME}")

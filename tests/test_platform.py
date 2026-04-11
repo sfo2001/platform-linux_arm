@@ -17,16 +17,15 @@
 
 import importlib.util
 import os
-import platform as stdlib_platform  # Import stdlib platform first to avoid circular import
 import sys
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
 # Add parent directory to path for imports (after stdlib platform is imported)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from platformio import exception
+from platformio import exception  # noqa: E402
 
 # Import platform.py module explicitly to avoid conflict with stdlib platform module
 _platform_path = os.path.join(
@@ -326,9 +325,7 @@ class TestGetUploadProtocol:
         platform = Linux_armPlatform(mock_platform_manifest)
         mock_env.GetProjectOption = Mock(return_value="invalid_protocol")
 
-        with pytest.raises(
-            exception.PlatformioException, match="Unknown upload protocol"
-        ):
+        with pytest.raises(exception.PlatformioException, match="Unknown upload protocol"):
             platform._get_upload_protocol(mock_env)
 
 
@@ -389,9 +386,7 @@ class TestParseUploadPort:
 
         platform = Linux_armPlatform(mock_platform_manifest)
 
-        user, host, path = platform._parse_upload_port(
-            "pi@raspberrypi:/tmp/prog", mock_env
-        )
+        user, host, path = platform._parse_upload_port("pi@raspberrypi:/tmp/prog", mock_env)
 
         assert user == "pi"
         assert host == "raspberrypi"
@@ -410,9 +405,7 @@ class TestParseUploadPort:
 
         platform = Linux_armPlatform(mock_platform_manifest)
 
-        with pytest.raises(
-            exception.PlatformioException, match="upload_port is not configured"
-        ):
+        with pytest.raises(exception.PlatformioException, match="upload_port is not configured"):
             platform._parse_upload_port(None, mock_env)
 
     @patch("platform_module.get_platform_config")
@@ -428,9 +421,7 @@ class TestParseUploadPort:
 
         platform = Linux_armPlatform(mock_platform_manifest)
 
-        with pytest.raises(
-            exception.PlatformioException, match="upload_port is not configured"
-        ):
+        with pytest.raises(exception.PlatformioException, match="upload_port is not configured"):
             platform._parse_upload_port("", mock_env)
 
 
@@ -587,9 +578,7 @@ class TestDetermineGdbExecutable:
 
         platform = Linux_armPlatform(mock_platform_manifest)
 
-        with pytest.raises(
-            exception.PlatformioException, match="No suitable GDB found"
-        ):
+        with pytest.raises(exception.PlatformioException, match="No suitable GDB found"):
             platform._determine_gdb_executable("armv7")
 
 
@@ -824,9 +813,7 @@ class TestOnMonitor:
 
         env = Mock()
         env.GetProjectOption = Mock(
-            side_effect=lambda key, default=None: (
-                True if key == "upload_run_after" else default
-            )
+            side_effect=lambda key, default=None: (True if key == "upload_run_after" else default)
         )
 
         platform = Linux_armPlatform(mock_platform_manifest)
@@ -936,9 +923,7 @@ class TestConfigureDebugSession:
         mock_configure_gdbserver.assert_called_once()
         # strict_host_check should default to False
         call_args = mock_configure_gdbserver.call_args
-        assert (
-            call_args[0][-1] is False or call_args[1].get("strict_host_check") is False
-        )
+        assert call_args[0][-1] is False or call_args[1].get("strict_host_check") is False
 
     @patch("platform_module.Linux_armPlatform._configure_gdbserver_ssh")
     @patch("platform_module.Linux_armPlatform._parse_debug_connection_info")
@@ -1073,9 +1058,7 @@ class TestBuildDebugInitCommands:
         debug_config.init_cmds = []
 
         platform = Linux_armPlatform(mock_platform_manifest)
-        cmds = platform._build_debug_init_commands(
-            DebugTools.GDB_REMOTE, debug_config, "/tmp/app"
-        )
+        cmds = platform._build_debug_init_commands(DebugTools.GDB_REMOTE, debug_config, "/tmp/app")
 
         assert any("target extended-remote" in cmd for cmd in cmds)
 
@@ -1101,9 +1084,7 @@ class TestBuildDebugInitCommands:
         debug_config.init_cmds = []
 
         platform = Linux_armPlatform(mock_platform_manifest)
-        cmds = platform._build_debug_init_commands(
-            DebugTools.GDB_REMOTE, debug_config, "/tmp/app"
-        )
+        cmds = platform._build_debug_init_commands(DebugTools.GDB_REMOTE, debug_config, "/tmp/app")
 
         assert "monitor reset" in cmds
 
@@ -1375,37 +1356,27 @@ class TestRunRemoteCommand:
 
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
-    def test_successful_run_returns_zero(
-        self, mock_print, mock_run, make_platform, make_env
-    ):
+    def test_successful_run_returns_zero(self, mock_print, mock_run, make_platform, make_env):
         mock_run.return_value = Mock(returncode=0)
         platform = make_platform()
         env = make_env()
 
-        result = platform._run_remote_command(
-            "pi", "host", "22", None, "/home/pi/app", env
-        )
+        result = platform._run_remote_command("pi", "host", "22", None, "/home/pi/app", env)
         assert result == 0
 
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
-    def test_nonzero_exit_code_returned(
-        self, mock_print, mock_run, make_platform, make_env
-    ):
+    def test_nonzero_exit_code_returned(self, mock_print, mock_run, make_platform, make_env):
         mock_run.return_value = Mock(returncode=42)
         platform = make_platform()
         env = make_env()
 
-        result = platform._run_remote_command(
-            "pi", "host", "22", None, "/home/pi/app", env
-        )
+        result = platform._run_remote_command("pi", "host", "22", None, "/home/pi/app", env)
         assert result == 42
 
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
-    def test_timeout_raises_exception(
-        self, mock_print, mock_run, make_platform, make_env
-    ):
+    def test_timeout_raises_exception(self, mock_print, mock_run, make_platform, make_env):
         import subprocess
 
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="ssh", timeout=300)
@@ -1417,9 +1388,7 @@ class TestRunRemoteCommand:
 
     @patch("platform_module.subprocess.run")
     @patch("builtins.print")
-    def test_custom_run_command_used(
-        self, mock_print, mock_run, make_platform, make_env
-    ):
+    def test_custom_run_command_used(self, mock_print, mock_run, make_platform, make_env):
         mock_run.return_value = Mock(returncode=0)
         platform = make_platform()
         env = make_env(upload_run_command="sudo /opt/myapp --daemon")
@@ -1464,8 +1433,8 @@ class TestParseDebugConnectionInfo:
         }
         debug_config.build_data = {}
 
-        user, host, prog_path, ssh_port, ssh_key = (
-            platform._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+            debug_config
         )
 
         assert user == "admin"
@@ -1481,8 +1450,8 @@ class TestParseDebugConnectionInfo:
         debug_config.env_options = {}
         debug_config.build_data = {}
 
-        user, host, prog_path, ssh_port, ssh_key = (
-            platform._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+            debug_config
         )
 
         assert user == SSHDefaults.USER
@@ -1499,8 +1468,8 @@ class TestParseDebugConnectionInfo:
         }
         debug_config.build_data = {"prog_path": "/local/build/myapp"}
 
-        user, host, prog_path, ssh_port, ssh_key = (
-            platform._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+            debug_config
         )
 
         assert prog_path == "/home/pi/bin/myapp"
@@ -1516,8 +1485,8 @@ class TestParseDebugConnectionInfo:
         }
         debug_config.build_data = {}
 
-        user, host, prog_path, ssh_port, ssh_key = (
-            platform._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+            debug_config
         )
 
         assert ssh_port == "2222"
@@ -1533,8 +1502,8 @@ class TestParseDebugConnectionInfo:
         }
         debug_config.build_data = {}
 
-        user, host, prog_path, ssh_port, ssh_key = (
-            platform._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+            debug_config
         )
 
         # upload_port is checked first in `or` chain, so it wins when both are set
@@ -1552,8 +1521,8 @@ class TestParseDebugConnectionInfo:
         debug_config.build_data = {}
 
         with patch("ssh_utils.parse_upload_port", side_effect=ValueError("bad")):
-            user, host, prog_path, ssh_port, ssh_key = (
-                platform._parse_debug_connection_info(debug_config)
+            user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+                debug_config
             )
 
         assert user == "pi"
@@ -1570,8 +1539,8 @@ class TestParseDebugConnectionInfo:
         debug_config.build_data = {}
 
         with patch("ssh_utils.parse_upload_port", side_effect=ValueError("bad")):
-            user, host, prog_path, ssh_port, ssh_key = (
-                platform._parse_debug_connection_info(debug_config)
+            user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+                debug_config
             )
 
         assert host == "myhost"
@@ -1586,8 +1555,8 @@ class TestParseDebugConnectionInfo:
         }
         debug_config.build_data = {}
 
-        user, host, prog_path, ssh_port, ssh_key = (
-            platform._parse_debug_connection_info(debug_config)
+        user, host, prog_path, ssh_port, ssh_key = platform._parse_debug_connection_info(
+            debug_config
         )
 
         assert host == "debug-host"
@@ -1622,9 +1591,7 @@ class TestShowWelcomeIfNeeded:
 
     @patch("builtins.print")
     @patch("os.path.exists", return_value=True)
-    def test_second_run_skips_message(
-        self, mock_exists, mock_print, mock_platform_manifest
-    ):
+    def test_second_run_skips_message(self, mock_exists, mock_print, mock_platform_manifest):
         platform = self._make_platform_raw(mock_platform_manifest)
         platform._show_welcome_if_needed()
 
@@ -1713,9 +1680,7 @@ class TestOnTestUpload:
         mock_uploader = Mock()
         mock_uploader.run.return_value = 0
 
-        with patch(
-            "platform_test_uploader.RemoteTestUploader", return_value=mock_uploader
-        ):
+        with patch("platform_test_uploader.RemoteTestUploader", return_value=mock_uploader):
             result = platform.on_test_upload(target, source, env)
 
         assert result == 0
@@ -1743,9 +1708,7 @@ class TestOnTestUpload:
         target = Mock()
         source = [Mock()]
 
-        with pytest.raises(
-            exception.PlatformioException, match="Unknown test_transport"
-        ):
+        with pytest.raises(exception.PlatformioException, match="Unknown test_transport"):
             platform.on_test_upload(target, source, env)
 
 
@@ -1759,9 +1722,7 @@ class TestConfigureGdbserverSshDirect:
         debug_config = Mock()
         debug_config.env_options = {}
 
-        with pytest.raises(
-            exception.PlatformioException, match="debug_port or upload_port"
-        ):
+        with pytest.raises(exception.PlatformioException, match="debug_port or upload_port"):
             platform._configure_gdbserver_ssh(
                 debug_config,
                 user="pi",
@@ -1833,9 +1794,7 @@ class TestConfigureGdbserverSshDirect:
 class TestRemotePathConstruction:
     """Verify remote paths use forward slashes via posixpath in actual platform methods."""
 
-    def test_directory_path_with_trailing_slash_appends_binary_name(
-        self, make_platform
-    ):
+    def test_directory_path_with_trailing_slash_appends_binary_name(self, make_platform):
         """_parse_debug_connection_info appends program name to directory paths."""
         platform = make_platform()
 
@@ -1864,9 +1823,7 @@ class TestRemotePathConstruction:
 
         assert prog_path == "/home/pi/myapp"
 
-    def test_directory_path_with_no_build_data_keeps_trailing_slash(
-        self, make_platform
-    ):
+    def test_directory_path_with_no_build_data_keeps_trailing_slash(self, make_platform):
         """Directory path without build metadata stays as-is (no program name to append)."""
         platform = make_platform()
 

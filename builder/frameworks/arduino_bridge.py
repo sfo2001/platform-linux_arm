@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-arduino-bridge
+arduino-bridge.
 
 arduino-bridge is a C++ MsgPack-RPC client framework for the Arduino Uno Q.
 It enables Linux C++ code running on the QRB2210 (AArch64, Debian) to call
@@ -57,6 +57,7 @@ env = DefaultEnvironment()
 
 def _find_mraa(home):
     """Find MRAA include and lib paths for AArch64.
+
     Returns (include_path, lib_path) or (None, None) if not found.
     """
     search_paths = [
@@ -70,9 +71,7 @@ def _find_mraa(home):
         inc_path = join(base_path, "include")
         lib_path = join(base_path, "lib")
         lib_path_multiarch = join(base_path, "lib", "aarch64-linux-gnu")
-        if isfile(join(inc_path, "mraa", "mraa.hpp")) or isfile(
-            join(inc_path, "mraa.hpp")
-        ):
+        if isfile(join(inc_path, "mraa", "mraa.hpp")) or isfile(join(inc_path, "mraa.hpp")):
             for lp in [lib_path_multiarch, lib_path]:
                 if isfile(join(lp, "libmraa.so")) or isfile(join(lp, "libmraa.so.2")):
                     return inc_path, lp
@@ -81,6 +80,7 @@ def _find_mraa(home):
 
 def _find_msgpack(home):
     """Find msgpack-cxx include path.
+
     Returns include path string or None if not found.
     """
     search_paths = [
@@ -147,9 +147,7 @@ def _mraa_setup_action(target, source, env):
     env_vars["INSTALL_DIR"] = install_dir
 
     try:
-        result = subprocess.run(
-            ["bash", script], env=env_vars, cwd=platform_dir, timeout=600
-        )
+        result = subprocess.run(["bash", script], env=env_vars, cwd=platform_dir, timeout=600)
     except subprocess.TimeoutExpired:
         sys.stderr.write(
             "\nMRAA setup timed out after 10 minutes.\n"

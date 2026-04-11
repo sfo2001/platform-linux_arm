@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-libgpiod - Official Linux GPIO Character Device Library
+libgpiod - Official Linux GPIO Character Device Library.
 
 libgpiod is the official userspace library for the Linux kernel GPIO subsystem.
 It provides a C API for interacting with GPIO chips via the character device
@@ -88,7 +88,7 @@ from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
-from utils import get_target_arch
+from utils import get_target_arch  # noqa: E402
 
 target_arch = get_target_arch(env)
 is_aarch64 = target_arch == "aarch64"
@@ -96,9 +96,7 @@ is_aarch64 = target_arch == "aarch64"
 # Detect libgpiod installation paths
 # Priority: 1) CI workspace (for Windows CI), 2) User local build, 3) System multiarch, 4) System package
 home = expanduser("~")
-workspace = environ.get(
-    "GITHUB_WORKSPACE", ""
-)  # CI workspace (Windows CI builds use this)
+workspace = environ.get("GITHUB_WORKSPACE", "")  # CI workspace (Windows CI builds use this)
 
 # Build architecture-specific search path list
 # Put the target architecture's paths FIRST to avoid finding wrong architecture
@@ -206,9 +204,7 @@ if libgpiod_include:
     except (OSError, UnicodeDecodeError) as e:
         # If we can't detect, assume v1 for backward compatibility
         libgpiod_version = "v1"
-        print(
-            f"Could not detect libgpiod API version ({e.__class__.__name__}), assuming v1.x"
-        )
+        print(f"Could not detect libgpiod API version ({e.__class__.__name__}), assuming v1.x")
 
 if not libgpiod_include or not libgpiod_lib:
     arch_name = "aarch64 (64-bit)" if is_aarch64 else "armhf (32-bit)"

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-lgpio
+lgpio.
 
 lgpio is a modern C library for Linux GPIO access, designed as a successor to
 deprecated sysfs GPIO and the pigpio library. It uses the GPIO character device
@@ -43,7 +43,7 @@ from SCons.Script import DefaultEnvironment
 
 env = DefaultEnvironment()
 
-from utils import get_target_arch
+from utils import get_target_arch  # noqa: E402
 
 target_arch = get_target_arch(env)
 is_aarch64 = target_arch == "aarch64"

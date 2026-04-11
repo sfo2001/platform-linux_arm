@@ -61,7 +61,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
@@ -74,7 +74,7 @@ if _PLATFORM_DIR not in sys.path:
     sys.path.insert(0, _PLATFORM_DIR)
 
 # Import platform configuration support
-from platform_config import get_platform_config, parse_bool_option
+from platform_config import get_platform_config, parse_bool_option  # noqa: E402
 
 
 class Linux_armPlatform(PlatformBase):
@@ -180,9 +180,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Marker file in user-writable PlatformIO core directory (not the platform install dir,
         # which may be read-only when installed via the PlatformIO package manager)
-        core_dir = os.environ.get(
-            "PLATFORMIO_CORE_DIR", os.path.expanduser("~/.platformio")
-        )
+        core_dir = os.environ.get("PLATFORMIO_CORE_DIR", os.path.expanduser("~/.platformio"))
         marker_file = os.path.join(core_dir, ".linux_arm_welcome_shown")
 
         if os.path.exists(marker_file):
@@ -200,9 +198,7 @@ class Linux_armPlatform(PlatformBase):
 
             with open(os.path.join(_PLATFORM_DIR, "platform.json")) as _f:
                 _manifest = json.load(_f)
-            homepage = _manifest.get(
-                "homepage", "https://github.com/platformio/platform-linux_arm"
-            )
+            homepage = _manifest.get("homepage", "https://github.com/platformio/platform-linux_arm")
         except (OSError, ValueError):
             homepage = "https://github.com/platformio/platform-linux_arm"
         _version = _manifest.get("version", "develop")
@@ -270,10 +266,7 @@ class Linux_armPlatform(PlatformBase):
         systype = get_systype()
         # PlatformIO's toolchain package only works on macOS x86_64
         # All other platforms use system-installed toolchains
-        if (
-            systype != SystemType.DARWIN_X86_64
-            and PackageName.TOOLCHAIN_GCC_ARM in packages
-        ):
+        if systype != SystemType.DARWIN_X86_64 and PackageName.TOOLCHAIN_GCC_ARM in packages:
             del packages[PackageName.TOOLCHAIN_GCC_ARM]
         return packages
 
@@ -303,9 +296,7 @@ class Linux_armPlatform(PlatformBase):
             sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import Framework
 
-        if not self._is_native() and Framework.WIRINGPI in variables.get(
-            "pioframework", []
-        ):
+        if not self._is_native() and Framework.WIRINGPI in variables.get("pioframework", []):
             raise exception.PlatformioException(
                 "PlatformIO temporarily does not support cross-compilation "
                 "for WiringPi framework. Please use PIO Core directly on "
@@ -401,9 +392,7 @@ class Linux_armPlatform(PlatformBase):
             UploadProtocol.SCP: self._upload_scp,
             UploadProtocol.RSYNC: self._upload_rsync,
             UploadProtocol.SSH: self._upload_ssh,
-            UploadProtocol.MANUAL: lambda t, s, e: self._show_manual_upload_instructions(
-                s
-            ),
+            UploadProtocol.MANUAL: lambda t, s, e: self._show_manual_upload_instructions(s),
         }
 
         handler = upload_handlers[upload_protocol]
@@ -584,9 +573,7 @@ class Linux_armPlatform(PlatformBase):
             self._get_config_default("upload_timeout", Timeouts.UPLOAD),
         )
         try:
-            result = subprocess.run(
-                cmd, capture_output=False, text=True, timeout=upload_timeout
-            )
+            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
         except subprocess.TimeoutExpired:
             raise exception.PlatformioException(
                 f"SCP upload timeout after {upload_timeout} seconds. "
@@ -606,9 +593,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Post-upload execution if configured
         if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
-            return self._run_remote_command(
-                user, host, ssh_port, ssh_key, path, env, source
-            )
+            return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
 
         return 0
 
@@ -695,9 +680,7 @@ class Linux_armPlatform(PlatformBase):
             self._get_config_default("upload_timeout", Timeouts.UPLOAD),
         )
         try:
-            result = subprocess.run(
-                cmd, capture_output=False, text=True, timeout=upload_timeout
-            )
+            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
         except subprocess.TimeoutExpired:
             raise exception.PlatformioException(
                 f"Rsync upload timeout after {upload_timeout} seconds. "
@@ -717,9 +700,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Post-upload execution if configured
         if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
-            return self._run_remote_command(
-                user, host, ssh_port, ssh_key, path, env, source
-            )
+            return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
 
         return 0
 
@@ -833,9 +814,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Post-upload execution if configured
         if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
-            return self._run_remote_command(
-                user, host, ssh_port, ssh_key, path, env, source
-            )
+            return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
 
         return 0
 
@@ -1034,9 +1013,7 @@ class Linux_armPlatform(PlatformBase):
                 source = [expanded_path]
 
         # Run the remote command and stream output
-        return self._run_remote_command(
-            user, host, ssh_port, ssh_key, path, env, source
-        )
+        return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
 
     def _determine_gdb_executable(self, target_arch: str) -> str:
         """
@@ -1212,9 +1189,7 @@ class Linux_armPlatform(PlatformBase):
         # WORKAROUND: _port property doesn't persist between configure_debug_session and reveal_patterns
         # Store in env_options["debug_port"] instead to ensure it's used when substituting $DEBUG_PORT
         debug_config.env_options["debug_port"] = pipe_port
-        debug_config.port = (
-            pipe_port  # Also set property in case PlatformIO uses it directly
-        )
+        debug_config.port = pipe_port  # Also set property in case PlatformIO uses it directly
 
     def _configure_gdb_remote(self, debug_config: dict) -> None:
         """
@@ -1265,9 +1240,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Add custom init commands from config (from env_options or init_cmds attribute)
         custom_init = (
-            debug_config.env_options.get("debug_init_cmds")
-            or debug_config.init_cmds
-            or []
+            debug_config.env_options.get("debug_init_cmds") or debug_config.init_cmds or []
         )
         if custom_init:
             init_cmds.extend(custom_init)
@@ -1300,9 +1273,7 @@ class Linux_armPlatform(PlatformBase):
         gdb_path = self._determine_gdb_executable(target_arch)
 
         # Parse connection information
-        user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(
-            debug_config
-        )
+        user, host, prog_path, ssh_port, ssh_key = self._parse_debug_connection_info(debug_config)
 
         # Get debug tool from tool_name attribute or env_options
         debug_tool = debug_config.tool_name or debug_config.env_options.get(
@@ -1332,9 +1303,7 @@ class Linux_armPlatform(PlatformBase):
         # Override GDB path in build_data (init_cmds, prog_path are read-only properties)
         # Update the build_data dict with our detected GDB executable
         # NOTE: prog_path in build_data is LOCAL path for symbols, don't override it
-        if hasattr(debug_config, "build_data") and isinstance(
-            debug_config.build_data, dict
-        ):
+        if hasattr(debug_config, "build_data") and isinstance(debug_config.build_data, dict):
             debug_config.build_data["gdb_path"] = gdb_path
 
         # Return the configured debug_config object
@@ -1370,9 +1339,7 @@ class Linux_armPlatform(PlatformBase):
             return self._add_debug_to_board(result)
         else:
             # All boards
-            return {
-                key: self._add_debug_to_board(value) for key, value in result.items()
-            }
+            return {key: self._add_debug_to_board(value) for key, value in result.items()}
 
     def _add_debug_to_board(self, board):
         """
@@ -1484,8 +1451,8 @@ class Linux_armPlatform(PlatformBase):
             print(f"  {source[0]}")
             print("\nTo run tests on your target device:")
             print(f"  1. Upload the binary: scp {source[0]} user@host:/path/to/test")
-            print(f"  2. Make it executable: ssh user@host 'chmod +x /path/to/test'")
-            print(f"  3. Run the tests: ssh user@host '/path/to/test'")
+            print("  2. Make it executable: ssh user@host 'chmod +x /path/to/test'")
+            print("  3. Run the tests: ssh user@host '/path/to/test'")
             print("\nTo configure automatic test execution, add to platformio.ini:")
             print("  test_transport = ssh")
             print("  test_port = user@hostname:/path/to/test")

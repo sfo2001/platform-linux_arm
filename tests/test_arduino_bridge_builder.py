@@ -98,9 +98,7 @@ def _load_module_with_arch(arch, command_line_targets=None):
             "utils": utils_stub,
         },
     ):
-        spec = importlib.util.spec_from_file_location(
-            "arduino_bridge_arch_test", _FRAMEWORK_PATH
-        )
+        spec = importlib.util.spec_from_file_location("arduino_bridge_arch_test", _FRAMEWORK_PATH)
         mod = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(mod)
@@ -177,9 +175,7 @@ class TestFindMraa:
         assert inc is None
         assert lib is None
 
-    def test_returns_none_when_header_found_but_lib_missing(
-        self, bridge_helpers, tmp_path
-    ):
+    def test_returns_none_when_header_found_but_lib_missing(self, bridge_helpers, tmp_path):
         """Returns (None, None) when header exists but no libmraa.so[.2] found."""
         _, find_mraa, _ = bridge_helpers
         base = tmp_path / ".local" / "aarch64-linux-gnu"
@@ -282,17 +278,13 @@ class TestSetupMraaTarget:
     def test_setup_only_bypasses_mraa_check(self):
         """With COMMAND_LINE_TARGETS=['setup-mraa'], missing MRAA does not exit."""
         with patch("os.path.isfile", return_value=False):
-            _, exc = _load_module_with_arch(
-                "aarch64", command_line_targets=["setup-mraa"]
-            )
+            _, exc = _load_module_with_arch("aarch64", command_line_targets=["setup-mraa"])
         assert exc is None, "setup-mraa target should bypass the MRAA check"
 
     def test_setup_only_flag_set_when_target_matches(self):
         """_SETUP_ONLY is True when COMMAND_LINE_TARGETS is exactly ['setup-mraa']."""
         with patch("os.path.isfile", return_value=False):
-            mod, exc = _load_module_with_arch(
-                "aarch64", command_line_targets=["setup-mraa"]
-            )
+            mod, exc = _load_module_with_arch("aarch64", command_line_targets=["setup-mraa"])
         assert exc is None
         assert mod is not None
         assert mod._SETUP_ONLY is True
@@ -302,9 +294,7 @@ class TestSetupMraaTarget:
         with patch("os.path.isfile", return_value=False):
             _, exc = _load_module_with_arch("aarch64", command_line_targets=[])
         # MRAA not found → module exits; the point is that setup-mraa bypass did NOT fire
-        assert (
-            exc is not None
-        ), "Expected SystemExit when MRAA missing and no setup target"
+        assert exc is not None, "Expected SystemExit when MRAA missing and no setup target"
         assert exc.code == 1
 
     def test_setup_only_false_when_mixed_targets(self):
@@ -336,9 +326,7 @@ class TestSetupMraaTarget:
         )
         present = {mraa_hpp, mraa_lib}
         with patch("os.path.isfile", side_effect=lambda p: p in present):
-            _, exc = _load_module_with_arch(
-                "aarch64", command_line_targets=["setup-mraa"]
-            )
+            _, exc = _load_module_with_arch("aarch64", command_line_targets=["setup-mraa"])
         assert exc is None, "setup-mraa target should bypass the msgpack check"
 
 
@@ -361,9 +349,7 @@ class TestMraaSetupAction:
     def _get_action(self):
         """Load _mraa_setup_action from a setup-mraa module load."""
         with patch("os.path.isfile", return_value=False):
-            mod, _ = _load_module_with_arch(
-                "aarch64", command_line_targets=["setup-mraa"]
-            )
+            mod, _ = _load_module_with_arch("aarch64", command_line_targets=["setup-mraa"])
         assert mod is not None, "Module must load under setup-mraa target"
         return mod._mraa_setup_action
 

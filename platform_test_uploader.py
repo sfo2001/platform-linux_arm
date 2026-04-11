@@ -45,12 +45,10 @@ Security:
 See docs/REMOTE_TESTING.md for detailed documentation.
 """
 
-import os
 import shlex
 import shutil
 import subprocess
 import sys
-import time
 
 from platformio import exception
 
@@ -308,9 +306,7 @@ class RemoteTestUploader:
         )
         cmd = self.build_scp_command(source_file, self.remote_path)
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=upload_timeout
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=upload_timeout)
         except subprocess.TimeoutExpired:
             raise exception.PlatformioException(
                 f"Test upload timeout after {upload_timeout} seconds. "
