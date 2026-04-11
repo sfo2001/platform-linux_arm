@@ -372,6 +372,8 @@ int pwm_init(int pin, uint32_t freq_hz) {
     int chip, channel;
     int result;
 
+    pwm_init_state();   // ensure sentinel values are set before conflict check
+
     // Validate frequency
     if (freq_hz < PWM_MIN_FREQUENCY_HZ || freq_hz > PWM_MAX_FREQUENCY_HZ) {
         return PWM_ERROR_INVALID_PARAM;

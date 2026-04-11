@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - lgpio framework: `BuildSources` was passed a file path instead of a directory, causing
   `undefined reference to 'pwm_write'` at link time (closes #118, reported and diagnosed
   by [@obrain17](https://github.com/obrain17))
+- lgpio PWM HAL: `pwm_init()` accessed `g_pwm_channels[]` before `pwm_init_state()` set
+  the `-1` sentinel values; C zero-init (gpio_pin=0) caused a false `PWM_ERROR_BUSY` on
+  first use of GPIO 18/19 (closes #119, reported and diagnosed by
+  [@obrain17](https://github.com/obrain17))
 
 ## [1.9.0] - 2026-04-03
 
