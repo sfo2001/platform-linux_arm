@@ -111,9 +111,7 @@ for base_path in lgpio_search_paths:
         # Check standard lib path as fallback
         # Architecture-specific base paths (e.g., ~/.local/arm-linux-gnueabihf/)
         # provide architecture isolation, so it's safe to check lib/ subdirectory
-        if isfile(join(lib_path, "liblgpio.so")) or isfile(
-            join(lib_path, "liblgpio.so.1")
-        ):
+        if isfile(join(lib_path, "liblgpio.so")) or isfile(join(lib_path, "liblgpio.so.1")):
             lgpio_include = inc_path
             lgpio_lib = lib_path
             print("Found lgpio at: %s" % base_path)
@@ -153,5 +151,5 @@ env.Append(
 )
 
 # Build PWM HAL library
-pwm_hal_src = join(env.PioPlatform().get_dir(), "framework-lgpio", "pwm-hal.c")
+pwm_hal_src = join(env.PioPlatform().get_dir(), "framework-lgpio")
 env.BuildSources(join("$BUILD_DIR", "FrameworkLgpioPwmHAL"), pwm_hal_src)
