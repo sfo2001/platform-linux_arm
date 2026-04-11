@@ -55,12 +55,12 @@ from pathlib import Path
 from typing import Optional, Union
 
 
-def parse_bool_option(value) -> bool:
+def parse_bool_option(raw_value) -> bool:
     """Parse a boolean option value to bool.
 
     Accepts "true", "yes", "1", "on" (case-insensitive) as True.
     """
-    return str(value).lower() in ("true", "yes", "1", "on")
+    return str(raw_value).lower() in ("true", "yes", "1", "on")
 
 
 class PlatformConfig:
@@ -105,8 +105,8 @@ class PlatformConfig:
             Config files are loaded immediately during initialization.
             Missing config files are silently ignored (backward compatible).
         """
-        self._config = {}
-        self._loaded_files = []
+        self._config: dict[str, str] = {}
+        self._loaded_files: list[str] = []
 
         # Determine configuration file paths
         self._global_path = self._get_global_config_path()
@@ -205,13 +205,13 @@ class PlatformConfig:
         self._config.update(project_config)
 
     def get(
-        self, key: str, default: Optional[Union[str, int, bool]] = None
+        self, config_key: str, default: Optional[Union[str, int, bool]] = None
     ) -> Optional[Union[str, int, bool]]:
         """
         Get configuration value with fallback to default.
 
         Args:
-            key: Configuration key (e.g., 'upload_timeout', 'upload_user')
+            config_key: Configuration key (e.g., 'upload_timeout', 'upload_user')
             default: Default value if key is not found in config files
 
         Returns:
@@ -228,29 +228,24 @@ class PlatformConfig:
             If default is int, the config value is converted to int.
             If default is bool, the config value is converted to bool.
         """
-        value = self._config.get(key)
+        config_value = self._config.get(config_key)
 
-        if value is None:
+        if config_value is None:
             return default
 
         # Type conversion based on default parameter type
         if default is not None:
             if isinstance(default, bool):
-                return parse_bool_option(value)
-            elif isinstance(default, int):
+                return parse_bool_option(config_value)
+            if isinstance(default, int):
                 try:
-                    return int(value)
-                except (ValueError, TypeError):
-                    return default
-            elif isinstance(default, float):
-                try:
-                    return float(value)
+                    return int(config_value)
                 except (ValueError, TypeError):
                     return default
 
-        return value
+        return config_value
 
-    def get_loaded_files(self) -> list:
+    def get_loaded_files(self) -> list[str]:
         """
         Get list of successfully loaded configuration files.
 
@@ -267,7 +262,7 @@ class PlatformConfig:
         """
         return self._loaded_files.copy()
 
-    def get_all(self) -> dict:
+    def get_all(self) -> dict[str, str]:
         """
         Get all configuration key-value pairs.
 
@@ -328,8 +323,8 @@ if __name__ == "__main__":
     else:
         print("\nNo configuration files found.")
         print("\nSearched locations:")
-        print(f"  - {config._global_path}")
-        print(f"  - {config._project_path}")
+        print(f"  - {config._global_path}")  # pylint: disable=protected-access
+        print(f"  - {config._project_path}")  # pylint: disable=protected-access
         print("\nCreate a configuration file to set defaults:")
         print("  mkdir -p ~/.platformio")
         print(f"  nano ~/.platformio/{PlatformConfig.CONFIG_FILENAME}")

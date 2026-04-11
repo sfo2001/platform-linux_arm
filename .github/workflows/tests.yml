@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ develop, main, master, 'claude/**' ]
+    branches: [develop, main, master, 'claude/**']
   pull_request:
 
 jobs:
@@ -79,6 +79,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
+        pip install platformio
 
     - name: Check code formatting with black
       run: |
@@ -88,15 +89,13 @@ jobs:
       run: |
         isort --check-only --diff .
 
-    - name: Type check with mypy  # Not yet enforced
+    - name: Type check with mypy
       run: |
-        mypy platform_constants.py platform.py
-      continue-on-error: true
+        mypy platform_constants.py platform.py platform_config.py platform_test_uploader.py
 
-    - name: Lint with pylint  # Not yet enforced
+    - name: Lint with pylint
       run: |
         pylint --rcfile=.pylintrc *.py
-      continue-on-error: true
 
   coverage-report:
     name: Coverage Report

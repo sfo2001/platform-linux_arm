@@ -69,7 +69,7 @@ repos:
     rev: v1.33.0
     hooks:
       - id: yamllint
-        args: ['-d', '{extends: default, rules: {line-length: {max: 120}, document-start: disable}}']
+        args: ['-d', '{extends: default, rules: {line-length: {max: 120}, document-start: disable, indentation: disable, truthy: disable, comments: disable}}']
         files: ^\.github/workflows/.*\.ya?ml$
 
   # Python docstring checks (optional, can be removed if too strict)

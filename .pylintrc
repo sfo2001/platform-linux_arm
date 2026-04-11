@@ -1,0 +1,37 @@
+[MASTER]
+# Platform-linux_arm pylint configuration
+
+[MESSAGES CONTROL]
+disable =
+    # PlatformIO requires imports inside methods after sys.path manipulation.
+    # 49+ instances across platform.py, platform_test_uploader.py, and framework builders.
+    C0415,
+
+    # Constants classes and config dataclasses intentionally have no public methods.
+    R0903,
+
+    # platform.py has 1466 lines. Splitting is a separate refactoring task.
+    C0302,
+
+    # PlatformBase.generate_sample_code is not needed for this platform type.
+    W0223,
+
+    # Linux_armPlatform follows PlatformIO naming convention (not PascalCase).
+    # _global_config_instance is a module-level mutable variable, not a constant.
+    C0103,
+
+    # Upload/debug handlers have 15–27 local variables; splitting harms readability.
+    R0914,
+
+    # SSH handler functions take 8 positional args (host, user, port, key, path, env, …).
+    R0913,
+    R0917,
+
+    # Complex state-machine functions have more than 6 return points.
+    R0911,
+
+    # Imports placed after sys.path.insert() for PlatformIO path setup.
+    C0413,
+
+    # Singleton initializer uses 'global' statement — valid pattern, one instance.
+    W0603
