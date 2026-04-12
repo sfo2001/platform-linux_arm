@@ -4,7 +4,8 @@
 **Platform Version**: 1.8.0
 **CI/CD Status**: [![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
 
-This document provides a comprehensive testing matrix for the platform-linux_arm platform, covering all supported boards, frameworks, architectures, and build configurations.
+This document provides a comprehensive testing matrix for the platform-linux_arm platform, covering all
+supported boards, frameworks, architectures, and build configurations.
 
 ## Table of Contents
 
@@ -47,6 +48,7 @@ This document provides a comprehensive testing matrix for the platform-linux_arm
 ### CI Build Process
 
 1. **Toolchain Installation**: Both ARM 32-bit and 64-bit cross-compilers
+
    ```bash
    gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf  # 32-bit
    gcc-aarch64-linux-gnu g++-aarch64-linux-gnu      # 64-bit
@@ -57,6 +59,7 @@ This document provides a comprehensive testing matrix for the platform-linux_arm
    - 64-bit: `CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-lgpio-cross.sh`
 
 3. **Platform Installation**: Symlink mode for testing
+
    ```bash
    pio pkg install --global --platform symlink://.
    ```
@@ -65,9 +68,60 @@ This document provides a comprehensive testing matrix for the platform-linux_arm
 
 ---
 
+## C Unit Tests (CMake)
+
+The `framework-lgpio/pwm-hal` library has a self-contained C unit test suite that runs without Raspberry Pi hardware.
+
+### Overview
+
+| Property | Value |
+|----------|-------|
+| Test file | `tests/test_pwm_hal.c` |
+| Test target | `test_pwm_hal` |
+| Build system | CMake (out-of-source) |
+| Hardware required | None |
+| Tests | 20 unit tests |
+
+### Architecture
+
+The tests use a **link-seam** architecture:
+
+- Production builds link `framework-lgpio/pwm-hal.c` + `framework-lgpio/pwm-hal-sysfs.c`
+- Test builds link `framework-lgpio/pwm-hal.c` + `tests/stubs/pwm-hal-sysfs-stub.c`
+
+The stub replaces all filesystem access (`/sys/class/pwm/...`) with an in-memory table,
+making tests fast, deterministic, and hardware-independent.
+
+The seam interface is defined in `framework-lgpio/pwm-hal-internal.h`.
+
+### Building and Running
+
+```bash
+# Configure and build
+cmake -B build
+cmake --build build --target test_pwm_hal
+
+# Run directly
+./build/test_pwm_hal
+
+# Or via ctest
+ctest --test-dir build
+```
+
+### Adding New Tests
+
+1. Add a new `static void test_your_test(void)` function to `tests/test_pwm_hal.c`
+2. Call `stub_reset()` and `pwm_reset_state_for_testing()` at the start
+3. Add `RUN(test_your_test)` in `main()`
+4. Update the final `printf("All N tests passed.\n")` count
+5. If the test needs new stub behavior, extend `tests/stubs/pwm-hal-sysfs-stub.h/.c`
+
+---
+
 ## Board × Framework Compatibility Matrix
 
 ### Legend
+
 - Yes - Fully Supported: Tested and working
 - Partial - Limited Support: Works with known limitations
 - No - Not Supported: Framework incompatible with board
@@ -88,6 +142,7 @@ This document provides a comprehensive testing matrix for the platform-linux_arm
 | **Raspberry Pi Zero 2W** | Yes | Deprecated | Deprecated | Yes |
 
 **Notes:**
+
 - \* **Pi 1 / Zero (original)**: Requires `RPI_LGPIO_REVISION` environment variable for lgpio
 - \*\* **Pi 5 wiringpi**: GCLK (general purpose clock) function not supported due to RP1 chip limitations
 
@@ -133,6 +188,7 @@ board_build.arch = aarch64
 ```
 
 **Requirements:**
+
 - 64-bit Raspberry Pi OS on target device
 - 64-bit cross-compilation toolchain: `gcc-aarch64-linux-gnu`
 - 64-bit libraries for frameworks (e.g., `liblgpio-dev:arm64`)
@@ -152,12 +208,14 @@ board_build.arch = aarch64
 | **ARM Linux (Native)** | Yes | Yes | System GCC (no cross-compiler needed) | Manually tested |
 
 **Legend:**
+
 - Yes - = Tested and verified working
 - Partial - = Code exists, toolchains available, but not tested in practice
 
 ### Native Compilation (On Raspberry Pi)
 
-When running PlatformIO directly on a Raspberry Pi, the platform automatically detects the native environment and uses the system GCC compiler.
+When running PlatformIO directly on a Raspberry Pi, the platform automatically detects the native
+environment and uses the system GCC compiler.
 
 | Raspberry Pi OS | Compiler | Notes |
 |-----------------|----------|-------|
@@ -249,6 +307,7 @@ framework = lgpio
 **Reason**: RP1 chip documentation doesn't provide clock control details needed for implementation.
 
 **Affected Functions**:
+
 - `gpioClockSet()`
 - Clock-based PWM on certain pins
 
@@ -263,6 +322,7 @@ framework = lgpio
 **Reason**: WiringPi build system not configured for cross-compilation.
 
 **Workaround**:
+
 - Build on physical Raspberry Pi device
 - OR use lgpio/pigpio (support cross-compilation)
 
@@ -308,6 +368,7 @@ ExecStart=/path/to/program
 **Reason**: No package manager like apt/homebrew on Windows.
 
 **Workaround**:
+
 1. Download from [ARM Developer website](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
 2. Add to PATH manually
 
@@ -326,6 +387,7 @@ ExecStart=/path/to/program
 **Solution**: Build libraries from source for 64-bit target.
 
 **Example** (lgpio 64-bit):
+
 ```bash
 CROSS_PREFIX=aarch64-linux-gnu- \
 INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
@@ -337,6 +399,7 @@ INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 **Issue**: 64-bit binaries require 64-bit Raspberry Pi OS on target device.
 
 **Verification**:
+
 ```bash
 # On Raspberry Pi
 uname -m
@@ -357,6 +420,7 @@ uname -m
 4. **Toolchain Validation**: Both ARM toolchains installed and working
 
 **Limitations**:
+
 - CI only runs on Ubuntu (Linux x86_64) - macOS and Windows untested
 - No runtime testing (no physical hardware in CI)
 - No pigpio/wiringpi testing (deprecated/native-only)
@@ -367,16 +431,19 @@ uname -m
 #### Test Procedure
 
 1. **Build on host system** (cross-compilation):
+
    ```bash
    pio run -e raspberrypi_4b
    ```
 
 2. **Transfer to Raspberry Pi**:
+
    ```bash
    scp .pio/build/raspberrypi_4b/program pi@raspberrypi.local:~
    ```
 
 3. **Run on Raspberry Pi**:
+
    ```bash
    ssh pi@raspberrypi.local
    chmod +x program
@@ -391,6 +458,7 @@ uname -m
 #### Test Hardware
 
 Testing has been performed on:
+
 - Yes - Raspberry Pi 3 Model B (32-bit and 64-bit OS)
 - Yes - Raspberry Pi 4 Model B (32-bit and 64-bit OS)
 - Yes - Raspberry Pi 5 (64-bit OS)
@@ -399,6 +467,7 @@ Testing has been performed on:
 ### Community Testing
 
 We welcome community testing reports! Please open an issue with:
+
 - Board model and OS version
 - Framework and architecture
 - Build host OS

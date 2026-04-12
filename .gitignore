@@ -61,3 +61,6 @@ MEMORY/
 
 # CMake build output
 build/
+
+# C in-tree object files (safety net for direct gcc invocations outside CMake)
+tests/**/*.o

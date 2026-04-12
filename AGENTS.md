@@ -18,7 +18,7 @@ computers (Raspberry Pi, Orange Pi, BeagleBone, Radxa, Khadas, Arduino Uno Q).
 
 ## Repository Structure
 
-```
+```text
 platform-linux_arm/
 ├── platform.py              # PlatformIO platform entry point (Linux_armPlatform class)
 ├── platform_constants.py    # Architecture and toolchain prefix enums
@@ -29,7 +29,9 @@ platform-linux_arm/
 │   └── frameworks/          # One .py per framework (lgpio, libgpiod, arduino_bridge, …)
 ├── examples/                # 21 example projects (each is a standalone PlatformIO project)
 ├── scripts/                 # Setup scripts (setup-mraa-cross.sh, setup-lgpio-cross.sh, …)
-├── tests/                   # Python unit tests for builder scripts (pytest)
+├── tests/                   # Python unit tests (pytest) for builder scripts
+│                            #   and C unit tests (CMake/ctest) for framework C code
+│   └── stubs/               # C sysfs stubs for link-seam unit testing
 └── docs/                    # Documentation (boards, frameworks, security, upload, etc.)
 ```
 
@@ -92,12 +94,14 @@ This is how Pi 5 64-bit builds work: `board = raspberrypi_5` +
 Framework builders live in `builder/frameworks/`. Each is a Python SCons script.
 
 **Accessing the environment:**
+
 ```python
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 ```
 
 **Detecting target architecture:**
+
 ```python
 from utils import get_target_arch
 target_arch = get_target_arch(env)   # returns "armv7" or "aarch64"
@@ -105,6 +109,7 @@ is_aarch64 = target_arch == "aarch64"
 ```
 
 **Reading board config:**
+
 ```python
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "")
@@ -112,6 +117,7 @@ arch = board.get("build.arch", "armv7")
 ```
 
 **Adding compile flags / libraries:**
+
 ```python
 env.Append(
     CPPPATH=["/path/to/include"],
@@ -126,6 +132,7 @@ env.Append(
 it via `env["_BINPREFIX"]`.
 
 **Installed library paths** follow this convention:
+
 - armv7: `~/.local/arm-linux-gnueabihf/`
 - aarch64: `~/.local/aarch64-linux-gnu/`
 
@@ -148,6 +155,7 @@ brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 ### Framework Libraries
 
 **lgpio** (required for `lgpio` framework):
+
 ```bash
 ./scripts/setup-lgpio-cross.sh                                           # ARMv7
 CROSS_PREFIX=aarch64-linux-gnu- INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
@@ -155,6 +163,7 @@ CROSS_PREFIX=aarch64-linux-gnu- INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 ```
 
 **MRAA** (required for `arduino-bridge` framework):
+
 ```bash
 # Recommended — auto-detects toolchain, from any arduino-bridge project directory:
 pio run --target setup-mraa
@@ -164,6 +173,7 @@ CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh           # AArch6
 ```
 
 **libgpiod** (required for `libgpiod` framework):
+
 ```bash
 ./scripts/setup-libgpiod-cross.sh                                        # ARMv7/AArch64
 ```

@@ -23,17 +23,20 @@ This document provides guidance for developers working on the platform-linux_arm
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/platformio/platform-linux_arm.git
    cd platform-linux_arm
    ```
 
 2. Install development dependencies:
+
    ```bash
    pip install -r requirements-dev.txt
    ```
 
 3. Install the platform in development mode (symlink):
+
    ```bash
    pio pkg install --global --platform symlink://.
    ```
@@ -49,44 +52,74 @@ The project uses pytest for unit testing. Tests are located in the `tests/` dire
 #### Quick Start
 
 Run all tests:
+
 ```bash
 pytest
 ```
 
 Run with verbose output:
+
 ```bash
 pytest -v
 ```
 
 Run specific test file:
+
 ```bash
 pytest tests/test_platform.py -v
 ```
 
 Run specific test class:
+
 ```bash
 pytest tests/test_platform.py::TestIsNative -v
 ```
 
 Run specific test method:
+
 ```bash
 pytest tests/test_platform.py::TestIsNative::test_is_native_on_linux_arm -v
 ```
 
+### C Unit Tests (CMake)
+
+The `framework-lgpio/pwm-hal` C library has a native unit test suite that does not require Raspberry Pi hardware.
+
+Build and run:
+
+```bash
+cmake -B build
+cmake --build build --target test_pwm_hal
+./build/test_pwm_hal
+```
+
+Or run via ctest:
+
+```bash
+cmake -B build && cmake --build build
+ctest --test-dir build
+```
+
+The tests use a link-seam stub (`tests/stubs/pwm-hal-sysfs-stub.c`) that replaces the production sysfs
+implementation, so no `/sys/class/pwm` access is needed.
+
 #### Coverage Reports
 
 Generate coverage report:
+
 ```bash
 pytest --cov=. --cov-report=term-missing
 ```
 
 Generate HTML coverage report:
+
 ```bash
 pytest --cov=. --cov-report=html
 # Open htmlcov/index.html in your browser
 ```
 
 Generate XML coverage report (for CI):
+
 ```bash
 pytest --cov=. --cov-report=xml
 ```
@@ -186,6 +219,7 @@ pylint *.py
 3. **Test Class Naming**: Test classes should match the pattern `Test*`
 
 4. **Test Structure**: Follow the Arrange-Act-Assert pattern
+
    ```python
    def test_example():
        # Arrange - Set up test data and mocks
@@ -199,6 +233,7 @@ pylint *.py
    ```
 
 5. **Use Fixtures**: Leverage pytest fixtures from `tests/conftest.py` for common setup:
+
    ```python
    def test_with_fixture(mock_env, temp_project_dir):
        # Use fixtures directly as function parameters
@@ -206,6 +241,7 @@ pylint *.py
    ```
 
 6. **Mock External Dependencies**: Use `unittest.mock` to isolate units:
+
    ```python
    @patch('platform.get_systype')
    def test_with_mock(mock_get_systype):
@@ -214,6 +250,7 @@ pylint *.py
    ```
 
 7. **Test Edge Cases**: Include tests for error conditions and boundary cases
+
    ```python
    def test_invalid_input_raises_error():
        with pytest.raises(ValueError, match="expected error message"):
@@ -234,6 +271,7 @@ pylint *.py
 ### Continuous Integration
 
 Tests run automatically on GitHub Actions for:
+
 - Every push to `develop` and `main` branches
 - Every pull request
 
@@ -257,7 +295,7 @@ This project uses git-flow:
 
 Follow conventional commit format:
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -266,6 +304,7 @@ Follow conventional commit format:
 ```
 
 **Types**:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -275,6 +314,7 @@ Follow conventional commit format:
 - `chore`: Maintenance tasks
 
 **Examples**:
+
 ```bash
 feat(platform): add support for Raspberry Pi 5
 fix(upload): handle timeout errors gracefully
@@ -285,6 +325,7 @@ test(platform): improve coverage for _is_native method
 ### Pull Request Process
 
 1. Create a feature branch from `develop`:
+
    ```bash
    git checkout develop
    git pull
@@ -292,6 +333,7 @@ test(platform): improve coverage for _is_native method
    ```
 
 2. Make your changes and add tests:
+
    ```bash
    # Make changes
    # Add tests
@@ -299,18 +341,21 @@ test(platform): improve coverage for _is_native method
    ```
 
 3. Format and lint your code:
+
    ```bash
    black .
    isort .
    ```
 
 4. Commit your changes:
+
    ```bash
    git add .
    git commit -m "feat(scope): description"
    ```
 
 5. Push and create pull request:
+
    ```bash
    git push origin feature/your-feature-name
    # Create PR on GitHub targeting 'develop' branch
@@ -325,6 +370,7 @@ test(platform): improve coverage for _is_native method
 ### Version Numbering
 
 This project uses semantic versioning (SemVer):
+
 - **Major** (1.x.x): Breaking changes
 - **Minor** (x.1.x): New features (backward compatible)
 - **Patch** (x.x.1): Bug fixes (backward compatible)
@@ -332,6 +378,7 @@ This project uses semantic versioning (SemVer):
 ### Release Checklist
 
 1. **Update Version**:
+
    ```json
    // platform.json
    {
@@ -342,11 +389,13 @@ This project uses semantic versioning (SemVer):
 2. **Update Changelog**: Document all changes since last release
 
 3. **Run Full Test Suite**:
+
    ```bash
    pytest
    ```
 
 4. **Create Release Branch**:
+
    ```bash
    git checkout develop
    git checkout -b release/v1.7.0
@@ -355,6 +404,7 @@ This project uses semantic versioning (SemVer):
 5. **Final Testing**: Verify all examples build successfully
 
 6. **Merge to Main**:
+
    ```bash
    git checkout main
    git merge --no-ff release/v1.7.0
@@ -363,6 +413,7 @@ This project uses semantic versioning (SemVer):
    ```
 
 7. **Merge Back to Develop**:
+
    ```bash
    git checkout develop
    git merge --no-ff release/v1.7.0
@@ -375,7 +426,7 @@ This project uses semantic versioning (SemVer):
 
 ## Project Structure
 
-```
+```text
 platform-linux_arm/
 ├── .github/
 │   └── workflows/         # CI/CD workflows
@@ -424,7 +475,7 @@ pio run --target clean
 pio run --target upload
 ```
 
-### Testing
+### Testing Commands
 
 ```bash
 # Run all tests
@@ -440,7 +491,7 @@ pytest tests/test_platform.py
 ptw
 ```
 
-### Code Quality
+### Quality Commands
 
 ```bash
 # Format code
@@ -460,19 +511,19 @@ mypy platform.py
 
 ## Resources
 
-- **PlatformIO Documentation**: https://docs.platformio.org/
-- **PlatformIO Platform Development**: https://docs.platformio.org/en/latest/platforms/creating_platform.html
-- **pytest Documentation**: https://docs.pytest.org/
-- **Black Formatter**: https://black.readthedocs.io/
-- **Conventional Commits**: https://www.conventionalcommits.org/
+- **PlatformIO Documentation**: <https://docs.platformio.org/>
+- **PlatformIO Platform Development**: <https://docs.platformio.org/en/latest/platforms/creating_platform.html>
+- **pytest Documentation**: <https://docs.pytest.org/>
+- **Black Formatter**: <https://black.readthedocs.io/>
+- **Conventional Commits**: <https://www.conventionalcommits.org/>
 
 ---
 
 ## Getting Help
 
-- **Issues**: https://github.com/platformio/platform-linux_arm/issues
-- **Discussions**: https://github.com/platformio/platform-linux_arm/discussions
-- **Wiki**: https://github.com/platformio/platform-linux_arm/wiki
+- **Issues**: <https://github.com/platformio/platform-linux_arm/issues>
+- **Discussions**: <https://github.com/platformio/platform-linux_arm/discussions>
+- **Wiki**: <https://github.com/platformio/platform-linux_arm/wiki>
 
 ---
 
