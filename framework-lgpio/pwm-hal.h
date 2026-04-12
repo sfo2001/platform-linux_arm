@@ -194,6 +194,9 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity);
  * @return PWM_SUCCESS on success, error code on failure
  *
  * @note status parameter must not be NULL
+ * @note Returns cached (write-shadow) state — values reflect the last written
+ *       configuration, not live hardware registers. Live readback is tracked
+ *       in issue #124.
  */
 int pwm_get_status(int pin, pwm_status_t *status);
 
