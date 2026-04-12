@@ -32,7 +32,7 @@ platform-linux_arm/
 ├── tests/                   # Python unit tests (pytest) for builder scripts
 │                            #   and C unit tests (CMake/ctest) for framework C code
 │   ├── test_platform.py     # pytest: builder script unit tests (83 tests)
-│   ├── test_pwm_hal.c       # ctest: PWM HAL C unit tests (29 tests, no hardware needed)
+│   ├── test_pwm_hal.c       # ctest: PWM HAL C unit tests (42 tests, no hardware needed)
 │   └── stubs/
 │       ├── pwm-hal-sysfs-stub.c  # Link-seam stub — replaces /sys/class/pwm/ with in-memory table
 │       └── pwm-hal-sysfs-stub.h  # Stub control API (stub_reset, stub_set_pi5, stub_set_export_delay)
@@ -222,11 +222,29 @@ pio run -e raspberrypi_4b_upload --target upload
 
 ## Testing
 
+### Python Unit Tests
+
 Python unit tests live in `tests/`. They test builder script logic without
 running a full PlatformIO build. Run with `pytest`.
 
 CI runs tests on ubuntu-latest, macos-latest, windows-latest with Python
 3.10, 3.11, 3.12 (see `.github/workflows/tests.yml`).
+
+### C Unit Tests (CMake)
+
+The `framework-lgpio/pwm-hal` module has a C unit test suite (`tests/test_pwm_hal.c`)
+that runs without Raspberry Pi hardware. A link-seam stub (`tests/stubs/pwm-hal-sysfs-stub.c`)
+replaces all `/sys/class/pwm` I/O with in-memory state.
+
+Build and run:
+
+```bash
+cmake -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+CI job: `c-unit-tests` in `.github/workflows/tests.yml`.
 
 Example builds are validated by `.github/workflows/examples.yml` across the
 same OS matrix.
@@ -276,6 +294,7 @@ Follows [Conventional Commits](https://www.conventionalcommits.org/).
 |----------|---------|-------------|
 | `examples.yml` | push, PR | Builds all 21 examples × {ubuntu, macos, windows} |
 | `tests.yml` | push, PR | Python pytest × {ubuntu, macos, windows} × Python {3.10, 3.11, 3.12} |
+| `tests.yml` | push, PR | C unit tests (CMake/ctest, 46 tests, ubuntu-latest) |
 | `release.yml` | tag push | Publishes platform package |
 
 ---

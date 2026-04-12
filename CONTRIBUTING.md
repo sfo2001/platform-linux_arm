@@ -121,7 +121,7 @@ INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 ./scripts/setup-lgpio-cross.sh
 ```
 
-### 5. Set Up MRAA for Cross-Compilation (arduino-bridge, Optional)
+### 6. Set Up MRAA for Cross-Compilation (arduino-bridge, Optional)
 
 If you plan to test or develop the `arduino-bridge` framework examples:
 
@@ -349,7 +349,7 @@ Our GitHub Actions CI automatically tests:
 - Cross-compilation on Ubuntu (Linux x86_64)
 - `baremetal-hello` example for multiple boards
 - `lgpio-blink` example for multiple boards (32-bit and 64-bit)
-- PWM HAL C unit tests (29 tests via CMake/ctest)
+- PWM HAL C unit tests (42 test functions via CMake/ctest)
 
 Make sure your changes pass CI before submitting a PR.
 

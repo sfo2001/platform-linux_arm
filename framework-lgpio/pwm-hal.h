@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * PWM Hardware Abstraction Layer (HAL) for Linux ARM Platform
  *

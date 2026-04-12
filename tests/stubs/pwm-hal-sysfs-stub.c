@@ -24,6 +24,9 @@ static int  s_export_delay_remaining;
 static bool s_export_written;
 static const char *s_write_fail_suffix;
 static int         s_write_fail_error;
+static const char *s_write_fail_after_suffix;
+static int         s_write_fail_after_error;
+static int         s_write_fail_after_count;
 
 /* ---- Stub control ---- */
 
@@ -31,8 +34,11 @@ void stub_reset(void) {
     s_use_pi5 = false;
     s_export_delay_remaining = 0;
     s_export_written = false;
-    s_write_fail_suffix = NULL;
-    s_write_fail_error  = 0;
+    s_write_fail_suffix       = NULL;
+    s_write_fail_error        = 0;
+    s_write_fail_after_suffix = NULL;
+    s_write_fail_after_error  = 0;
+    s_write_fail_after_count  = 0;
     for (int c = 0; c < STUB_MAX_CHIPS; c++) {
         for (int ch = 0; ch < STUB_MAX_CHANNELS; ch++) {
             s_exported[c][ch] = false;
@@ -51,6 +57,13 @@ void stub_set_export_delay(int n_failures) {
 void stub_set_write_fail_on(const char *path_suffix, int error_code) {
     s_write_fail_suffix = path_suffix;
     s_write_fail_error  = error_code;
+}
+
+void stub_set_write_fail_after(const char *path_suffix, int error_code,
+                               int n_successes_before_fail) {
+    s_write_fail_after_suffix = path_suffix;
+    s_write_fail_after_error  = error_code;
+    s_write_fail_after_count  = n_successes_before_fail;
 }
 
 /* ---- Seam function implementations ---- */
@@ -72,6 +85,25 @@ int pwm_sysfs_write(const char *path, const char *value) {
         if (plen >= slen && strcmp(path + plen - slen, s_write_fail_suffix) == 0) {
             s_write_fail_suffix = NULL; /* consume — one-shot */
             return s_write_fail_error;
+        }
+    }
+    /*
+     * Count-based write failure injection: if a suffix was registered via
+     * stub_set_write_fail_after(), check whether this path ends with it.
+     * Each matching write decrements the counter.  When the counter reaches
+     * zero, the trigger fires (one-shot) and returns the configured error.
+     */
+    if (s_write_fail_after_suffix != NULL) {
+        size_t plen = strlen(path);
+        size_t slen = strlen(s_write_fail_after_suffix);
+        if (plen >= slen &&
+            strcmp(path + plen - slen, s_write_fail_after_suffix) == 0) {
+            if (s_write_fail_after_count > 0) {
+                s_write_fail_after_count--;
+            } else {
+                s_write_fail_after_suffix = NULL; /* consume — one-shot */
+                return s_write_fail_after_error;
+            }
         }
     }
     /*

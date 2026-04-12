@@ -429,29 +429,39 @@ This project uses semantic versioning (SemVer):
 ```text
 platform-linux_arm/
 ├── .github/
-│   └── workflows/         # CI/CD workflows
-│       ├── examples.yml   # Integration tests
-│       ├── tests.yml      # Unit tests
-│       └── release.yml    # Release automation
-├── boards/                # Board definitions (JSON)
-├── builder/               # SCons build scripts
-│   ├── frameworks/        # Framework integration
-│   └── main.py           # Main build script
-├── docs/                  # Documentation
-├── examples/              # Example projects
-├── tests/                 # Unit tests
-│   ├── conftest.py       # Shared fixtures
-│   ├── test_platform.py  # Platform tests
-│   ├── test_ssh_utils.py # SSH utilities tests
-│   └── test_platform_config.py  # Config tests
-├── platform.py            # Main platform class
-├── platform_config.py     # Configuration support
-├── platform_constants.py  # Constants definitions
-├── ssh_utils.py           # SSH utilities
-├── platform.json          # Platform manifest
-├── pytest.ini             # Pytest configuration
-├── .coveragerc            # Coverage configuration
-└── requirements-dev.txt   # Development dependencies
+│   └── workflows/              # CI/CD workflows
+│       ├── examples.yml        # Integration tests (example builds)
+│       ├── tests.yml           # Unit tests (Python + C)
+│       └── release.yml         # Release automation
+├── boards/                     # Board definitions (JSON)
+├── builder/                    # SCons build scripts
+│   ├── frameworks/             # Framework integration
+│   └── main.py                 # Main build script
+├── docs/                       # Documentation
+├── examples/                   # Example projects
+├── framework-lgpio/            # lgpio framework C sources
+│   ├── pwm-hal.h               # PWM HAL public API
+│   ├── pwm-hal.c               # PWM HAL implementation
+│   ├── pwm-hal-internal.h      # Internal types and sysfs seam declarations
+│   └── pwm-hal-sysfs.c         # Production sysfs seam implementation
+├── tests/                      # Unit tests
+│   ├── stubs/                  # C link-seam stubs (replace sysfs in test builds)
+│   │   ├── pwm-hal-sysfs-stub.c   # Sysfs seam stub implementation
+│   │   └── pwm-hal-sysfs-stub.h   # Stub control interface
+│   ├── conftest.py             # Shared pytest fixtures
+│   ├── test_platform.py        # Platform tests
+│   ├── test_ssh_utils.py       # SSH utilities tests
+│   ├── test_platform_config.py # Config tests
+│   └── test_pwm_hal.c          # PWM HAL C unit tests (CMake/ctest)
+├── platform.py                 # Main platform class
+├── platform_config.py          # Configuration support
+├── platform_constants.py       # Constants definitions
+├── ssh_utils.py                # SSH utilities
+├── platform.json               # Platform manifest
+├── CMakeLists.txt              # CMake build for C unit tests
+├── pytest.ini                  # Pytest configuration
+├── .coveragerc                 # Coverage configuration
+└── requirements-dev.txt        # Development dependencies
 ```
 
 ---
@@ -527,5 +537,5 @@ mypy platform.py
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-11-15
+**Document Version**: 1.1
+**Last Updated**: 2026-04-12

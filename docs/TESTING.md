@@ -1,7 +1,7 @@
 # Platform Testing Matrix
 
-**Last Updated**: 2025-11-30
-**Platform Version**: 1.8.0
+**Last Updated**: 2026-04-12
+**Platform Version**: 1.9.x
 **CI/CD Status**: [![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
 
 This document provides a comprehensive testing matrix for the platform-linux_arm platform, covering all
@@ -80,7 +80,7 @@ The `framework-lgpio/pwm-hal` library has a self-contained C unit test suite tha
 | Test target | `test_pwm_hal` |
 | Build system | CMake (out-of-source) |
 | Hardware required | None |
-| Tests | 29 unit tests |
+| Tests | 42 unit tests |
 
 ### Architecture
 
@@ -545,7 +545,7 @@ We welcome community testing reports! Please open an issue with:
 ---
 
 **Document Version**: 1.0
-**Last Updated**: 2025-11-09
+**Last Updated**: 2026-04-12
 **Maintained By**: platform-linux_arm Team
 
 For questions or to report testing results, please open an issue on [GitHub](https://github.com/platformio/platform-linux_arm/issues).

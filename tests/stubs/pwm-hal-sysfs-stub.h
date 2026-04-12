@@ -45,4 +45,16 @@ void stub_set_export_delay(int n_failures);
  */
 void stub_set_write_fail_on(const char *path_suffix, int error_code);
 
+/**
+ * Set write failure for path_suffix to fire after n_successes_before_fail
+ * successful writes to that suffix.  Use for testing double-failure paths.
+ *
+ * After n_successes_before_fail matching writes succeed, the next matching
+ * write returns error_code.  Only fires once — the trigger is consumed.
+ * Pass NULL to disable (default).
+ * Reset to NULL by stub_reset().
+ */
+void stub_set_write_fail_after(const char *path_suffix, int error_code,
+                               int n_successes_before_fail);
+
 #endif /* PWM_HAL_SYSFS_STUB_H */

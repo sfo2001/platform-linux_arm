@@ -142,7 +142,7 @@ static void test_pi5_pin_map(void) {
     int chip = -1, channel = -1;
     int result = pwm_get_chip_channel(18, &chip, &channel);
 
-    assert(result  == PWM_SUCCESS);
+    assert(result == PWM_SUCCESS);
     assert(chip    == 2);
     assert(channel == 0);
 }
@@ -222,7 +222,7 @@ static void test_set_polarity_normal(void) {
 /**
  * T16: pwm_set_polarity(18, PWM_POLARITY_INVERTED) after init returns PWM_SUCCESS.
  */
-static void test_set_polarity_inversed(void) {
+static void test_set_polarity_inverted(void) {
     stub_reset();
     pwm_reset_state_for_testing();
 
@@ -604,6 +604,76 @@ static void test_set_frequency_fails_on_duty_write(void) {
     assert(result == PWM_ERROR_IO);
 }
 
+/**
+ * T43: pwm_init(18, PWM_MAX_FREQUENCY_HZ) returns PWM_SUCCESS.
+ * At 100 MHz the period is 10 ns (1,000,000,000 / 100,000,000 = 10).
+ */
+static void test_init_max_freq_succeeds(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    int result = pwm_init(18, PWM_MAX_FREQUENCY_HZ);
+    assert(result == PWM_SUCCESS);
+
+    pwm_status_t status;
+    assert(pwm_get_status(18, &status) == PWM_SUCCESS);
+    assert(status.period_ns == 10);
+    assert(status.frequency_hz == PWM_MAX_FREQUENCY_HZ);
+}
+
+/**
+ * T44: pwm_set_frequency(18, 2000) returns PWM_ERROR_IO when the disable
+ * write to /enable fails.  Failure is injected after a successful init so
+ * that the fault fires on the first /enable write inside pwm_set_frequency.
+ */
+static void test_set_frequency_fails_on_disable(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_write_fail_on("/enable", PWM_ERROR_IO);
+    int result = pwm_set_frequency(18, 2000);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T45: pwm_set_polarity(18, PWM_POLARITY_INVERTED) returns PWM_ERROR_IO when
+ * the disable write to /enable fails.  Failure is injected after a successful
+ * init so that the fault fires on the first /enable write in pwm_set_polarity.
+ */
+static void test_set_polarity_fails_on_disable(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_write_fail_on("/enable", PWM_ERROR_IO);
+    int result = pwm_set_polarity(18, PWM_POLARITY_INVERTED);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T46: pwm_set_frequency(18, 2000) returns an error when both the period write
+ * and the subsequent re-enable write fail.
+ *
+ * Setup:
+ *   stub_set_write_fail_after("/enable", PWM_ERROR_IO, 1) — lets the first
+ *   /enable write (disable step) succeed, then fails the second (re-enable).
+ *   stub_set_write_fail_on("/period", PWM_ERROR_IO) — fails the period write,
+ *   triggering the re-enable attempt that then also fails.
+ *
+ * Both mechanisms use independent slots and may be armed simultaneously.
+ */
+static void test_set_frequency_reenable_fails_after_period_write(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_write_fail_after("/enable", PWM_ERROR_IO, 1);
+    stub_set_write_fail_on("/period", PWM_ERROR_IO);
+    int result = pwm_set_frequency(18, 2000);
+    assert(result == PWM_ERROR_IO);
+}
+
 /* ============================================================
  * Main
  * ============================================================ */
@@ -629,7 +699,7 @@ int main(void) {
     RUN(test_init_invalid_pin);
     RUN(test_set_frequency_valid);
     RUN(test_set_polarity_normal);
-    RUN(test_set_polarity_inversed);
+    RUN(test_set_polarity_inverted);
     RUN(test_get_status_after_init);
     RUN(test_is_enabled_after_init);
     RUN(test_is_enabled_before_init);
@@ -656,7 +726,11 @@ int main(void) {
     RUN(test_get_status_before_init_fails);
     RUN(test_write_fails_on_sysfs_io);
     RUN(test_set_frequency_fails_on_duty_write);
+    RUN(test_init_max_freq_succeeds);
+    RUN(test_set_frequency_fails_on_disable);
+    RUN(test_set_polarity_fails_on_disable);
+    RUN(test_set_frequency_reenable_fails_after_period_write);
 
-    printf("\nAll 42 tests passed.\n");
+    printf("\nAll 46 tests passed.\n");
     return 0;
 }

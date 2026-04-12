@@ -49,7 +49,7 @@ extern const pwm_pin_map_t g_pwm_pin_map_pi5[];
  * Test stub implementations live in tests/stubs/pwm-hal-sysfs-stub.c.
  */
 int  pwm_sysfs_write(const char *path, const char *value);
-/* reserved for issue #124 — not yet called from pwm-hal.c */
+/** @todo(#124) Reserved — not yet called from pwm-hal.c */
 int  pwm_sysfs_read(const char *path, char *value, size_t max_len);
 /**
  * Sleep for the given number of milliseconds.  Production implementation calls

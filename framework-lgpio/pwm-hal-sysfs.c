@@ -46,7 +46,7 @@ void pwm_sysfs_sleep_ms(int ms) {
     usleep((useconds_t)ms * 1000);
 }
 
-/* TODO(#124): currently dead code — no caller in pwm-hal.c. */
+/* @todo(#124): no callers yet — reserved for live readback */
 int pwm_sysfs_read(const char *path, char *value, size_t max_len) {
     int fd = open(path, O_RDONLY);
     if (fd < 0) {
