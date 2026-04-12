@@ -55,6 +55,7 @@ Author: PlatformIO
 License: Apache 2.0
 """
 
+import json
 import os
 import posixpath
 import shlex
@@ -194,9 +195,7 @@ class Linux_armPlatform(PlatformBase):
 
         # Build doc URL from platform manifest to avoid hardcoding the fork URL
         try:
-            import json
-
-            with open(os.path.join(_PLATFORM_DIR, "platform.json")) as _f:
+            with open(os.path.join(_PLATFORM_DIR, "platform.json"), encoding="utf-8") as _f:
                 _manifest = json.load(_f)
             homepage = _manifest.get("homepage", "https://github.com/platformio/platform-linux_arm")
         except (OSError, ValueError):
@@ -262,22 +261,22 @@ class Linux_armPlatform(PlatformBase):
             sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import PackageName, SystemType
 
-        packages = PlatformBase.packages.fget(self)
+        packages = super().packages
         systype = get_systype()
         # PlatformIO's toolchain package only works on macOS x86_64
         # All other platforms use system-installed toolchains
         if systype != SystemType.DARWIN_X86_64 and PackageName.TOOLCHAIN_GCC_ARM in packages:
             del packages[PackageName.TOOLCHAIN_GCC_ARM]
-        return packages
+        return packages  # type: ignore[no-any-return]
 
     def configure_default_packages(
-        self, variables: Dict[str, Any], targets: List[str]
+        self, options: Dict[str, Any], targets: List[str]
     ) -> Dict[str, dict]:
         """
         Configure default packages based on build configuration.
 
         Args:
-            variables: Build variables dictionary containing framework and board configuration.
+            options: Build variables dictionary containing framework and board configuration.
             targets: Build targets list.
 
         Returns:
@@ -296,13 +295,13 @@ class Linux_armPlatform(PlatformBase):
             sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import Framework
 
-        if not self._is_native() and Framework.WIRINGPI in variables.get("pioframework", []):
+        if not self._is_native() and Framework.WIRINGPI in options.get("pioframework", []):
             raise exception.PlatformioException(
                 "PlatformIO temporarily does not support cross-compilation "
                 "for WiringPi framework. Please use PIO Core directly on "
                 "Raspberry Pi"
             )
-        return super().configure_default_packages(variables, targets)
+        return super().configure_default_packages(options, targets)  # type: ignore[no-any-return]
 
     def _get_upload_protocol(self, env) -> str:
         """
@@ -331,7 +330,7 @@ class Linux_armPlatform(PlatformBase):
                 f"Supported protocols: {', '.join(valid_protocols)}"
             )
 
-        return protocol
+        return str(protocol)
 
     def _show_manual_upload_instructions(self, source) -> int:
         """
@@ -482,12 +481,12 @@ class Linux_armPlatform(PlatformBase):
         except ValueError as e:
             raise exception.PlatformioException(str(e))
 
-    def _upload_scp(self, target, source, env) -> int:
+    def _upload_scp(self, _target, source, env) -> int:
         """
         Upload binary using SCP (Secure Copy Protocol).
 
         Args:
-            target: Build target.
+            _target: Build target.
             source: List of source files (binary path).
             env: PlatformIO environment object.
 
@@ -573,12 +572,14 @@ class Linux_armPlatform(PlatformBase):
             self._get_config_default("upload_timeout", Timeouts.UPLOAD),
         )
         try:
-            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
-        except subprocess.TimeoutExpired:
+            result = subprocess.run(
+                cmd, capture_output=False, text=True, timeout=upload_timeout, check=False
+            )
+        except subprocess.TimeoutExpired as exc:
             raise exception.PlatformioException(
                 f"SCP upload timeout after {upload_timeout} seconds. "
                 "Increase timeout with 'upload_timeout' option in platformio.ini"
-            )
+            ) from exc
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -597,12 +598,12 @@ class Linux_armPlatform(PlatformBase):
 
         return 0
 
-    def _upload_rsync(self, target, source, env) -> int:
+    def _upload_rsync(self, _target, source, env) -> int:
         """
         Upload binary using rsync (efficient incremental transfer).
 
         Args:
-            target: Build target.
+            _target: Build target.
             source: List of source files (binary path).
             env: PlatformIO environment object.
 
@@ -680,12 +681,14 @@ class Linux_armPlatform(PlatformBase):
             self._get_config_default("upload_timeout", Timeouts.UPLOAD),
         )
         try:
-            result = subprocess.run(cmd, capture_output=False, text=True, timeout=upload_timeout)
-        except subprocess.TimeoutExpired:
+            result = subprocess.run(
+                cmd, capture_output=False, text=True, timeout=upload_timeout, check=False
+            )
+        except subprocess.TimeoutExpired as exc:
             raise exception.PlatformioException(
                 f"Rsync upload timeout after {upload_timeout} seconds. "
                 "Increase timeout with 'upload_timeout' option in platformio.ini"
-            )
+            ) from exc
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -704,7 +707,7 @@ class Linux_armPlatform(PlatformBase):
 
         return 0
 
-    def _upload_ssh(self, target, source, env) -> int:
+    def _upload_ssh(self, _target, source, env) -> int:
         """
         Upload binary using SSH with piped input.
 
@@ -712,7 +715,7 @@ class Linux_armPlatform(PlatformBase):
         'cat' command, eliminating the need for SCP.
 
         Args:
-            target: Build target.
+            _target: Build target.
             source: List of source files (binary path).
             env: PlatformIO environment object.
 
@@ -794,12 +797,13 @@ class Linux_armPlatform(PlatformBase):
                     capture_output=False,
                     text=False,
                     timeout=upload_timeout,
+                    check=False,
                 )
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             raise exception.PlatformioException(
                 f"SSH upload timeout after {upload_timeout} seconds. "
                 "Increase timeout with 'upload_timeout' option in platformio.ini"
-            )
+            ) from exc
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -912,16 +916,16 @@ class Linux_armPlatform(PlatformBase):
             self._get_config_default("upload_run_timeout", Timeouts.UPLOAD_RUN),
         )
         try:
-            result = subprocess.run(cmd, timeout=run_timeout)
-        except subprocess.TimeoutExpired:
+            result = subprocess.run(cmd, timeout=run_timeout, check=False)
+        except subprocess.TimeoutExpired as exc:
             raise exception.PlatformioException(
                 f"Remote command execution timeout after {run_timeout} seconds. "
                 "Increase timeout with 'upload_run_timeout' option in platformio.ini"
-            )
+            ) from exc
 
         return result.returncode
 
-    def on_monitor(self, target, source, env) -> int:
+    def on_monitor(self, _target, source, env) -> int:
         """
         Handle remote program monitoring via SSH.
 
@@ -930,7 +934,7 @@ class Linux_armPlatform(PlatformBase):
         but for remote Linux targets.
 
         Args:
-            target: Build target.
+            _target: Build target.
             source: List of source files (binary path).
             env: PlatformIO environment object.
 
@@ -943,7 +947,8 @@ class Linux_armPlatform(PlatformBase):
         Note:
             Requires upload_port to be configured in platformio.ini.
             Optionally supports upload_run_command for custom execution.
-            Uses upload_run_timeout for timeout protection (default: 300 seconds, Timeouts.UPLOAD_RUN).
+            Uses upload_run_timeout for timeout protection
+            (default: 300 seconds, Timeouts.UPLOAD_RUN).
             If upload_run_after=true, monitor is skipped (program already ran).
 
         Example:
@@ -1009,7 +1014,8 @@ class Linux_armPlatform(PlatformBase):
             if progpath:
                 # Expand SCons variables like $BUILD_DIR, $PROGNAME, $PROGSUFFIX
                 expanded_path = env.subst(progpath)
-                # Create a list with the program path so _run_remote_command can extract the basename
+                # Create a list with the program path so _run_remote_command
+                # can extract the basename
                 source = [expanded_path]
 
         # Run the remote command and stream output
@@ -1071,7 +1077,7 @@ class Linux_armPlatform(PlatformBase):
             f"  Windows: Install cross-toolchain with GDB"
         )
 
-    def _parse_debug_connection_info(self, debug_config: dict) -> tuple:
+    def _parse_debug_connection_info(self, debug_config: Any) -> tuple:
         """
         Parse debug connection information from configuration.
 
@@ -1127,7 +1133,7 @@ class Linux_armPlatform(PlatformBase):
 
     def _configure_gdbserver_ssh(
         self,
-        debug_config: dict,
+        debug_config: Any,
         user: str,
         host: str,
         ssh_port: str,
@@ -1186,12 +1192,13 @@ class Linux_armPlatform(PlatformBase):
         # Format: "| <command>" tells PlatformIO to use pipe mode instead of TCP connection
         pipe_port = f"| {ssh_cmd}"
 
-        # WORKAROUND: _port property doesn't persist between configure_debug_session and reveal_patterns
-        # Store in env_options["debug_port"] instead to ensure it's used when substituting $DEBUG_PORT
+        # WORKAROUND: _port property doesn't persist between configure_debug_session
+        # and reveal_patterns. Store in env_options["debug_port"] instead to ensure
+        # it's used when substituting $DEBUG_PORT
         debug_config.env_options["debug_port"] = pipe_port
         debug_config.port = pipe_port  # Also set property in case PlatformIO uses it directly
 
-    def _configure_gdb_remote(self, debug_config: dict) -> None:
+    def _configure_gdb_remote(self, debug_config: Any) -> None:
         """
         Configure direct TCP connection to gdbserver.
 
@@ -1207,7 +1214,7 @@ class Linux_armPlatform(PlatformBase):
         debug_config.port = debug_port
 
     def _build_debug_init_commands(
-        self, debug_tool: str, debug_config: dict, prog_path: str
+        self, debug_tool: str, debug_config: Any, prog_path: str
     ) -> list:
         """
         Build GDB initialization commands.
@@ -1247,7 +1254,7 @@ class Linux_armPlatform(PlatformBase):
 
         return init_cmds
 
-    def configure_debug_session(self, debug_config: dict) -> dict:
+    def configure_debug_session(self, debug_config: Any) -> Any:
         """
         Configure remote debugging session for ARM Linux targets.
 
@@ -1337,9 +1344,8 @@ class Linux_armPlatform(PlatformBase):
         if id_:
             # Single board
             return self._add_debug_to_board(result)
-        else:
-            # All boards
-            return {key: self._add_debug_to_board(value) for key, value in result.items()}
+        # All boards
+        return {key: self._add_debug_to_board(value) for key, value in result.items()}
 
     def _add_debug_to_board(self, board):
         """
@@ -1442,7 +1448,7 @@ class Linux_armPlatform(PlatformBase):
 
             return RemoteTestUploader(target, source, env).run()
 
-        elif test_transport == TestTransport.MANUAL:
+        if test_transport == TestTransport.MANUAL:
             separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
             print("\n" + separator)
             print("MANUAL TEST EXECUTION REQUIRED")
@@ -1459,8 +1465,7 @@ class Linux_armPlatform(PlatformBase):
             print(separator + "\n")
             return 0
 
-        else:
-            raise exception.PlatformioException(
-                f"Unknown test_transport '{test_transport}'. "
-                f"Supported transports: {', '.join(TestTransport.ALL)}"
-            )
+        raise exception.PlatformioException(
+            f"Unknown test_transport '{test_transport}'. "
+            f"Supported transports: {', '.join(TestTransport.ALL)}"
+        )

@@ -817,7 +817,7 @@ class TestOnMonitor:
         )
 
         platform = Linux_armPlatform(mock_platform_manifest)
-        result = platform.on_monitor(target=Mock(), source=Mock(), env=env)
+        result = platform.on_monitor(_target=Mock(), source=Mock(), env=env)
 
         assert result == 0
         print_calls = [str(c) for c in mock_print.call_args_list]
@@ -843,7 +843,7 @@ class TestOnMonitor:
         env.GetProjectOption = Mock(return_value=None)
 
         platform = Linux_armPlatform(mock_platform_manifest)
-        result = platform.on_monitor(target=Mock(), source=Mock(), env=env)
+        result = platform.on_monitor(_target=Mock(), source=Mock(), env=env)
 
         assert result == 0
         print_calls = [str(c) for c in mock_print.call_args_list]
@@ -875,7 +875,7 @@ class TestOnMonitor:
         env.get = Mock(return_value=None)
 
         platform = Linux_armPlatform(mock_platform_manifest)
-        result = platform.on_monitor(target=Mock(), source=[], env=env)
+        result = platform.on_monitor(_target=Mock(), source=[], env=env)
 
         assert result == 0
         mock_run_remote.assert_called_once()

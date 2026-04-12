@@ -56,7 +56,7 @@ from platform_config import get_platform_config, parse_bool_option
 from ssh_utils import SSHCommandBuilder, SSHConnectionConfig, parse_upload_port
 
 
-class RemoteTestUploader:
+class RemoteTestUploader:  # pylint: disable=too-many-instance-attributes
     """
     Handles uploading and executing test binaries on remote Linux ARM targets via SSH.
 
@@ -103,12 +103,12 @@ class RemoteTestUploader:
         self.target = target
         self.source = source
         self.env = env
-        self.upload_port = None
-        self.user = None
-        self.host = None
-        self.remote_path = None
-        self.ssh_port = SSHDefaults.PORT
-        self.ssh_key = None
+        self.upload_port: str | None = None
+        self.user: str | None = None
+        self.host: str | None = None
+        self.remote_path: str | None = None
+        self.ssh_port: int = SSHDefaults.PORT
+        self.ssh_key: str | None = None
 
         # Load platform configuration for defaults
         self._config = get_platform_config()
@@ -225,6 +225,8 @@ class RemoteTestUploader:
                 self._get_config_default("test_strict_host_check", False),
             )
         )
+        assert self.user is not None, "_create_ssh_builder called before parse_test_port"
+        assert self.host is not None, "_create_ssh_builder called before parse_test_port"
         try:
             config = SSHConnectionConfig(
                 user=self.user,
@@ -296,6 +298,9 @@ class RemoteTestUploader:
         from platform_constants import Timeouts
 
         source_file = str(self.source[0])
+        assert self.user is not None, "upload_test_binary called before parse_test_port"
+        assert self.host is not None, "upload_test_binary called before parse_test_port"
+        assert self.remote_path is not None, "upload_test_binary called before parse_test_port"
 
         print(f"\nUploading test binary to {self.user}@{self.host}:{self.remote_path}")
 
@@ -306,12 +311,14 @@ class RemoteTestUploader:
         )
         cmd = self.build_scp_command(source_file, self.remote_path)
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=upload_timeout)
-        except subprocess.TimeoutExpired:
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=upload_timeout, check=False
+            )
+        except subprocess.TimeoutExpired as exc:
             raise exception.PlatformioException(
                 f"Test upload timeout after {upload_timeout} seconds. "
                 "Increase timeout with 'test_upload_timeout' option in platformio.ini"
-            )
+            ) from exc
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -324,12 +331,12 @@ class RemoteTestUploader:
         chmod_cmd = self.build_ssh_command(f"chmod +x {shlex.quote(self.remote_path)}")
         try:
             result = subprocess.run(
-                chmod_cmd, capture_output=True, text=True, timeout=Timeouts.CHMOD
+                chmod_cmd, capture_output=True, text=True, timeout=Timeouts.CHMOD, check=False
             )
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             raise exception.PlatformioException(
                 "Timeout while setting executable permission on remote test binary"
-            )
+            ) from exc
 
         if result.returncode != 0:
             raise exception.PlatformioException(
@@ -352,6 +359,7 @@ class RemoteTestUploader:
         from platform_constants import TestConstants
 
         # Use shlex.quote to prevent command injection via remote_path
+        assert self.remote_path is not None, "_build_test_command called before parse_test_port"
         return f'{shlex.quote(self.remote_path)}; echo "{TestConstants.EXIT_CODE_MARKER}$?"'
 
     def _collect_test_output(self, process, test_timeout: int) -> int:
@@ -383,13 +391,13 @@ class RemoteTestUploader:
             # wait after the stdout loop — a hung process would block forever
             # with the old iter() approach.
             stdout, _ = process.communicate(timeout=test_timeout)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             process.kill()
             process.communicate()  # drain pipes to avoid deadlock
             raise exception.PlatformioException(
                 f"Test execution timeout after {test_timeout} seconds. "
                 "Increase timeout with 'test_timeout' option in platformio.ini"
-            )
+            ) from exc
 
         for line in stdout.splitlines(keepends=True):
             if TestConstants.EXIT_CODE_MARKER in line:
@@ -427,6 +435,8 @@ class RemoteTestUploader:
         # Lazy import to avoid breaking platform loading
         from platform_constants import Timeouts, UIConstants
 
+        assert self.user is not None, "execute_test_binary called before parse_test_port"
+        assert self.host is not None, "execute_test_binary called before parse_test_port"
         print(f"\nExecuting tests on {self.user}@{self.host}...")
         print(UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH)
 
@@ -439,7 +449,7 @@ class RemoteTestUploader:
         )
 
         # Start process
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=consider-using-with
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -498,7 +508,8 @@ class RemoteTestUploader:
                 file=sys.stderr,
             )
             print(
-                "Increase timeout with 'test_timeout' or 'test_upload_timeout' option in platformio.ini",
+                "Increase timeout with 'test_timeout' or 'test_upload_timeout' "
+                "option in platformio.ini",
                 file=sys.stderr,
             )
             return 1
@@ -517,7 +528,7 @@ class RemoteTestUploader:
         except KeyboardInterrupt:
             print("\nERROR: Operation cancelled by user", file=sys.stderr)
             return 130
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"\nERROR: Unexpected error: {e}", file=sys.stderr)
             import traceback
 
