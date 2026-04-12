@@ -360,7 +360,7 @@ int pwm_write(int pin, float duty_cycle_percent) {
 
     // Calculate duty cycle in nanoseconds
     uint64_t period_ns = 1000000000ULL / state->frequency_hz;
-    uint64_t duty_cycle_ns = (uint64_t)(period_ns * (duty_cycle_percent / 100.0f));
+    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * (duty_cycle_percent / 100.0));
 
     // Set duty cycle
     char path[MAX_PATH_LEN];
@@ -441,7 +441,7 @@ int pwm_set_frequency(int pin, uint32_t freq_hz) {
     }
 
     // Update duty cycle to maintain percentage
-    uint64_t duty_cycle_ns = (uint64_t)(period_ns * (state->duty_cycle_percent / 100.0f));
+    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * (state->duty_cycle_percent / 100.0));
     snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/duty_cycle",
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     snprintf(value, sizeof(value), "%llu", (unsigned long long)duty_cycle_ns);
@@ -544,7 +544,7 @@ int pwm_get_status(int pin, pwm_status_t *status) {
     status->duty_cycle_percent = state->duty_cycle_percent;
     status->polarity = state->polarity;
     status->period_ns = 1000000000ULL / state->frequency_hz;
-    status->duty_cycle_ns = (uint64_t)(status->period_ns * (state->duty_cycle_percent / 100.0f));
+    status->duty_cycle_ns = (uint64_t)((double)status->period_ns * (state->duty_cycle_percent / 100.0));
 
     return PWM_SUCCESS;
 }

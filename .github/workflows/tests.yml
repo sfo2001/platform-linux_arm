@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [develop, main, master, 'claude/**']
+    branches: [develop, main, master, 'claude/**', 'fix/**', 'feature/**']
   pull_request:
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -43,7 +43,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         # Install platformio for testing platform integration
-        pip install platformio
+        pip install "platformio>=6.1.0,<7.0.0"
 
     - name: Run tests with pytest
       run: |
@@ -60,6 +60,28 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  c-unit-tests:
+    name: C Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Install CMake build dependencies
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y cmake build-essential libmsgpack-cxx-dev
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Build C unit tests
+      run: cmake --build build
+
+    - name: Run C unit tests
+      run: ctest --test-dir build --output-on-failure
+
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
@@ -69,7 +91,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
       with:
         python-version: '3.12'
         cache: 'pip'
@@ -79,7 +101,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
-        pip install platformio
+        pip install "platformio>=6.1.0,<7.0.0"
 
     - name: Check code formatting with black
       run: |
@@ -107,7 +129,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
       with:
         python-version: '3.12'
         cache: 'pip'
@@ -117,14 +139,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
-        pip install platformio
 
     - name: Generate coverage report
       run: |
         pytest tests/ --cov=. --cov-report=html --cov-report=term
 
     - name: Archive coverage report
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4
       with:
         name: coverage-report
         path: htmlcov/

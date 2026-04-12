@@ -84,7 +84,7 @@ int pwm_sysfs_write(const char *path, const char *value) {
      *   PWM_SYSFS_BASE "/pwmchipN/unexport" → mark chip N, channel=value unexported
      * All other paths succeed silently (period, duty_cycle, enable, polarity).
      */
-    if (sscanf(path, "/sys/class/pwm/pwmchip%d/export", &chip) == 1) {
+    if (sscanf(path, PWM_SYSFS_BASE "/pwmchip%d/export", &chip) == 1) {
         int channel = -1;
         /*
          * Parse channel from value string.  Use sscanf so malformed input
@@ -101,7 +101,7 @@ int pwm_sysfs_write(const char *path, const char *value) {
         }
         return PWM_SUCCESS;
     }
-    if (sscanf(path, "/sys/class/pwm/pwmchip%d/unexport", &chip) == 1) {
+    if (sscanf(path, PWM_SYSFS_BASE "/pwmchip%d/unexport", &chip) == 1) {
         int channel = -1;
         /*
          * Parse channel from value string.  Use sscanf so malformed input

@@ -31,7 +31,11 @@ platform-linux_arm/
 ├── scripts/                 # Setup scripts (setup-mraa-cross.sh, setup-lgpio-cross.sh, …)
 ├── tests/                   # Python unit tests (pytest) for builder scripts
 │                            #   and C unit tests (CMake/ctest) for framework C code
-│   └── stubs/               # C sysfs stubs for link-seam unit testing
+│   ├── test_platform.py     # pytest: builder script unit tests (83 tests)
+│   ├── test_pwm_hal.c       # ctest: PWM HAL C unit tests (29 tests, no hardware needed)
+│   └── stubs/
+│       ├── pwm-hal-sysfs-stub.c  # Link-seam stub — replaces /sys/class/pwm/ with in-memory table
+│       └── pwm-hal-sysfs-stub.h  # Stub control API (stub_reset, stub_set_pi5, stub_set_export_delay)
 └── docs/                    # Documentation (boards, frameworks, security, upload, etc.)
 ```
 

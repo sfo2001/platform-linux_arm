@@ -317,6 +317,31 @@ If you have Raspberry Pi hardware:
    - No runtime errors
    - Expected behavior observed
 
+### C Unit Tests (Required when modifying `framework-lgpio/`)
+
+The PWM HAL has a self-contained C unit test suite that runs without hardware:
+
+```bash
+# Configure
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+# Build and run
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+Tests live in `tests/test_pwm_hal.c`. The suite uses a link-seam stub
+(`tests/stubs/pwm-hal-sysfs-stub.c`) that replaces all filesystem access
+with an in-memory table — no Raspberry Pi hardware required. See
+`docs/TESTING.md` for the full architecture.
+
+**Run these tests if you touch:**
+
+- `framework-lgpio/pwm-hal.c`
+- `framework-lgpio/pwm-hal-sysfs.c`
+- `framework-lgpio/pwm-hal-internal.h`
+- `framework-lgpio/pwm-hal.h`
+
 ### CI/CD Testing
 
 Our GitHub Actions CI automatically tests:
@@ -324,6 +349,7 @@ Our GitHub Actions CI automatically tests:
 - Cross-compilation on Ubuntu (Linux x86_64)
 - `baremetal-hello` example for multiple boards
 - `lgpio-blink` example for multiple boards (32-bit and 64-bit)
+- PWM HAL C unit tests (29 tests via CMake/ctest)
 
 Make sure your changes pass CI before submitting a PR.
 

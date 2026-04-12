@@ -55,6 +55,11 @@ int pwm_sysfs_read(const char *path, char *value, size_t max_len) {
         return PWM_ERROR_IO;
     }
 
+    if (max_len == 0) {
+        close(fd);
+        return PWM_ERROR_INVALID_PARAM;
+    }
+
     ssize_t len = read(fd, value, max_len - 1);
     close(fd);
 
