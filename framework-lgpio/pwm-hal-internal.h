@@ -49,7 +49,13 @@ extern const pwm_pin_map_t g_pwm_pin_map_pi5[];
  * Test stub implementations live in tests/stubs/pwm-hal-sysfs-stub.c.
  */
 int  pwm_sysfs_write(const char *path, const char *value);
-/** @todo(#124) Reserved — not yet called from pwm-hal.c */
+/**
+ * Read a sysfs attribute into value (max_len bytes, NUL-terminated).
+ * @todo(#124) Not yet called from pwm-hal.c — readback support is planned.
+ * Stub and production implementations MUST provide this function regardless,
+ * as it is part of the mandatory seam contract; a stub that omits it will
+ * fail to link when #124 wires up the caller.
+ */
 int  pwm_sysfs_read(const char *path, char *value, size_t max_len);
 /**
  * Sleep for the given number of milliseconds.  Production implementation calls
@@ -66,6 +72,12 @@ const pwm_pin_map_t *pwm_get_pin_map(void);
  */
 #ifdef UNIT_TESTING
 void pwm_reset_state_for_testing(void);
+/**
+ * Fill all state slots with fictional entries to simulate slot exhaustion.
+ * Use before calling pwm_init() to trigger the PWM_ERROR_HARDWARE path in
+ * pwm_alloc_state().  See pwm-hal.c for implementation details.
+ */
+void pwm_fill_channels_for_testing(void);
 #endif
 
 #endif /* PWM_HAL_INTERNAL_H */

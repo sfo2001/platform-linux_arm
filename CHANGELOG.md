@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   testing without Raspberry Pi hardware
 - lgpio PWM HAL: `tests/stubs/pwm-hal-sysfs-stub.c` — link-seam stub that replaces the
   production sysfs implementation in test builds; tracks export state in-memory
-- lgpio PWM HAL: `tests/test_pwm_hal.c` — 42 C unit tests covering init/deinit, conflict
+- lgpio PWM HAL: `tests/test_pwm_hal.c` — 50 C unit tests covering init/deinit, conflict
   detection, pin validation, frequency/polarity setters, status query, boundary values,
   and export timeout simulation
 - CI: `cpp-tests` job in `examples.yml` builds and runs the PWM HAL C test suite on

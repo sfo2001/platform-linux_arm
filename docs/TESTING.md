@@ -80,7 +80,7 @@ The `framework-lgpio/pwm-hal` library has a self-contained C unit test suite tha
 | Test target | `test_pwm_hal` |
 | Build system | CMake (out-of-source) |
 | Hardware required | None |
-| Tests | 42 unit tests |
+| Tests | 50 unit tests |
 
 ### Architecture
 

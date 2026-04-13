@@ -23,7 +23,8 @@
 /* ============================================================
  * Helper macro — print test name, call function, check result
  * ============================================================ */
-#define RUN(fn) do { fn(); printf("PASS %s\n", #fn); } while (0)
+static int g_tests_run = 0;
+#define RUN(fn) do { fn(); g_tests_run++; printf("PASS %s\n", #fn); } while (0)
 
 /* ============================================================
  * Test cases
@@ -196,7 +197,8 @@ static void test_init_invalid_pin(void) {
 }
 
 /**
- * T14: pwm_set_frequency(18, 2000) after init returns PWM_SUCCESS.
+ * T14: pwm_set_frequency(18, 2000) after init returns PWM_SUCCESS and updates
+ * shadow state — status.frequency_hz must reflect the new frequency.
  */
 static void test_set_frequency_valid(void) {
     stub_reset();
@@ -205,6 +207,9 @@ static void test_set_frequency_valid(void) {
     assert(pwm_init(18, 1000) == PWM_SUCCESS);
     int result = pwm_set_frequency(18, 2000);
     assert(result == PWM_SUCCESS);
+    pwm_status_t status;
+    assert(pwm_get_status(18, &status) == PWM_SUCCESS);
+    assert(status.frequency_hz == 2000);
 }
 
 /**
@@ -220,7 +225,8 @@ static void test_set_polarity_normal(void) {
 }
 
 /**
- * T16: pwm_set_polarity(18, PWM_POLARITY_INVERTED) after init returns PWM_SUCCESS.
+ * T16: pwm_set_polarity(18, PWM_POLARITY_INVERTED) after init returns PWM_SUCCESS and
+ * updates shadow state — status.polarity must reflect the new polarity value.
  */
 static void test_set_polarity_inverted(void) {
     stub_reset();
@@ -229,6 +235,9 @@ static void test_set_polarity_inverted(void) {
     assert(pwm_init(18, 1000) == PWM_SUCCESS);
     int result = pwm_set_polarity(18, PWM_POLARITY_INVERTED);
     assert(result == PWM_SUCCESS);
+    pwm_status_t status;
+    assert(pwm_get_status(18, &status) == PWM_SUCCESS);
+    assert(status.polarity == PWM_POLARITY_INVERTED);
 }
 
 /**
@@ -375,8 +384,15 @@ static void test_get_chip_channel_null_fails(void) {
     stub_reset();
     pwm_reset_state_for_testing();
 
+    int chip, channel;
     int result = pwm_get_chip_channel(18, NULL, NULL);
     assert(result == PWM_ERROR_INVALID_PARAM);
+    result = pwm_get_chip_channel(18, NULL, &channel);
+    assert(result == PWM_ERROR_INVALID_PARAM);
+    result = pwm_get_chip_channel(18, &chip, NULL);
+    assert(result == PWM_ERROR_INVALID_PARAM);
+    (void)chip;    /* output only; value discarded — suppress -Wunused warnings */
+    (void)channel;
 }
 
 /**
@@ -672,6 +688,81 @@ static void test_set_frequency_reenable_fails_after_period_write(void) {
     stub_set_write_fail_on("/period", PWM_ERROR_IO);
     int result = pwm_set_frequency(18, 2000);
     assert(result == PWM_ERROR_IO);
+    assert(pwm_is_enabled(18) == false);
+}
+
+/**
+ * T47: pwm_deinit(18) propagates the error when the unexport sysfs write fails.
+ * The state is freed regardless; the caller receives the unexport error code.
+ * Verified by confirming GPIO 12 (same chip/channel as GPIO 18 on Pi 1-4) can
+ * be initialised after the failed deinit — proving the slot was released.
+ */
+static void test_deinit_unexport_fail_propagates(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_write_fail_on("/unexport", PWM_ERROR_IO);
+    int result = pwm_deinit(18);
+    assert(result == PWM_ERROR_IO);
+    /* State slot must be freed even though unexport failed. */
+    assert(pwm_init(12, 1000) == PWM_SUCCESS);
+}
+
+/**
+ * T48: pwm_set_polarity(18, PWM_POLARITY_INVERTED) returns an error when both
+ * the polarity write and the subsequent re-enable write fail.
+ *
+ * Mirrors T46 for pwm_set_polarity.
+ *
+ * Setup:
+ *   stub_set_write_fail_after("/enable", PWM_ERROR_IO, 1) — lets the first
+ *   /enable write (disable step) succeed, then fails the second (re-enable).
+ *   stub_set_write_fail_on("/polarity", PWM_ERROR_IO) — fails the polarity write,
+ *   triggering the re-enable attempt that then also fails.
+ *
+ * Both mechanisms use independent slots and may be armed simultaneously.
+ */
+static void test_set_polarity_reenable_fails_after_polarity_write(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_write_fail_after("/enable", PWM_ERROR_IO, 1);
+    stub_set_write_fail_on("/polarity", PWM_ERROR_IO);
+    int result = pwm_set_polarity(18, PWM_POLARITY_INVERTED);
+    assert(result == PWM_ERROR_IO);
+    assert(pwm_is_enabled(18) == false);
+}
+
+/**
+ * T49: pwm_init(18, 1000) returns PWM_ERROR_IO when the export sysfs write fails.
+ * The write to pwmchipN/export is the first I/O step in pwm_export(); failure
+ * propagates directly to pwm_init() without entering the poll loop.
+ */
+static void test_init_fails_on_export_write(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    stub_set_write_fail_on("/export", PWM_ERROR_IO);
+    int result = pwm_init(18, 1000);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T50: pwm_init(18, 1000) returns PWM_ERROR_HARDWARE when all state slots are full.
+ * pwm_fill_channels_for_testing() pre-fills every g_pwm_channels slot with a
+ * fictional pin (gpio_pin = 100..107, chip=0, ch=1).  GPIO 18 maps to ch=0,
+ * so the conflict check passes, but pwm_alloc_state() finds no free slot and
+ * returns NULL, causing pwm_init() to return PWM_ERROR_HARDWARE.
+ */
+static void test_init_fails_when_all_slots_full(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+    pwm_fill_channels_for_testing();
+
+    int result = pwm_init(18, 1000);
+    assert(result == PWM_ERROR_HARDWARE);
 }
 
 /* ============================================================
@@ -679,11 +770,6 @@ static void test_set_frequency_reenable_fails_after_period_write(void) {
  * ============================================================ */
 
 int main(void) {
-    /* Known gap: PWM_ERROR_HARDWARE (slot exhaustion at MAX_PWM_CHANNELS=8)
-     * is not tested. The Pi 1-4 stub map provides only 2 distinct chip/channel
-     * pairs, making it impossible to exhaust 8 slots without extending the stub.
-     * Tracked as a future improvement. */
-
     RUN(test_init_gpio18_succeeds);
     RUN(test_init_gpio13_succeeds);
     RUN(test_init_conflict_gpio12_after_gpio18);
@@ -730,7 +816,11 @@ int main(void) {
     RUN(test_set_frequency_fails_on_disable);
     RUN(test_set_polarity_fails_on_disable);
     RUN(test_set_frequency_reenable_fails_after_period_write);
+    RUN(test_set_polarity_reenable_fails_after_polarity_write);
+    RUN(test_deinit_unexport_fail_propagates);
+    RUN(test_init_fails_on_export_write);
+    RUN(test_init_fails_when_all_slots_full);
 
-    printf("\nAll 46 tests passed.\n");
+    printf("\nAll %d tests passed.\n", g_tests_run);
     return 0;
 }

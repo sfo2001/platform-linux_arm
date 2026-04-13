@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * PWM Hardware Abstraction Layer (HAL) Implementation
  *
@@ -83,6 +84,8 @@ const pwm_pin_map_t g_pwm_pin_map_pi5[] = {
  * Internal Helper Functions
  * ============================================================================ */
 
+static void pwm_init_state(void); /* forward declaration — defined below UNIT_TESTING block */
+
 #ifdef UNIT_TESTING
 /**
  * @brief Reset all PWM state for unit tests.
@@ -100,6 +103,26 @@ void pwm_reset_state_for_testing(void) {
         g_pwm_channels[i].frequency_hz      = 0;
         g_pwm_channels[i].duty_cycle_percent = 0.0f;
         g_pwm_channels[i].polarity          = PWM_POLARITY_NORMAL;
+    }
+}
+
+/**
+ * @brief Fill all state slots with dummy entries to simulate slot exhaustion.
+ *
+ * Populates every g_pwm_channels slot with a fictional gpio_pin (100+i) and
+ * chip=0, channel=1 so that a subsequent pwm_init() for any real pin passes
+ * the conflict check (channel 0 is unused) but fails pwm_alloc_state() with
+ * NULL, causing pwm_init() to return PWM_ERROR_HARDWARE.
+ *
+ * Called at the start of the slot-exhaustion test case only.
+ * Only compiled with -DUNIT_TESTING=1.
+ */
+void pwm_fill_channels_for_testing(void) {
+    pwm_init_state(); /* mark initialized so pwm_init() won't wipe slots on entry */
+    for (int i = 0; i < MAX_PWM_CHANNELS; i++) {
+        g_pwm_channels[i].gpio_pin   = 100 + i; /* fictional pins, not in pin map */
+        g_pwm_channels[i].pwm_chip   = 0;
+        g_pwm_channels[i].pwm_channel = 1;       /* ch=1 ≠ ch=0 used by GPIO 18 */
     }
 }
 #endif /* UNIT_TESTING */
@@ -360,7 +383,7 @@ int pwm_write(int pin, float duty_cycle_percent) {
 
     // Calculate duty cycle in nanoseconds
     uint64_t period_ns = 1000000000ULL / state->frequency_hz;
-    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * (duty_cycle_percent / 100.0));
+    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * ((double)duty_cycle_percent / 100.0));
 
     // Set duty cycle
     char path[MAX_PATH_LEN];
@@ -441,7 +464,7 @@ int pwm_set_frequency(int pin, uint32_t freq_hz) {
     }
 
     // Update duty cycle to maintain percentage
-    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * (state->duty_cycle_percent / 100.0));
+    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * ((double)state->duty_cycle_percent / 100.0));
     snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/duty_cycle",
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     snprintf(value, sizeof(value), "%llu", (unsigned long long)duty_cycle_ns);
@@ -462,6 +485,7 @@ int pwm_set_frequency(int pin, uint32_t freq_hz) {
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     result = pwm_sysfs_write(path, "1");
     if (result != PWM_SUCCESS) {
+        state->is_enabled = false;
         return result;
     }
 
@@ -502,7 +526,10 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity) {
         // Try to re-enable with old polarity
         snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/enable",
                  PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
-        pwm_sysfs_write(path, "1");
+        int re_enable_result = pwm_sysfs_write(path, "1");
+        if (re_enable_result != PWM_SUCCESS) {
+            state->is_enabled = false;
+        }
         return result;
     }
 
@@ -511,6 +538,7 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity) {
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     result = pwm_sysfs_write(path, "1");
     if (result != PWM_SUCCESS) {
+        state->is_enabled = false;
         return result;
     }
 
@@ -544,7 +572,7 @@ int pwm_get_status(int pin, pwm_status_t *status) {
     status->duty_cycle_percent = state->duty_cycle_percent;
     status->polarity = state->polarity;
     status->period_ns = 1000000000ULL / state->frequency_hz;
-    status->duty_cycle_ns = (uint64_t)((double)status->period_ns * (state->duty_cycle_percent / 100.0));
+    status->duty_cycle_ns = (uint64_t)((double)status->period_ns * ((double)state->duty_cycle_percent / 100.0));
 
     return PWM_SUCCESS;
 }

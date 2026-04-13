@@ -27,14 +27,15 @@ int pwm_sysfs_write(const char *path, const char *value) {
         return PWM_ERROR_IO;
     }
 
-    ssize_t len     = (ssize_t)strlen(value);
-    ssize_t written = write(fd, value, (size_t)len);
+    ssize_t len        = (ssize_t)strlen(value);
+    ssize_t written    = write(fd, value, (size_t)len);
+    int     write_errno = errno;   /* capture before close() can clobber */
     close(fd);
 
     if (written != len) {
-        if (errno == EACCES || errno == EPERM)  return PWM_ERROR_PERMISSION;
-        if (errno == EBUSY)                      return PWM_ERROR_BUSY;
-        if (errno == EINVAL)                     return PWM_ERROR_INVALID_PARAM;
+        if (write_errno == EACCES || write_errno == EPERM)  return PWM_ERROR_PERMISSION;
+        if (write_errno == EBUSY)                            return PWM_ERROR_BUSY;
+        if (write_errno == EINVAL)                           return PWM_ERROR_INVALID_PARAM;
         return PWM_ERROR_IO;
     }
 
