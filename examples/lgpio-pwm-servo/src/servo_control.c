@@ -250,7 +250,13 @@ int main(int argc, char *argv[]) {
 
     // Parse command line arguments
     if (argc > 1) {
-        gpio_pin = atoi(argv[1]);
+        char *end;
+        long val = strtol(argv[1], &end, 10);
+        if (*end != '\0' || val < 0 || val > 99) {
+            fprintf(stderr, "Invalid GPIO pin: %s\n", argv[1]);
+            return 1;
+        }
+        gpio_pin = (int)val;
     }
 
     // Print header

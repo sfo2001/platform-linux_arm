@@ -132,10 +132,22 @@ int main(int argc, char *argv[]) {
 
     // Parse command line arguments
     if (argc > 1) {
-        gpio_pin = atoi(argv[1]);
+        char *end;
+        long val = strtol(argv[1], &end, 10);
+        if (*end != '\0' || val < 0 || val > 99) {
+            fprintf(stderr, "Invalid GPIO pin: %s\n", argv[1]);
+            return 1;
+        }
+        gpio_pin = (int)val;
     }
     if (argc > 2) {
-        frequency = atoi(argv[2]);
+        char *end;
+        long val = strtol(argv[2], &end, 10);
+        if (*end != '\0' || val < PWM_MIN_FREQUENCY_HZ || val > PWM_MAX_FREQUENCY_HZ) {
+            fprintf(stderr, "Invalid frequency: %s\n", argv[2]);
+            return 1;
+        }
+        frequency = (int)val;
     }
 
     // Print header

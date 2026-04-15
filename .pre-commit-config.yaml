@@ -69,7 +69,16 @@ repos:
     rev: v1.33.0
     hooks:
       - id: yamllint
-        args: ['-d', '{extends: default, rules: {line-length: {max: 120}, document-start: disable, indentation: disable, truthy: disable, comments: disable}}']
+        # Disabled rules for GitHub Actions workflow YAML:
+        #   line-length: max 200  — CI YAML legitimately has long run: blocks
+        #   document-start: disable — '---' header is optional in GHA files
+        #   truthy: disable — GHA uses 'on:' as a trigger key; yamllint incorrectly
+        #                     flags it as a YAML boolean truthy value
+        #   indentation: disable — GHA workflows use valid but complex nested
+        #                          indentation that triggers false positives
+        #   comments: disable — inline '# vN' SHA-pinning comments violate
+        #                       yamllint's comment-spacing rule
+        args: ['-d', '{extends: default, rules: {line-length: {max: 200}, document-start: disable, indentation: disable, truthy: disable, comments: disable}}']
         files: ^\.github/workflows/.*\.ya?ml$
 
   # Python docstring checks (optional, can be removed if too strict)

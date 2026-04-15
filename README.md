@@ -2,9 +2,14 @@
 
 [![Examples](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml/badge.svg)](https://github.com/sfo2001/platform-linux_arm/actions/workflows/examples.yml)
 
-> This is an actively maintained fork of the official [platformio/platform-linux_arm](https://github.com/platformio/platform-linux_arm) platform (last updated May 2022). Adds Raspberry Pi 5 support, lgpio framework, remote development workflows, and additional examples. See [CHANGELOG.md](CHANGELOG.md) for details.
+> This is an actively maintained fork of the official
+> [platformio/platform-linux_arm](https://github.com/platformio/platform-linux_arm) platform
+> (last updated May 2022). Adds Raspberry Pi 5 support, lgpio framework, remote development
+> workflows, and additional examples. See [CHANGELOG.md](CHANGELOG.md) for details.
 
-Linux ARM platform enables building native applications for ARM-based Linux systems (Raspberry Pi, Orange Pi, etc.) using PlatformIO Core 6.0+. Supports both cross-compilation from your development machine and native compilation on ARM devices.
+Linux ARM platform enables building native applications for ARM-based Linux systems
+(Raspberry Pi, Orange Pi, etc.) using PlatformIO Core 6.0+. Supports both
+cross-compilation from your development machine and native compilation on ARM devices.
 
 ## Key Features
 
@@ -27,13 +32,17 @@ Linux ARM platform enables building native applications for ARM-based Linux syst
 - [Troubleshooting](docs/TROUBLESHOOTING.md) - Common issues and solutions
 - [Contributing](CONTRIBUTING.md) - How to contribute
 
-> **Note for VS Code users:** The PlatformIO GUI's "Monitor" button is for serial ports only and does not work with this platform. For SSH monitoring support, copy [examples/vscode/tasks.json](examples/vscode/tasks.json) to your project's `.vscode/` folder. See [docs/VSCODE.md](docs/VSCODE.md) for details.
+> **Note for VS Code users:** The PlatformIO GUI's "Monitor" button is for serial ports only
+> and does not work with this platform. For SSH monitoring support, copy
+> [examples/vscode/tasks.json](examples/vscode/tasks.json) to your project's `.vscode/` folder.
+> See [docs/VSCODE.md](docs/VSCODE.md) for details.
 
 ## Installation
 
 ### 1. Install PlatformIO
 
 If you haven't already:
+
 ```bash
 pip install -U platformio
 ```
@@ -45,11 +54,13 @@ Or install [PlatformIO IDE](https://platformio.org/install/ide) for VS Code, CLi
 Choose based on your development machine:
 
 **Linux (x86_64):**
+
 ```bash
 sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 ```
 
 **macOS (Intel or Apple Silicon):**
+
 ```bash
 brew tap messense/macos-cross-toolchains
 brew install arm-unknown-linux-gnueabihf
@@ -77,6 +88,7 @@ upload_port = pi@raspberrypi.local:/home/pi/myapp
 ```
 
 Or use a stable release:
+
 ```ini
 platform = linux_arm@^1.8.0
 ```
@@ -111,9 +123,11 @@ int main(void) {
 ```
 
 See `examples/` directory for more:
+
 - `lgpio-blink/` - Basic GPIO control
 - `lgpio-i2c-sensor/` - I2C sensor reading (BME280)
 - `lgpio-pwm-fade/` - Hardware PWM LED fading
+- `lgpio-pwm-servo/` - Hardware PWM servo control
 - `lgpio-spi-adc/` - SPI communication (MCP3008)
 - `baremetal-threads/` - Multi-threading with POSIX threads
 - `remote-deployment/` - Automated deployment example
@@ -129,6 +143,7 @@ This platform uses SSH for remote operations (upload, test, debug). Review secur
 - Host Verification: Enable strict host key checking in production environments
 
 Quick Security Checklist:
+
 - [ ] Using dedicated SSH key (not personal key)
 - [ ] SSH key permissions set to 600 (`chmod 600 ~/.ssh/key`)
 - [ ] Host key verification enabled for production
@@ -138,6 +153,7 @@ Quick Security Checklist:
 For detailed security configuration, see [SECURITY.md](SECURITY.md).
 
 Recent Security Improvements (v1.7.1):
+
 - Fixed command injection vulnerabilities (CVSS 8.0-9.0)
 - Added timeout protection against DoS attacks
 - Added security documentation
@@ -201,11 +217,13 @@ See [docs/FRAMEWORKS.md](docs/FRAMEWORKS.md) for detailed comparison.
 ## Building and Deploying
 
 ### Build Locally
+
 ```bash
 pio run
 ```
 
 ### Upload to Remote Device
+
 ```bash
 pio run --target upload
 ```
@@ -213,6 +231,7 @@ pio run --target upload
 Requires `upload_protocol` configuration - see [docs/UPLOAD.md](docs/UPLOAD.md).
 
 ### Run Tests on Hardware
+
 ```bash
 pio test
 ```
@@ -220,6 +239,7 @@ pio test
 Requires `test_transport = ssh` - see [docs/TESTING.md](docs/TESTING.md).
 
 ### Debug Remotely
+
 ```bash
 pio debug
 ```
@@ -241,6 +261,7 @@ board_build.arch = aarch64
 ```
 
 Requires 64-bit toolchain:
+
 ```bash
 # Linux
 sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
@@ -275,7 +296,7 @@ See [Platform Documentation](docs/platforms/linux_arm.rst) for all configuration
 
 ## Project Structure
 
-```
+```text
 your-project/
 ├── platformio.ini        # Project configuration
 ├── src/

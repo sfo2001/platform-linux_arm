@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * PWM Hardware Abstraction Layer (HAL) Implementation
  *
@@ -12,26 +13,14 @@
  */
 
 #include "pwm-hal.h"
+#include "pwm-hal-internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 
 /* ============================================================================
  * Internal Data Structures and Constants
  * ============================================================================ */
-
-/**
- * @brief GPIO pin to PWM chip/channel mapping
- */
-typedef struct {
-    int gpio_pin;      /**< GPIO pin number (BCM) */
-    int pwm_chip;      /**< PWM chip number */
-    int pwm_channel;   /**< PWM channel (0 or 1) */
-} pwm_pin_map_t;
 
 /**
  * @brief PWM state tracking for each channel
@@ -54,18 +43,10 @@ typedef struct {
 static pwm_channel_state_t g_pwm_channels[MAX_PWM_CHANNELS];
 static bool g_pwm_initialized = false;
 
-/* Base path for PWM sysfs interface */
-#define PWM_SYSFS_BASE "/sys/class/pwm"
-
-/* Maximum path length for sysfs files */
-#define MAX_PATH_LEN 256
-
 /* Maximum string length for reading/writing sysfs values */
 #define MAX_VALUE_LEN 64
 
-/* ============================================================================
- * GPIO Pin to PWM Chip/Channel Mapping
- * ============================================================================ */
+/* Pin maps defined here (always linked). Sysfs implementations: see pwm-hal-sysfs.c */
 
 /**
  * Pi 1-4: pwmchip0
@@ -83,7 +64,7 @@ static bool g_pwm_initialized = false;
  * Note: GPIO 18/19 share the same PWM channels as GPIO 12/13.
  * Using both simultaneously requires additional conflict detection.
  */
-static const pwm_pin_map_t g_pwm_pin_map_pi1_4[] = {
+const pwm_pin_map_t g_pwm_pin_map_pi1_4[] = {
     {12, 0, 0},  // GPIO 12 -> pwmchip0, channel 0
     {13, 0, 1},  // GPIO 13 -> pwmchip0, channel 1
     {18, 0, 0},  // GPIO 18 -> pwmchip0, channel 0 (alt function)
@@ -91,7 +72,7 @@ static const pwm_pin_map_t g_pwm_pin_map_pi1_4[] = {
     {-1, -1, -1} // Sentinel
 };
 
-static const pwm_pin_map_t g_pwm_pin_map_pi5[] = {
+const pwm_pin_map_t g_pwm_pin_map_pi5[] = {
     {12, 2, 0},  // GPIO 12 -> pwmchip2, channel 0
     {13, 2, 1},  // GPIO 13 -> pwmchip2, channel 1
     {18, 2, 0},  // GPIO 18 -> pwmchip2, channel 0 (alt function)
@@ -102,6 +83,49 @@ static const pwm_pin_map_t g_pwm_pin_map_pi5[] = {
 /* ============================================================================
  * Internal Helper Functions
  * ============================================================================ */
+
+static void pwm_init_state(void); /* forward declaration — defined below UNIT_TESTING block */
+
+#ifdef UNIT_TESTING
+/**
+ * @brief Reset all PWM state for unit tests.
+ *
+ * Called at the start of each test case.  Only compiled with -DUNIT_TESTING=1.
+ */
+void pwm_reset_state_for_testing(void) {
+    g_pwm_initialized = false;
+    for (int i = 0; i < MAX_PWM_CHANNELS; i++) {
+        g_pwm_channels[i].gpio_pin          = -1;
+        g_pwm_channels[i].pwm_chip          = -1;
+        g_pwm_channels[i].pwm_channel       = -1;
+        g_pwm_channels[i].is_exported       = false;
+        g_pwm_channels[i].is_enabled        = false;
+        g_pwm_channels[i].frequency_hz      = 0;
+        g_pwm_channels[i].duty_cycle_percent = 0.0f;
+        g_pwm_channels[i].polarity          = PWM_POLARITY_NORMAL;
+    }
+}
+
+/**
+ * @brief Fill all state slots with dummy entries to simulate slot exhaustion.
+ *
+ * Populates every g_pwm_channels slot with a fictional gpio_pin (100+i) and
+ * chip=0, channel=1 so that a subsequent pwm_init() for any real pin passes
+ * the conflict check (channel 0 is unused) but fails pwm_alloc_state() with
+ * NULL, causing pwm_init() to return PWM_ERROR_HARDWARE.
+ *
+ * Called at the start of the slot-exhaustion test case only.
+ * Only compiled with -DUNIT_TESTING=1.
+ */
+void pwm_fill_channels_for_testing(void) {
+    pwm_init_state(); /* mark initialized so pwm_init() won't wipe slots on entry */
+    for (int i = 0; i < MAX_PWM_CHANNELS; i++) {
+        g_pwm_channels[i].gpio_pin   = 100 + i; /* fictional pins, not in pin map */
+        g_pwm_channels[i].pwm_chip   = 0;
+        g_pwm_channels[i].pwm_channel = 1;       /* ch=1 ≠ ch=0 used by GPIO 18 */
+    }
+}
+#endif /* UNIT_TESTING */
 
 /**
  * @brief Initialize global state tracking on first use
@@ -119,24 +143,6 @@ static void pwm_init_state(void) {
             g_pwm_channels[i].polarity = PWM_POLARITY_NORMAL;
         }
         g_pwm_initialized = true;
-    }
-}
-
-/**
- * @brief Detect Raspberry Pi model and return appropriate pin map
- *
- * Uses the presence of pwmchip2 to detect Pi 5 vs Pi 1-4.
- *
- * @return Pointer to pin map array
- */
-static const pwm_pin_map_t* pwm_get_pin_map(void) {
-    struct stat st;
-
-    // Check if pwmchip2 exists (Pi 5 indicator)
-    if (stat("/sys/class/pwm/pwmchip2", &st) == 0 && S_ISDIR(st.st_mode)) {
-        return g_pwm_pin_map_pi5;
-    } else {
-        return g_pwm_pin_map_pi1_4;
     }
 }
 
@@ -207,100 +213,6 @@ static void pwm_free_state(int pin) {
 }
 
 /**
- * @brief Write string to sysfs file
- *
- * @param path File path
- * @param value String value to write
- * @return PWM_SUCCESS on success, error code on failure
- */
-static int pwm_sysfs_write(const char* path, const char* value) {
-    int fd = open(path, O_WRONLY);
-    if (fd < 0) {
-        if (errno == EACCES || errno == EPERM) {
-            return PWM_ERROR_PERMISSION;
-        } else if (errno == EBUSY) {
-            return PWM_ERROR_BUSY;
-        } else if (errno == ENOENT || errno == ENODEV) {
-            return PWM_ERROR_NOT_EXPORTED;
-        } else {
-            return PWM_ERROR_IO;
-        }
-    }
-
-    ssize_t len = strlen(value);
-    ssize_t written = write(fd, value, len);
-    close(fd);
-
-    if (written != len) {
-        if (errno == EACCES || errno == EPERM) {
-            return PWM_ERROR_PERMISSION;
-        } else if (errno == EBUSY) {
-            return PWM_ERROR_BUSY;
-        } else if (errno == EINVAL) {
-            return PWM_ERROR_INVALID_PARAM;
-        } else {
-            return PWM_ERROR_IO;
-        }
-    }
-
-    return PWM_SUCCESS;
-}
-
-/**
- * @brief Read string from sysfs file
- *
- * @param path File path
- * @param value Buffer to store read value
- * @param max_len Maximum buffer length
- * @return PWM_SUCCESS on success, error code on failure
- */
-static int pwm_sysfs_read(const char* path, char* value, size_t max_len) {
-    int fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        if (errno == EACCES || errno == EPERM) {
-            return PWM_ERROR_PERMISSION;
-        } else if (errno == ENOENT || errno == ENODEV) {
-            return PWM_ERROR_NOT_EXPORTED;
-        } else {
-            return PWM_ERROR_IO;
-        }
-    }
-
-    ssize_t len = read(fd, value, max_len - 1);
-    close(fd);
-
-    if (len < 0) {
-        return PWM_ERROR_IO;
-    }
-
-    value[len] = '\0';
-
-    // Remove trailing newline if present
-    if (len > 0 && value[len - 1] == '\n') {
-        value[len - 1] = '\0';
-    }
-
-    return PWM_SUCCESS;
-}
-
-/**
- * @brief Check if PWM channel is already exported
- *
- * @param chip PWM chip number
- * @param channel PWM channel number
- * @return true if exported, false otherwise
- */
-static bool pwm_is_exported(int chip, int channel) {
-    char path[MAX_PATH_LEN];
-    struct stat st;
-
-    snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d",
-             PWM_SYSFS_BASE, chip, channel);
-
-    return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
-}
-
-/**
  * @brief Export PWM channel to userspace
  *
  * @param chip PWM chip number
@@ -326,11 +238,11 @@ static int pwm_export(int chip, int channel) {
     }
 
     // Wait for sysfs to create the channel directory (up to 100ms)
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < PWM_EXPORT_RETRIES; i++) {
         if (pwm_is_exported(chip, channel)) {
             return PWM_SUCCESS;
         }
-        usleep(10000); // 10ms delay
+        pwm_sysfs_sleep_ms(10); /* 10ms; no-op in unit-test builds */
     }
 
     return PWM_ERROR_IO; // Export didn't complete in time
@@ -352,10 +264,10 @@ static int pwm_unexport(int chip, int channel) {
         return PWM_SUCCESS;
     }
 
-    // Disable before unexporting
+    /* Disable before unexporting — best-effort; unexport proceeds regardless of result. */
     snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/enable",
              PWM_SYSFS_BASE, chip, channel);
-    pwm_sysfs_write(path, "0");
+    (void)pwm_sysfs_write(path, "0");
 
     // Unexport channel
     snprintf(path, sizeof(path), "%s/pwmchip%d/unexport", PWM_SYSFS_BASE, chip);
@@ -372,7 +284,7 @@ int pwm_init(int pin, uint32_t freq_hz) {
     int chip, channel;
     int result;
 
-    pwm_init_state();   // ensure sentinel values are set before conflict check
+    pwm_init_state();   // explicit; pwm_find_state also calls this — defense in depth
 
     // Validate frequency
     if (freq_hz < PWM_MIN_FREQUENCY_HZ || freq_hz > PWM_MAX_FREQUENCY_HZ) {
@@ -471,7 +383,7 @@ int pwm_write(int pin, float duty_cycle_percent) {
 
     // Calculate duty cycle in nanoseconds
     uint64_t period_ns = 1000000000ULL / state->frequency_hz;
-    uint64_t duty_cycle_ns = (uint64_t)(period_ns * (duty_cycle_percent / 100.0f));
+    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * ((double)duty_cycle_percent / 100.0));
 
     // Set duty cycle
     char path[MAX_PATH_LEN];
@@ -544,12 +456,15 @@ int pwm_set_frequency(int pin, uint32_t freq_hz) {
         // Try to re-enable with old settings
         snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/enable",
                  PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
-        pwm_sysfs_write(path, "1");
+        int re_enable_result = pwm_sysfs_write(path, "1");
+        if (re_enable_result != PWM_SUCCESS) {
+            state->is_enabled = false;
+        }
         return result;
     }
 
     // Update duty cycle to maintain percentage
-    uint64_t duty_cycle_ns = (uint64_t)(period_ns * (state->duty_cycle_percent / 100.0f));
+    uint64_t duty_cycle_ns = (uint64_t)((double)period_ns * ((double)state->duty_cycle_percent / 100.0));
     snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/duty_cycle",
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     snprintf(value, sizeof(value), "%llu", (unsigned long long)duty_cycle_ns);
@@ -558,7 +473,10 @@ int pwm_set_frequency(int pin, uint32_t freq_hz) {
         // Try to re-enable with new period and zero duty cycle
         snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/enable",
                  PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
-        pwm_sysfs_write(path, "1");
+        int re_enable_result = pwm_sysfs_write(path, "1");
+        if (re_enable_result != PWM_SUCCESS) {
+            state->is_enabled = false;
+        }
         return result;
     }
 
@@ -567,6 +485,7 @@ int pwm_set_frequency(int pin, uint32_t freq_hz) {
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     result = pwm_sysfs_write(path, "1");
     if (result != PWM_SUCCESS) {
+        state->is_enabled = false;
         return result;
     }
 
@@ -600,13 +519,17 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity) {
     // Set polarity
     snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/polarity",
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
+    /* kernel sysfs uses "inversed" (not "inverted") — see Documentation/driver-api/pwm.rst */
     const char* polarity_str = (polarity == PWM_POLARITY_NORMAL) ? "normal" : "inversed";
     result = pwm_sysfs_write(path, polarity_str);
     if (result != PWM_SUCCESS) {
         // Try to re-enable with old polarity
         snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/enable",
                  PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
-        pwm_sysfs_write(path, "1");
+        int re_enable_result = pwm_sysfs_write(path, "1");
+        if (re_enable_result != PWM_SUCCESS) {
+            state->is_enabled = false;
+        }
         return result;
     }
 
@@ -615,6 +538,7 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity) {
              PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
     result = pwm_sysfs_write(path, "1");
     if (result != PWM_SUCCESS) {
+        state->is_enabled = false;
         return result;
     }
 
@@ -624,6 +548,9 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity) {
     return PWM_SUCCESS;
 }
 
+/* TODO(#124): returns write-shadow state (last values set via this API), NOT live
+ * hardware state.  pwm_sysfs_read is available but unwired — see issue for design
+ * options (always-read-back, cache-invalidation, or document-as-mirror). */
 int pwm_get_status(int pin, pwm_status_t *status) {
     if (!status) {
         return PWM_ERROR_INVALID_PARAM;
@@ -645,7 +572,7 @@ int pwm_get_status(int pin, pwm_status_t *status) {
     status->duty_cycle_percent = state->duty_cycle_percent;
     status->polarity = state->polarity;
     status->period_ns = 1000000000ULL / state->frequency_hz;
-    status->duty_cycle_ns = (uint64_t)(status->period_ns * (state->duty_cycle_percent / 100.0f));
+    status->duty_cycle_ns = (uint64_t)((double)status->period_ns * ((double)state->duty_cycle_percent / 100.0));
 
     return PWM_SUCCESS;
 }

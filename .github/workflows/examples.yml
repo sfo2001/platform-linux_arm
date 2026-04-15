@@ -7,6 +7,7 @@ on:
       - develop
       - 'claude/**'
       - 'feature/**'
+      - 'fix/**'
   pull_request:
 
 jobs:
@@ -14,10 +15,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
         with:
           python-version: '3.11'
 
@@ -69,6 +70,8 @@ jobs:
           - examples/baremetal-hello
           - examples/baremetal-threads
           - examples/lgpio-blink
+          - examples/lgpio-pwm-fade
+          - examples/lgpio-pwm-servo
           - examples/libgpiod-blink
           - examples/libgpiod-blink-v2
           - examples/libgpiod-button
@@ -80,6 +83,14 @@ jobs:
           # Exclude lgpio on Windows (complex cross-compile setup)
           - os: windows-latest
             example: examples/lgpio-blink
+
+          # Exclude lgpio-pwm-fade on Windows (complex cross-compile setup)
+          - os: windows-latest
+            example: examples/lgpio-pwm-fade
+
+          # Exclude lgpio-pwm-servo on Windows (complex cross-compile setup)
+          - os: windows-latest
+            example: examples/lgpio-pwm-servo
 
           # Exclude arduino-uno-q-hello on Windows (AArch64 cross-compile not configured for Windows CI)
           - os: windows-latest
@@ -101,11 +112,11 @@ jobs:
 
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
           submodules: "recursive"
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
         with:
           python-version: "3.11"
 
@@ -436,7 +447,7 @@ jobs:
       # and the linker would fall back to the 32-bit .so producing "file format not
       # recognized".
       - name: Cache lgpio library (32-bit, Ubuntu/macOS)
-        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        if: matrix.os != 'windows-latest' && contains(matrix.example, 'lgpio')
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-lgpio-armhf
         with:
@@ -447,7 +458,7 @@ jobs:
 
       # Cache built lgpio library (64-bit, Ubuntu/macOS)
       - name: Cache lgpio library (64-bit, Ubuntu/macOS)
-        if: matrix.os != 'windows-latest' && matrix.example == 'examples/lgpio-blink'
+        if: matrix.os != 'windows-latest' && contains(matrix.example, 'lgpio')
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
         id: cache-lgpio-aarch64
         with:
@@ -458,7 +469,7 @@ jobs:
 
       # Build lgpio for ARM cross-compilation (32-bit) - Ubuntu only
       - name: Build lgpio for ARM cross-compilation (32-bit) - Ubuntu
-        if: matrix.os == 'ubuntu-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-armhf.outputs.cache-hit != 'true'
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'lgpio') && steps.cache-lgpio-armhf.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 32-bit..."
@@ -468,7 +479,7 @@ jobs:
       # macOS brew toolchain uses arm-unknown-linux-gnueabihf- prefix (not arm-linux-gnueabihf-)
       # Install to arm-linux-gnueabihf so the lgpio framework builder finds it
       - name: Build lgpio for ARM cross-compilation (32-bit) - macOS
-        if: matrix.os == 'macos-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-armhf.outputs.cache-hit != 'true'
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'lgpio') && steps.cache-lgpio-armhf.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 32-bit on macOS..."
@@ -478,7 +489,7 @@ jobs:
 
       # Build lgpio for ARM cross-compilation (64-bit) - Ubuntu only
       - name: Build lgpio for ARM cross-compilation (64-bit) - Ubuntu
-        if: matrix.os == 'ubuntu-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-aarch64.outputs.cache-hit != 'true'
+        if: matrix.os == 'ubuntu-latest' && contains(matrix.example, 'lgpio') && steps.cache-lgpio-aarch64.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 64-bit..."
@@ -490,7 +501,7 @@ jobs:
       # macOS brew toolchain uses aarch64-unknown-linux-gnu- prefix (not aarch64-linux-gnu-)
       # Install to aarch64-linux-gnu so the lgpio framework builder finds it
       - name: Build lgpio for ARM cross-compilation (64-bit) - macOS
-        if: matrix.os == 'macos-latest' && matrix.example == 'examples/lgpio-blink' && steps.cache-lgpio-aarch64.outputs.cache-hit != 'true'
+        if: matrix.os == 'macos-latest' && contains(matrix.example, 'lgpio') && steps.cache-lgpio-aarch64.outputs.cache-hit != 'true'
         shell: bash
         run: |
           echo "Building lgpio library for ARM 64-bit on macOS..."
@@ -578,7 +589,7 @@ jobs:
           echo "MRAA artifacts verified."
 
       - name: Install PlatformIO Core
-        run: pip install -U platformio
+        run: pip install "platformio>=6.1.0,<7.0.0"
 
       - name: Install platform (symlink mode)
         run: pio pkg install --global --platform symlink://.
@@ -590,16 +601,19 @@ jobs:
         run: pio run -d "$EXAMPLE_PATH"
 
   cpp-tests:
-    name: C++ unit tests (ArduinoBridge)
+    name: C unit tests (ArduinoBridge + PWM HAL)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
 
       - name: Install dependencies
-        run: sudo apt-get install -y libmsgpack-dev cmake
+        run: sudo apt-get install -y cmake build-essential libmsgpack-cxx-dev
 
       - name: Build
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
-      - name: Run
-        run: cmake --build build --target test_arduino_bridge && ./build/test_arduino_bridge
+      - name: Build all C unit tests
+        run: cmake --build build
+
+      - name: Run all C unit tests
+        run: ctest --test-dir build --output-on-failure

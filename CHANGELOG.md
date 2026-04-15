@@ -16,6 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   first use of GPIO 18/19 (closes #119, reported and diagnosed by
   [@obrain17](https://github.com/obrain17))
 
+### Added
+- lgpio PWM HAL: sysfs seam extraction — `pwm-hal-sysfs.c` and `pwm-hal-internal.h`
+  isolate all `/sys/class/pwm` I/O behind a link-seam interface, enabling native unit
+  testing without Raspberry Pi hardware
+- lgpio PWM HAL: `tests/stubs/pwm-hal-sysfs-stub.c` — link-seam stub that replaces the
+  production sysfs implementation in test builds; tracks export state in-memory
+- lgpio PWM HAL: `tests/test_pwm_hal.c` — 50 C unit tests covering init/deinit, conflict
+  detection, pin validation, frequency/polarity setters, status query, boundary values,
+  and export timeout simulation
+- CI: `cpp-tests` job in `examples.yml` builds and runs the PWM HAL C test suite on
+  ubuntu-latest via CMake + ctest
+- `.pylintrc` — project-specific pylint configuration enforced in CI lint job
+
+### Changed
+- lgpio PWM HAL: `pwm-hal.c` sysfs I/O delegated to the seam; `usleep()` replaced by
+  `pwm_sysfs_sleep_ms()` seam call so unit tests run without real delays
+- CI: `tests.yml` lint job now enforces `pylint` (with `.pylintrc`) and `mypy` across
+  all four Python modules; `fix/**` branches added to push triggers
+- CI: `examples.yml` build matrix extended with `lgpio-pwm-fade` and `lgpio-pwm-servo`;
+  `fix/**` branches added to push triggers
+
 ## [1.9.0] - 2026-04-03
 
 ### Changed

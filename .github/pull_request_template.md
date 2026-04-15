@@ -66,6 +66,16 @@ Please ensure your PR meets the following requirements:
 - [ ] I have updated framework documentation
 - [ ] I have tested on multiple Pi models (if applicable)
 
+### AI-Assisted Contributions (if applicable)
+
+If this PR was created or substantially modified with AI assistance (Claude, Copilot, Codex, etc.):
+
+- [ ] I have disclosed the AI tool(s) used and the scope of assistance in the description above
+- [ ] I have reviewed and understand all AI-generated code in this PR
+- [ ] I have noted the degree of testing (untested / lightly tested / fully tested)
+- [ ] AI `Co-Authored-By:` commit trailers have been removed before submitting
+- [ ] If hardware was involved, I have noted whether it was tested on real hardware or build-only
+
 ## Test Results
 
 <!-- Describe the tests you ran and the results -->

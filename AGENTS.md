@@ -18,7 +18,7 @@ computers (Raspberry Pi, Orange Pi, BeagleBone, Radxa, Khadas, Arduino Uno Q).
 
 ## Repository Structure
 
-```
+```text
 platform-linux_arm/
 ├── platform.py              # PlatformIO platform entry point (Linux_armPlatform class)
 ├── platform_constants.py    # Architecture and toolchain prefix enums
@@ -29,7 +29,13 @@ platform-linux_arm/
 │   └── frameworks/          # One .py per framework (lgpio, libgpiod, arduino_bridge, …)
 ├── examples/                # 21 example projects (each is a standalone PlatformIO project)
 ├── scripts/                 # Setup scripts (setup-mraa-cross.sh, setup-lgpio-cross.sh, …)
-├── tests/                   # Python unit tests for builder scripts (pytest)
+├── tests/                   # Python unit tests (pytest) for builder scripts
+│                            #   and C unit tests (CMake/ctest) for framework C code
+│   ├── test_platform.py     # pytest: builder script unit tests (83 tests)
+│   ├── test_pwm_hal.c       # ctest: PWM HAL C unit tests (50 tests, no hardware needed)
+│   └── stubs/
+│       ├── pwm-hal-sysfs-stub.c  # Link-seam stub — replaces /sys/class/pwm/ with in-memory table
+│       └── pwm-hal-sysfs-stub.h  # Stub control API (stub_reset, stub_set_pi5, stub_set_export_delay)
 └── docs/                    # Documentation (boards, frameworks, security, upload, etc.)
 ```
 
@@ -92,12 +98,14 @@ This is how Pi 5 64-bit builds work: `board = raspberrypi_5` +
 Framework builders live in `builder/frameworks/`. Each is a Python SCons script.
 
 **Accessing the environment:**
+
 ```python
 from SCons.Script import DefaultEnvironment
 env = DefaultEnvironment()
 ```
 
 **Detecting target architecture:**
+
 ```python
 from utils import get_target_arch
 target_arch = get_target_arch(env)   # returns "armv7" or "aarch64"
@@ -105,6 +113,7 @@ is_aarch64 = target_arch == "aarch64"
 ```
 
 **Reading board config:**
+
 ```python
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "")
@@ -112,6 +121,7 @@ arch = board.get("build.arch", "armv7")
 ```
 
 **Adding compile flags / libraries:**
+
 ```python
 env.Append(
     CPPPATH=["/path/to/include"],
@@ -126,6 +136,7 @@ env.Append(
 it via `env["_BINPREFIX"]`.
 
 **Installed library paths** follow this convention:
+
 - armv7: `~/.local/arm-linux-gnueabihf/`
 - aarch64: `~/.local/aarch64-linux-gnu/`
 
@@ -148,6 +159,7 @@ brew install arm-unknown-linux-gnueabihf aarch64-unknown-linux-gnu
 ### Framework Libraries
 
 **lgpio** (required for `lgpio` framework):
+
 ```bash
 ./scripts/setup-lgpio-cross.sh                                           # ARMv7
 CROSS_PREFIX=aarch64-linux-gnu- INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
@@ -155,6 +167,7 @@ CROSS_PREFIX=aarch64-linux-gnu- INSTALL_DIR=$HOME/.local/aarch64-linux-gnu \
 ```
 
 **MRAA** (required for `arduino-bridge` framework):
+
 ```bash
 # Recommended — auto-detects toolchain, from any arduino-bridge project directory:
 pio run --target setup-mraa
@@ -164,6 +177,7 @@ CROSS_PREFIX=aarch64-linux-gnu- ./scripts/setup-mraa-cross.sh           # AArch6
 ```
 
 **libgpiod** (required for `libgpiod` framework):
+
 ```bash
 ./scripts/setup-libgpiod-cross.sh                                        # ARMv7/AArch64
 ```
@@ -208,11 +222,29 @@ pio run -e raspberrypi_4b_upload --target upload
 
 ## Testing
 
+### Python Unit Tests
+
 Python unit tests live in `tests/`. They test builder script logic without
 running a full PlatformIO build. Run with `pytest`.
 
 CI runs tests on ubuntu-latest, macos-latest, windows-latest with Python
 3.10, 3.11, 3.12 (see `.github/workflows/tests.yml`).
+
+### C Unit Tests (CMake)
+
+The `framework-lgpio/pwm-hal` module has a C unit test suite (`tests/test_pwm_hal.c`)
+that runs without Raspberry Pi hardware. A link-seam stub (`tests/stubs/pwm-hal-sysfs-stub.c`)
+replaces all `/sys/class/pwm` I/O with in-memory state.
+
+Build and run:
+
+```bash
+cmake -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+CI job: `cpp-tests` in `.github/workflows/examples.yml`.
 
 Example builds are validated by `.github/workflows/examples.yml` across the
 same OS matrix.
@@ -262,6 +294,7 @@ Follows [Conventional Commits](https://www.conventionalcommits.org/).
 |----------|---------|-------------|
 | `examples.yml` | push, PR | Builds all 21 examples × {ubuntu, macos, windows} |
 | `tests.yml` | push, PR | Python pytest × {ubuntu, macos, windows} × Python {3.10, 3.11, 3.12} |
+| `examples.yml` | push, PR | C unit tests (CMake/ctest, 50 tests, ubuntu-latest) |
 | `release.yml` | tag push | Publishes platform package |
 
 ---

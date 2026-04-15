@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(arduino_bridge_tests CXX)
+project(platform_linux_arm_tests C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -38,3 +38,42 @@ target_link_libraries(test_arduino_bridge PRIVATE
 
 enable_testing()
 add_test(NAME test_arduino_bridge COMMAND test_arduino_bridge)
+
+# C unit tests — pwm-hal with sysfs stub (no hardware required)
+# Links pwm-hal.c + stub; does NOT link pwm-hal-sysfs.c (the real sysfs impl).
+# -DUNIT_TESTING=1 enables pwm_reset_state_for_testing() in pwm-hal.c.
+add_executable(test_pwm_hal
+    tests/test_pwm_hal.c
+    framework-lgpio/pwm-hal.c
+    tests/stubs/pwm-hal-sysfs-stub.c)
+
+target_include_directories(test_pwm_hal PRIVATE
+    framework-lgpio
+    tests/stubs
+    tests)
+
+target_compile_definitions(test_pwm_hal PRIVATE
+    UNIT_TESTING=1)
+
+# Safety-oriented warning flags for the C unit test target.
+# -Wall/-Wextra: comprehensive baseline (implicit conversions, sign compare, etc.)
+# -Wshadow: catches variable declarations that shadow outer-scope variables
+# -Wformat=2: format-string security (bounds, type mismatches, non-literal formats)
+# -Wnull-dereference: flags paths that provably dereference NULL
+# -Wvla: bans variable-length arrays (stack-size unpredictability, security risk)
+# -Wstrict-prototypes: requires all function declarations to name parameter types
+# -Wdouble-promotion: flags implicit float→double promotions (precision surprises)
+# -Wswitch-default: every switch must have a default arm (catches unhandled enums)
+target_compile_options(test_pwm_hal PRIVATE
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wformat=2
+    -Wnull-dereference
+    -Wvla
+    -Wstrict-prototypes
+    -Wdouble-promotion
+    -Wswitch-default
+    -Werror)
+
+add_test(NAME test_pwm_hal COMMAND test_pwm_hal)

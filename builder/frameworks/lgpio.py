@@ -150,6 +150,8 @@ env.Append(
     LIBS=["lgpio"],
 )
 
-# Build PWM HAL library
+# Build PWM HAL library — compiles all .c files in framework-lgpio/ (currently
+# pwm-hal.c and pwm-hal-sysfs.c). Any new .c file added to that directory is
+# automatically included in every lgpio production build.
 pwm_hal_src = join(env.PioPlatform().get_dir(), "framework-lgpio")
 env.BuildSources(join("$BUILD_DIR", "FrameworkLgpioPwmHAL"), pwm_hal_src)

@@ -15,6 +15,9 @@ pre-commit>=3.5.0,<5.0.0
 mypy>=1.0.0,<2.0.0
 types-setuptools
 
+# PlatformIO (needed by test, lint, and coverage-report CI jobs)
+platformio>=6.1.0,<7.0.0
+
 # Documentation
 sphinx>=6.0.0,<9.0.0
 sphinx-rtd-theme>=1.2.0,<3.0.0
