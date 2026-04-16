@@ -47,7 +47,6 @@ void pwm_sysfs_sleep_ms(int ms) {
     usleep((useconds_t)ms * 1000);
 }
 
-/* @todo(#124): no callers yet — reserved for live readback */
 int pwm_sysfs_read(const char *path, char *value, size_t max_len) {
     int fd = open(path, O_RDONLY);
     if (fd < 0) {
@@ -85,7 +84,7 @@ const pwm_pin_map_t *pwm_get_pin_map(void) {
      * Pi 1–4 (single controller, pwmchip0 only).  Known limitation: this
      * detection can produce a false Pi 5 result if pwmchip2 is present for
      * another reason (e.g. a USB PWM adapter), or a false Pi 1–4 result if
-     * the Pi 5 pwm overlay is not loaded.  Tracked for improvement in #124.
+     * the Pi 5 pwm overlay is not loaded.
      */
     struct stat st;
     if (stat("/sys/class/pwm/pwmchip2", &st) == 0 && S_ISDIR(st.st_mode)) {

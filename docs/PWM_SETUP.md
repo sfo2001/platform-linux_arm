@@ -92,11 +92,13 @@ Pi 5 has additional PWM channels via pwmchip3 (GPIO 2, 3) - future support plann
 PWM must be enabled in the device tree:
 
 **For Pi 1-4**, edit `/boot/config.txt`:
+
 ```bash
 sudo nano /boot/config.txt
 ```
 
 **For Pi 5**, edit `/boot/firmware/config.txt`:
+
 ```bash
 sudo nano /boot/firmware/config.txt
 ```
@@ -105,24 +107,25 @@ Add one of the following overlays:
 
 #### Single Channel (GPIO 18)
 
-```
+```ini
 dtoverlay=pwm,pin=18,func=2
 ```
 
 #### Dual Channel (GPIO 18 + 19)
 
-```
+```ini
 dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2
 ```
 
 #### Custom GPIO Pins
 
-```
+```ini
 dtoverlay=pwm,pin=12,func=4     # GPIO 12 (ALT0)
 dtoverlay=pwm,pin=13,func=4     # GPIO 13 (ALT0)
 ```
 
 **Important**: Reboot after making changes:
+
 ```bash
 sudo reboot
 ```
@@ -132,17 +135,20 @@ sudo reboot
 Check if PWM hardware is detected:
 
 **Pi 1-4**:
+
 ```bash
 ls /sys/class/pwm/pwmchip0
 ```
 
 **Pi 5**:
+
 ```bash
 ls /sys/class/pwm/pwmchip2
 ```
 
 Expected output:
-```
+
+```text
 device  export  npwm  power  subsystem  uevent  unexport
 ```
 
@@ -205,28 +211,32 @@ Device tree overlays configure hardware peripherals at boot time. PWM overlays:
 
 #### Overlay Parameters
 
-```
+```ini
 dtoverlay=pwm[,OPTIONS]
 ```
 
 Options:
+
 - `pin=N` - GPIO pin number (12, 13, 18, or 19)
 - `func=N` - Alternate function (2 for GPIO 18/19, 4 for GPIO 12/13)
 
 #### Configuration Examples
 
 **LED on GPIO 18**:
-```
+
+```ini
 dtoverlay=pwm,pin=18,func=2
 ```
 
 **Two LEDs on GPIO 18 and 19**:
-```
+
+```ini
 dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2
 ```
 
 **Motor on GPIO 12**:
-```
+
+```ini
 dtoverlay=pwm,pin=12,func=4
 ```
 
@@ -235,6 +245,7 @@ dtoverlay=pwm,pin=12,func=4
 #### Manual Setup
 
 Export PWM channel:
+
 ```bash
 # Pi 1-4 (pwmchip0, channel 0)
 echo 0 | sudo tee /sys/class/pwm/pwmchip0/export
@@ -244,6 +255,7 @@ echo 0 | sudo tee /sys/class/pwm/pwmchip2/export
 ```
 
 Set permissions:
+
 ```bash
 # Pi 1-4
 sudo chown -R root:gpio /sys/class/pwm/pwmchip0/pwm0
@@ -255,6 +267,7 @@ sudo chmod -R ug+rw /sys/class/pwm/pwmchip2/pwm0
 ```
 
 Add user to gpio group:
+
 ```bash
 sudo usermod -a -G gpio $USER
 # Log out and back in for changes to take effect
@@ -269,6 +282,7 @@ sudo ./scripts/setup-pwm-perms.sh
 ```
 
 Script features:
+
 - Auto-detects Pi model (pwmchip0 vs pwmchip2)
 - Exports multiple channels (default: 2)
 - Sets group ownership (default: gpio)
@@ -276,6 +290,7 @@ Script features:
 - Validates configuration
 
 Options:
+
 ```bash
 sudo ./scripts/setup-pwm-perms.sh --chip 0      # Force pwmchip0 (Pi 1-4)
 sudo ./scripts/setup-pwm-perms.sh --chip 2      # Force pwmchip2 (Pi 5)
@@ -288,6 +303,7 @@ sudo ./scripts/setup-pwm-perms.sh --help        # Show all options
 Automatically setup PWM permissions on boot:
 
 **Install service**:
+
 ```bash
 sudo cp scripts/platformio-pwm.service /etc/systemd/system/
 sudo systemctl enable platformio-pwm.service
@@ -295,16 +311,19 @@ sudo systemctl start platformio-pwm.service
 ```
 
 **Check status**:
+
 ```bash
 sudo systemctl status platformio-pwm.service
 ```
 
 **View logs**:
+
 ```bash
 sudo journalctl -u platformio-pwm.service
 ```
 
 **Uninstall service**:
+
 ```bash
 sudo systemctl stop platformio-pwm.service
 sudo systemctl disable platformio-pwm.service
@@ -324,14 +343,17 @@ int pwm_init(int pin, uint32_t freq_hz);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number (12, 13, 18, or 19)
 - `freq_hz` - Frequency in Hz (1 Hz to 100 MHz)
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - Error code on failure (see [Error Codes](#error-codes))
 
 **Example**:
+
 ```c
 // Initialize GPIO 18 at 1 kHz
 int result = pwm_init(18, 1000);
@@ -351,14 +373,17 @@ int pwm_write(int pin, float duty_cycle_percent);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 - `duty_cycle_percent` - Duty cycle (0.0 to 100.0%)
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - Error code on failure
 
 **Example**:
+
 ```c
 // Set 75% duty cycle (75% power)
 pwm_write(18, 75.0);
@@ -381,13 +406,16 @@ int pwm_deinit(int pin);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - Error code on failure
 
 **Example**:
+
 ```c
 // Cleanup when done
 pwm_deinit(18);
@@ -406,14 +434,17 @@ int pwm_set_frequency(int pin, uint32_t freq_hz);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 - `freq_hz` - New frequency in Hz
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - Error code on failure
 
 **Example**:
+
 ```c
 // Change frequency to 5 kHz
 pwm_set_frequency(18, 5000);
@@ -432,14 +463,17 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 - `polarity` - `PWM_POLARITY_NORMAL` or `PWM_POLARITY_INVERTED`
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - Error code on failure
 
 **Example**:
+
 ```c
 // Normal polarity (high = active)
 pwm_set_polarity(18, PWM_POLARITY_NORMAL);
@@ -452,26 +486,29 @@ pwm_set_polarity(18, PWM_POLARITY_INVERTED);
 
 ---
 
-#### pwm_get_status()
+#### pwm_get_state()
 
 Query current PWM status and configuration.
 
 ```c
-int pwm_get_status(int pin, pwm_status_t *status);
+int pwm_get_state(int pin, pwm_status_t *status);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 - `status` - Pointer to `pwm_status_t` structure
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - Error code on failure
 
 **Example**:
+
 ```c
 pwm_status_t status;
-if (pwm_get_status(18, &status) == PWM_SUCCESS) {
+if (pwm_get_state(18, &status) == PWM_SUCCESS) {
     printf("Frequency: %u Hz\n", status.frequency_hz);
     printf("Duty Cycle: %.1f%%\n", status.duty_cycle_percent);
     printf("Enabled: %s\n", status.is_enabled ? "yes" : "no");
@@ -479,6 +516,7 @@ if (pwm_get_status(18, &status) == PWM_SUCCESS) {
 ```
 
 **Status Structure**:
+
 ```c
 typedef struct {
     int gpio_pin;              // GPIO pin number
@@ -496,6 +534,51 @@ typedef struct {
 
 ---
 
+#### pwm_sample_hardware()
+
+Read live hardware state directly from sysfs registers.
+
+```c
+int pwm_sample_hardware(int pin, pwm_status_t *status);
+```
+
+**Parameters**:
+
+- `pin` - GPIO pin number
+- `status` - Pointer to `pwm_status_t` structure
+
+**Returns**:
+
+- `PWM_SUCCESS` (0) on success
+- `PWM_ERROR_INVALID_PARAM` if `status` is NULL
+- `PWM_ERROR_NOT_EXPORTED` if pin not initialized
+- `PWM_ERROR_IO` on sysfs read failure or malformed data
+
+**Example**:
+
+```c
+pwm_status_t hw_state;
+if (pwm_sample_hardware(18, &hw_state) == PWM_SUCCESS) {
+    printf("Live HW frequency: %u Hz\n", hw_state.frequency_hz);
+    printf("Live HW duty cycle: %.1f%%\n", hw_state.duty_cycle_percent);
+}
+```
+
+**Note**: Performs 4 sysfs reads (period, duty_cycle, enable, polarity) on each call. More
+expensive than `pwm_get_state()`, which reads from the write-shadow cache. Use
+`pwm_sample_hardware()` when you need to verify actual hardware state, e.g., after a
+suspected hardware reset or for diagnostic tooling.
+
+**Note**: The 4 reads are **not atomic** — if another process modifies the PWM channel
+between reads, the returned struct may be an inconsistent snapshot (e.g., period from before
+a frequency change, duty_cycle from after). Suitable for diagnostics and verification; do
+not rely on this function for real-time synchronisation.
+
+**Note**: `status.frequency_hz` is derived via integer division (`1 GHz / period_ns`) and
+may differ slightly from the value passed to `pwm_init()` due to rounding.
+
+---
+
 #### pwm_is_enabled()
 
 Check if PWM channel is enabled.
@@ -505,13 +588,16 @@ bool pwm_is_enabled(int pin);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 
 **Returns**:
+
 - `true` if enabled
 - `false` if disabled or not initialized
 
 **Example**:
+
 ```c
 if (pwm_is_enabled(18)) {
     printf("PWM is active\n");
@@ -531,12 +617,15 @@ const char* pwm_error_string(pwm_error_t error);
 ```
 
 **Parameters**:
+
 - `error` - Error code
 
 **Returns**:
+
 - Pointer to static error message string
 
 **Example**:
+
 ```c
 int result = pwm_init(18, 1000);
 if (result != PWM_SUCCESS) {
@@ -555,13 +644,16 @@ bool pwm_pin_is_valid(int pin);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 
 **Returns**:
+
 - `true` if pin supports PWM
 - `false` otherwise
 
 **Example**:
+
 ```c
 if (!pwm_pin_is_valid(18)) {
     printf("GPIO 18 does not support PWM\n");
@@ -579,15 +671,18 @@ int pwm_get_chip_channel(int pin, int *chip, int *channel);
 ```
 
 **Parameters**:
+
 - `pin` - GPIO pin number
 - `chip` - Pointer to store chip number (output)
 - `channel` - Pointer to store channel number (output)
 
 **Returns**:
+
 - `PWM_SUCCESS` (0) on success
 - `PWM_ERROR_INVALID_PIN` if not a PWM pin
 
 **Example**:
+
 ```c
 int chip, channel;
 if (pwm_get_chip_channel(18, &chip, &channel) == PWM_SUCCESS) {
@@ -642,8 +737,8 @@ int main() {
     pwm_write(pin, 50.0);
 
     // Query status
-    pwm_status_t status;
-    pwm_get_status(pin, &status);
+    pwm_state_t status;
+    pwm_get_state(pin, &status);
     printf("Frequency: %u Hz\n", status.frequency_hz);
 
     // Cleanup
@@ -658,11 +753,13 @@ int main() {
 ### Permission denied (PWM_ERROR_PERMISSION)
 
 **Symptoms**:
-```
+
+```text
 ERROR: Failed to initialize PWM: Permission denied (run setup-pwm-perms.sh)
 ```
 
 **Causes**:
+
 1. PWM permissions not setup
 2. User not in gpio group
 3. Wrong file ownership
@@ -670,17 +767,20 @@ ERROR: Failed to initialize PWM: Permission denied (run setup-pwm-perms.sh)
 **Solutions**:
 
 1. Run setup script:
+
    ```bash
    sudo ./scripts/setup-pwm-perms.sh
    ```
 
 2. Add user to gpio group:
+
    ```bash
    sudo usermod -a -G gpio $USER
    # Log out and back in
    ```
 
 3. Manual permission fix:
+
    ```bash
    # Pi 1-4
    sudo chown -R root:gpio /sys/class/pwm/pwmchip0/pwm0
@@ -696,11 +796,13 @@ ERROR: Failed to initialize PWM: Permission denied (run setup-pwm-perms.sh)
 ### PWM channel not exported (PWM_ERROR_NOT_EXPORTED)
 
 **Symptoms**:
-```
+
+```text
 ERROR: Failed to initialize PWM: PWM channel not exported
 ```
 
 **Causes**:
+
 1. Device tree overlay not loaded
 2. Wrong pwmchip for Pi model
 3. Kernel PWM subsystem disabled
@@ -708,6 +810,7 @@ ERROR: Failed to initialize PWM: PWM channel not exported
 **Solutions**:
 
 1. Check device tree overlay:
+
    ```bash
    # Pi 1-4
    grep pwm /boot/config.txt
@@ -717,6 +820,7 @@ ERROR: Failed to initialize PWM: PWM channel not exported
    ```
 
 2. Add overlay if missing:
+
    ```bash
    # Pi 1-4
    echo "dtoverlay=pwm,pin=18,func=2" | sudo tee -a /boot/config.txt
@@ -728,6 +832,7 @@ ERROR: Failed to initialize PWM: PWM channel not exported
    ```
 
 3. Verify pwmchip exists:
+
    ```bash
    # Pi 1-4
    ls /sys/class/pwm/pwmchip0
@@ -737,6 +842,7 @@ ERROR: Failed to initialize PWM: PWM channel not exported
    ```
 
 4. Check kernel config:
+
    ```bash
    zcat /proc/config.gz | grep PWM
    # Should see: CONFIG_PWM=y, CONFIG_PWM_BCM2835=y
@@ -747,7 +853,8 @@ ERROR: Failed to initialize PWM: PWM channel not exported
 ### GPIO pin does not support PWM (PWM_ERROR_INVALID_PIN)
 
 **Symptoms**:
-```
+
+```text
 ERROR: GPIO 17 does not support PWM
 Valid PWM pins: 12, 13, 18, 19
 ```
@@ -763,11 +870,13 @@ Use a valid PWM pin: 12, 13, 18, or 19
 ### PWM channel already in use (PWM_ERROR_BUSY)
 
 **Symptoms**:
-```
+
+```text
 ERROR: Failed to initialize PWM: PWM channel already in use
 ```
 
 **Causes**:
+
 1. Another process using the same PWM channel
 2. GPIO pin conflict (12/18 share PWM0, 13/19 share PWM1)
 3. Channel already exported by another program
@@ -775,17 +884,20 @@ ERROR: Failed to initialize PWM: PWM channel already in use
 **Solutions**:
 
 1. Check for other processes:
+
    ```bash
    sudo lsof | grep pwm
    ps aux | grep lgpio
    ```
 
 2. Kill competing processes:
+
    ```bash
    sudo killall lgpio-pwm-fade
    ```
 
 3. Unexport and re-export channel:
+
    ```bash
    # Pi 1-4
    echo 0 | sudo tee /sys/class/pwm/pwmchip0/unexport
@@ -805,6 +917,7 @@ ERROR: Failed to initialize PWM: PWM channel already in use
 ### LED not turning on/off
 
 **Causes**:
+
 1. LED polarity reversed
 2. Resistor value too high
 3. GPIO pin not configured
@@ -817,12 +930,14 @@ ERROR: Failed to initialize PWM: PWM channel already in use
    - Short leg (cathode, flat side) to GND
 
 2. Test with known working frequency:
+
    ```c
    pwm_init(18, 1000);
    pwm_write(18, 100.0);  // Full brightness
    ```
 
 3. Test GPIO with non-PWM code:
+
    ```bash
    # Use lgpio-blink example to verify GPIO works
    cd examples/lgpio-blink
@@ -838,6 +953,7 @@ ERROR: Failed to initialize PWM: PWM channel already in use
 ### LED flickering or unstable
 
 **Causes**:
+
 1. Frequency too low
 2. Duty cycle at extreme values (0% or 100%)
 3. Power supply noise
@@ -846,11 +962,13 @@ ERROR: Failed to initialize PWM: PWM channel already in use
 **Solutions**:
 
 1. Increase frequency:
+
    ```c
    pwm_init(18, 5000);  // 5 kHz instead of 1 kHz
    ```
 
 2. Avoid extreme duty cycles:
+
    ```c
    // Use 1% instead of 0%
    pwm_write(18, 1.0);
@@ -869,6 +987,7 @@ ERROR: Failed to initialize PWM: PWM channel already in use
 ### Frequency limited or duty cycle clamped
 
 **Symptoms**:
+
 - Cannot set frequency above certain value
 - Duty cycle limited to specific range
 
@@ -876,6 +995,7 @@ ERROR: Failed to initialize PWM: PWM channel already in use
 Hardware limitations of PWM peripheral.
 
 **Raspberry Pi PWM Limits**:
+
 - Frequency: 1 Hz to ~100 MHz (practical: 1 Hz to 10 MHz)
 - Duty cycle: 0.0% to 100.0%
 - Resolution: Dependent on frequency (higher frequency = lower resolution)
@@ -1085,11 +1205,13 @@ For fine control, use lower frequencies.
 | Setup | Device tree + permissions | None (immediate) |
 
 Use hardware PWM (this HAL) when:
+
 - Precise timing required (servo, motor)
 - Low CPU usage desired
 - High frequency needed
 
 Use software PWM (lgpio) when:
+
 - Need many PWM outputs
 - Quick prototyping
 - Imprecise timing acceptable
@@ -1126,12 +1248,14 @@ See [LGPIO_SETUP.md](LGPIO_SETUP.md) for detailed cross-compilation instructions
 ### Documentation
 
 - [Linux PWM Subsystem](https://www.kernel.org/doc/Documentation/pwm.txt) - Kernel PWM documentation
+<!-- markdownlint-disable-next-line MD013 -->
 - [Raspberry Pi Device Tree Overlays](https://github.com/raspberrypi/firmware/blob/master/boot/overlays/README) - PWM overlay options
 - [sysfs PWM Guide](https://jumpnowtek.com/rpi/Using-the-Raspberry-Pi-Hardware-PWM-timers.html) - Practical PWM usage
 - [lgpio Documentation](http://abyz.me.uk/lg/lgpio.html) - lgpio library reference
 
 ### Hardware
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [BCM2835 ARM Peripherals](https://www.raspberrypi.org/app/uploads/2012/02/BCM2835-ARM-Peripherals.pdf) - Pi 1-4 hardware (Chapter 9: PWM)
 - [BCM2711 Datasheet](https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf) - Pi 4 hardware
 - [RP1 Datasheet](https://datasheets.raspberrypi.com/rp1/rp1-peripherals.pdf) - Pi 5 I/O controller
@@ -1154,10 +1278,12 @@ See [LGPIO_SETUP.md](LGPIO_SETUP.md) for detailed cross-compilation instructions
 
 1. Check [Troubleshooting](#troubleshooting) section
 2. Run diagnostics:
+
    ```bash
    sudo ./scripts/setup-pwm-perms.sh --verbose
    ```
-3. Search existing issues: https://github.com/sfo2001/platform-linux_arm/issues
+
+3. Search existing issues: <https://github.com/sfo2001/platform-linux_arm/issues>
 4. Create new issue with:
    - Raspberry Pi model
    - OS version (`cat /etc/os-release`)
@@ -1168,6 +1294,7 @@ See [LGPIO_SETUP.md](LGPIO_SETUP.md) for detailed cross-compilation instructions
 ### Contributing
 
 Contributions welcome! See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
+
 - Development setup
 - Code style guidelines
 - Testing requirements

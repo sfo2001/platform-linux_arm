@@ -12,7 +12,7 @@ development workflow, and common gotchas.
 cross-compilation and deployment of C/C++ applications for Linux ARM single-board
 computers (Raspberry Pi, Orange Pi, BeagleBone, Radxa, Khadas, Arduino Uno Q).
 
-**Version:** 1.9.x | **License:** Apache 2.0
+**Version:** 2.0.x | **License:** Apache 2.0
 
 ---
 
@@ -32,7 +32,7 @@ platform-linux_arm/
 ├── tests/                   # Python unit tests (pytest) for builder scripts
 │                            #   and C unit tests (CMake/ctest) for framework C code
 │   ├── test_platform.py     # pytest: builder script unit tests (83 tests)
-│   ├── test_pwm_hal.c       # ctest: PWM HAL C unit tests (50 tests, no hardware needed)
+│   ├── test_pwm_hal.c       # ctest: PWM HAL C unit tests (61 tests, no hardware needed)
 │   └── stubs/
 │       ├── pwm-hal-sysfs-stub.c  # Link-seam stub — replaces /sys/class/pwm/ with in-memory table
 │       └── pwm-hal-sysfs-stub.h  # Stub control API (stub_reset, stub_set_pi5, stub_set_export_delay)
@@ -294,7 +294,7 @@ Follows [Conventional Commits](https://www.conventionalcommits.org/).
 |----------|---------|-------------|
 | `examples.yml` | push, PR | Builds all 21 examples × {ubuntu, macos, windows} |
 | `tests.yml` | push, PR | Python pytest × {ubuntu, macos, windows} × Python {3.10, 3.11, 3.12} |
-| `examples.yml` | push, PR | C unit tests (CMake/ctest, 50 tests, ubuntu-latest) |
+| `examples.yml` | push, PR | C unit tests (CMake/ctest, 61 tests, ubuntu-latest) |
 | `release.yml` | tag push | Publishes platform package |
 
 ---

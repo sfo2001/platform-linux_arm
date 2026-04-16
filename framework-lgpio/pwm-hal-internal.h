@@ -51,10 +51,9 @@ extern const pwm_pin_map_t g_pwm_pin_map_pi5[];
 int  pwm_sysfs_write(const char *path, const char *value);
 /**
  * Read a sysfs attribute into value (max_len bytes, NUL-terminated).
- * @todo(#124) Not yet called from pwm-hal.c — readback support is planned.
- * Stub and production implementations MUST provide this function regardless,
- * as it is part of the mandatory seam contract; a stub that omits it will
- * fail to link when #124 wires up the caller.
+ * Used by pwm_sample_hardware() to read live hardware state.
+ * Stub and production implementations MUST provide this function as it is
+ * part of the mandatory seam contract.
  */
 int  pwm_sysfs_read(const char *path, char *value, size_t max_len);
 /**
