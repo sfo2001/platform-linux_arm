@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-04-16
+
 ### Breaking Changes
 
 - **BREAKING** `pwm_get_status()` renamed to `pwm_get_state()` — formalises write-shadow as
@@ -20,8 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   This is a **semver MAJOR** bump — downstream binaries linked against the old symbol will
   not link; a source-level rename and recompile is required.
-
-### Changed
 
 ### Added
 - `pwm_sample_hardware()` — reads live hardware registers via sysfs (4 reads: period,
