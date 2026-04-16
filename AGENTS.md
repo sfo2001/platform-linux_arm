@@ -218,6 +218,118 @@ pio pkg install --global --platform symlink://.
 pio run -e raspberrypi_4b_upload --target upload
 ```
 
+### Agent-Driven Dev Loop
+
+The `dev-loop` target chains build → upload → monitor in one command
+with structured JSON output. Designed for AI agent iteration loops.
+
+```bash
+# Run complete dev loop
+pio run --target dev-loop
+
+# With specific environment
+pio run -e raspberrypi_4b_upload --target dev-loop
+```
+
+**Configuration** in `platformio.ini`:
+
+```ini
+[env:raspberrypi_4b_upload]
+platform = linux_arm
+board = raspberrypi_4b
+upload_protocol = scp
+upload_port = pi@raspberrypi.local:/home/pi/myapp
+dev_loop_monitor_timeout = 30   ; seconds (default: 30)
+upload_run_command = ./myapp --flag  ; optional: custom remote command
+```
+
+> **Security:** `upload_run_command` is passed verbatim through the remote shell.
+> Shell metacharacters (`;`, `&&`, `|`, backticks) in its value will execute arbitrary
+> commands on the remote host. Only set values you authored — never derive this option
+> from untrusted external input.
+
+**Structured JSON output** — extract between `--- DEV_LOOP_RESULT ---` delimiters:
+
+```json
+{
+  "schema_version": "1",
+  "phases": {
+    "build": { "status": "pass" },
+    "upload": { "status": "pass", "error": null },
+    "monitor": {
+      "status": "pass",
+      "exit_code": 0,
+      "timed_out": false,
+      "timeout_seconds": 30,
+      "output": "Hello from ARM!\n"
+    }
+  },
+  "overall_status": "pass",
+  "failure_phase": null,
+  "elapsed_seconds": 18.4,
+  "timestamp_iso": "2026-04-05T14:23:11+02:00"
+}
+```
+
+The JSON is also written to `.pio/build/<env>/dev-loop-result.json`.
+
+**Agent parsing guidance:**
+
+- Extract JSON between the two `--- DEV_LOOP_RESULT ---` lines
+- Check `overall_status` first: `"pass"` or `"fail"`
+- If `"fail"`, check `failure_phase` (`"upload"` or `"monitor"`)
+- `phases.monitor.status` has three possible values: `"pass"`, `"fail"`, `"timeout"`
+- `monitor.timed_out == true` means program ran for the full timeout; `status` will be `"timeout"` (not `"fail"`)
+- If upload phase fails, `phases.monitor` is omitted (never ran)
+
+**Error handling:**
+
+- On SSH failure: `failure_phase` is `"upload"`, check `phases.upload.error`
+- Do not retry faster than every 5 seconds (avoids SSH connection storms)
+- The dev loop is idempotent — binary is overwritten on each upload
+
+---
+
+## Branch Workflow
+
+`develop` and `main` are **protected branches**. Direct pushes are rejected.
+CI must be green before any branch can merge into `develop`.
+
+### Rules (no exceptions)
+
+1. **Never commit directly to `develop` or `main`** — even for a one-liner.
+2. **Never use `--no-verify`** — hook failures are signals, not noise. If a hook
+   fails, fix the root cause. Bypassing it hides toolchain drift that will break CI.
+3. **Verify toolchain parity before starting any work:**
+
+   ```bash
+   pre-commit run --all-files
+   ```
+
+   If this fails on a clean checkout, fix the toolchain mismatch first as a
+   separate commit before making any product changes.
+4. **Branch naming:** `fix/NNN-short-description`, `feat/NNN-short-description`,
+   `chore/description`, `style/description` — where NNN is the issue number if one exists.
+5. **CI must pass on the branch** before merging into `develop`.
+
+### Workflow
+
+```bash
+git checkout develop && git pull
+git checkout -b fix/119-pwm-init-sentinel    # branch off develop
+pre-commit run --all-files                   # verify toolchain is clean
+# ... make changes, commit (hooks must pass) ...
+git push -u origin fix/119-pwm-init-sentinel
+# wait for CI green, then merge
+```
+
+### Why this matters
+
+A broken toolchain on `develop` (e.g. mismatched black line-length between
+pre-commit and CI) is invisible until CI runs. Working through a branch means CI
+catches the problem on the branch before develop is touched. A dirty develop
+history is the cost of skipping this step.
+
 ---
 
 ## Testing
@@ -268,10 +380,12 @@ Follows [Conventional Commits](https://www.conventionalcommits.org/).
 | `ci` | GitHub Actions workflows |
 | `config` | Platform config file support |
 | `debug` | GDB/SSH remote debugging |
+| `dev-loop` | Dev-loop composite build/upload/monitor target |
 | `docs` | Documentation |
 | `examples` | Example projects |
 | `frameworks` | Framework support (generic) |
 | `lgpio` | lgpio-specific changes |
+| `pwm-hal` | PWM HAL (`framework-lgpio/pwm-hal.c`) changes |
 | `libgpiod` | libgpiod-specific changes |
 | `monitor` | SSH serial monitor |
 | `onboarding` | First-run welcome and setup |

@@ -55,14 +55,17 @@ Author: PlatformIO
 License: Apache 2.0
 """
 
+import datetime
 import json
 import os
 import posixpath
+import re
 import shlex
 import shutil
 import subprocess
 import sys
-from typing import Any, Dict, List
+import time
+from typing import Any, Dict, List, Tuple
 
 from platformio import exception
 from platformio.public import PlatformBase, get_systype
@@ -858,7 +861,7 @@ class Linux_armPlatform(PlatformBase):
         if _PLATFORM_DIR not in sys.path:
             sys.path.insert(0, _PLATFORM_DIR)
         from platform_constants import Timeouts, UIConstants
-        from ssh_utils import SSHCommandBuilder, SSHConnectionConfig
+        from ssh_utils import SSHConnectionConfig
 
         strict_host_check = parse_bool_option(
             env.GetProjectOption(
@@ -879,35 +882,17 @@ class Linux_armPlatform(PlatformBase):
         except (ValueError, FileNotFoundError) as e:
             raise exception.PlatformioException(str(e))
 
-        # Get custom run command or use default
-        run_command = env.GetProjectOption("upload_run_command", None)
-        if run_command:
-            # SECURITY: upload_run_command is treated as trusted user input from platformio.ini.
-            # Arbitrary shell metacharacters are intentionally permitted. See docs/SECURITY.md.
-            remote_command = run_command
-        else:
-            # Determine the actual executable path
-            # Rule: If remote_path ends with '/', it's a directory - append program name
-            #       Otherwise, it's the full file path - use as-is
-            if source and remote_path.endswith("/"):
-                program_name = os.path.basename(str(source[0]))
-                executable_path = posixpath.join(remote_path, program_name)
-            else:
-                executable_path = remote_path
-
-            # For simple path execution, quote the path to prevent injection
-            remote_command = shlex.quote(executable_path)
-
-        # Build SSH command using shared builder
-        builder = SSHCommandBuilder(config)
-        cmd = builder.build_ssh_command(remote_command)
+        # Build SSH command using shared helper
+        cmd, display_path = Linux_armPlatform._build_ssh_execute_cmd(
+            config, env, remote_path, source
+        )
 
         separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
         print("\n" + separator)
         print("RUNNING REMOTE PROGRAM")
         print(separator)
         print(f"Target: {user}@{host}")
-        print(f"Command: {run_command if run_command else executable_path}")
+        print(f"Command: {display_path}")
         print(separator + "\n")
 
         # Execute remote command with timeout protection (interactive - shows output directly)
@@ -1020,6 +1005,346 @@ class Linux_armPlatform(PlatformBase):
 
         # Run the remote command and stream output
         return self._run_remote_command(user, host, ssh_port, ssh_key, path, env, source)
+
+    def on_dev_loop(self, target, source, env) -> int:
+        """
+        Execute build → upload → monitor dev loop with structured JSON output.
+
+        Build is handled by SCons dependency resolution (target_bin).
+        This method orchestrates upload and monitor phases, collecting
+        results into a structured JSON summary for AI agent consumption.
+
+        Args:
+            target: Build target.
+            source: List of source files (binary path).
+            env: PlatformIO environment object.
+
+        Returns:
+            int: 0 if all phases passed, 1 if any phase failed.
+
+        Note:
+            JSON output is printed to stdout between delimiter lines
+            and also written to BUILD_DIR/dev-loop-result.json.
+            Configure monitor timeout via dev_loop_monitor_timeout
+            in platformio.ini (default: 30 seconds).
+
+            A monitor timeout (monitor_timed_out=True) is treated as
+            overall_status='pass', not 'fail'. This is intentional for
+            long-running daemon workloads expected to run indefinitely.
+            Use phases.monitor.status == 'timeout' to distinguish this case
+            from a clean exit.
+        """
+        # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
+        from platform_constants import DevLoopConstants, UIConstants
+
+        start_time = time.monotonic()
+
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
+        print("DEV LOOP: BUILD → UPLOAD → MONITOR")
+        print(separator + "\n")
+
+        result: Dict[str, Any] = {
+            "schema_version": DevLoopConstants.SCHEMA_VERSION,
+            "phases": {
+                "build": {"status": "pass"},
+            },
+            "overall_status": "pass",
+            "failure_phase": None,
+        }
+
+        # Warn if upload_run_after=true — the program will execute twice
+        # (once during upload, once during monitor). This is intentional but
+        # users may not expect it. Unlike on_monitor(), _run_dev_loop_monitor
+        # always executes the program regardless of upload_run_after.
+        if parse_bool_option(env.GetProjectOption("upload_run_after", False)):
+            print(f"\n{separator}")
+            print("DEV LOOP: WARNING")
+            print(separator)
+            print(
+                "\nupload_run_after = true is set in platformio.ini.\n"
+                "The program will run TWICE: once during the upload phase\n"
+                "and once during the monitor phase.\n"
+                "To avoid double execution, remove upload_run_after = true."
+            )
+            print(separator + "\n")
+
+        print(separator)
+        print("DEV LOOP: UPLOAD PHASE")
+        print(separator + "\n")
+
+        upload_error = None
+        try:
+            upload_rc = self.on_upload(target, source, env)
+            if upload_rc != 0:
+                upload_error = f"Upload returned non-zero exit code: {upload_rc}"
+        except (exception.PlatformioException, OSError, subprocess.TimeoutExpired) as e:
+            # subprocess.TimeoutExpired is caught here as defence-in-depth: if a custom
+            # upload protocol raises it unwrapped, on_dev_loop still emits a structured
+            # JSON result (failure_phase=upload) rather than propagating an unhandled
+            # exception. The built-in protocols (SCP, rsync, SSH) already wrap this as
+            # PlatformioException, so this clause is a fallback for future/custom protocols.
+            upload_rc = 1
+            upload_error = Linux_armPlatform._scrub_error_message(str(e))
+
+        if upload_error:
+            result["phases"]["upload"] = {
+                "status": "fail",
+                "error": upload_error,
+            }
+            result["overall_status"] = "fail"
+            result["failure_phase"] = "upload"
+            elapsed = time.monotonic() - start_time
+            result["elapsed_seconds"] = round(elapsed, 2)
+            result["timestamp_iso"] = self._iso_timestamp()
+            self._emit_dev_loop_result(result, env)
+            return 1
+
+        result["phases"]["upload"] = {"status": "pass", "error": None}
+
+        print("\n" + separator)
+        print("DEV LOOP: MONITOR PHASE")
+        print(separator + "\n")
+
+        _timeout_raw = env.GetProjectOption(
+            "dev_loop_monitor_timeout",
+            self._get_config_default(
+                "dev_loop_monitor_timeout",
+                DevLoopConstants.MONITOR_TIMEOUT,
+            ),
+        )
+        try:
+            monitor_timeout = int(_timeout_raw)
+        except ValueError as exc:
+            raise exception.PlatformioException(
+                f"dev_loop_monitor_timeout must be an integer, got {_timeout_raw!r}"
+            ) from exc
+        if monitor_timeout <= 0:
+            raise exception.PlatformioException(
+                f"dev_loop_monitor_timeout must be a positive integer, got {monitor_timeout}"
+            )
+
+        monitor_output, monitor_exit_code, monitor_timed_out = self._run_dev_loop_monitor(
+            env, source, monitor_timeout
+        )
+
+        if monitor_timed_out:
+            monitor_status = "timeout"
+        elif monitor_exit_code != 0:
+            monitor_status = "fail"
+        else:
+            monitor_status = "pass"
+
+        result["phases"]["monitor"] = {
+            "status": monitor_status,
+            "exit_code": monitor_exit_code,
+            "timed_out": monitor_timed_out,
+            "timeout_seconds": monitor_timeout,
+            "output": monitor_output,
+        }
+
+        if monitor_status == "fail":
+            result["overall_status"] = "fail"
+            result["failure_phase"] = "monitor"
+
+        elapsed = time.monotonic() - start_time
+        result["elapsed_seconds"] = round(elapsed, 2)
+        result["timestamp_iso"] = self._iso_timestamp()
+
+        self._emit_dev_loop_result(result, env)
+        return 0 if result["overall_status"] == "pass" else 1
+
+    def _run_dev_loop_monitor(self, env, source, timeout: int) -> Tuple[str, int, bool]:
+        """
+        Run remote program with timeout and capture output.
+
+        Unlike on_monitor() which streams output interactively, this method
+        captures all output for inclusion in the structured JSON result.
+
+        Args:
+            env: PlatformIO environment object.
+            source: List of source files (binary path).
+            timeout: Maximum execution time in seconds.
+
+        Returns:
+            Tuple of (output: str, exit_code: int, timed_out: bool).
+        """
+        # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
+        from platform_constants import DevLoopConstants, SSHDefaults
+        from ssh_utils import SSHConnectionConfig
+
+        upload_port = env.GetProjectOption("upload_port", None)
+        if not upload_port:
+            raise exception.PlatformioException(
+                "upload_port is not configured. Set upload_port in platformio.ini."
+            )
+
+        user, host, remote_path = self._parse_upload_port(upload_port, env)
+
+        ssh_port = env.GetProjectOption(
+            "upload_ssh_port",
+            self._get_config_default("upload_ssh_port", SSHDefaults.PORT),
+        )
+        ssh_key = env.GetProjectOption(
+            "upload_ssh_key",
+            self._get_config_default("upload_ssh_key", None),
+        )
+        strict_host_check = parse_bool_option(
+            env.GetProjectOption(
+                "upload_strict_host_check",
+                self._get_config_default("upload_strict_host_check", False),
+            )
+        )
+
+        try:
+            config = SSHConnectionConfig(
+                user=user,
+                host=host,
+                port=ssh_port,
+                key=ssh_key,
+                strict_host_check=strict_host_check,
+            )
+        except (ValueError, FileNotFoundError) as e:
+            return (
+                f"SSH config error: {Linux_armPlatform._scrub_error_message(str(e))}",
+                1,
+                False,
+            )
+
+        cmd, display_path = Linux_armPlatform._build_ssh_execute_cmd(
+            config, env, remote_path, source
+        )
+
+        print(f"Running: {user}@{host} -> {display_path}")
+        print(f"Timeout: {timeout}s\n")
+
+        stdout_bytes = b""
+        timed_out = False
+        exit_code = -1
+        try:
+            # stderr is merged into stdout so agents receive all output in one stream.
+            process = subprocess.Popen(  # pylint: disable=consider-using-with
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            )
+            stdout_bytes, _ = process.communicate(timeout=timeout)
+            exit_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            try:
+                stdout_bytes, _ = process.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
+                stdout_bytes = b""
+            exit_code = process.returncode if process.returncode is not None else -1
+            timed_out = True
+
+        stdout = stdout_bytes.decode("utf-8", errors="replace") if stdout_bytes else ""
+        output = re.sub(r"[^\x09\x0a\x0d\x20-\x7e]", "", stdout)
+
+        if len(output) > DevLoopConstants.MAX_OUTPUT_BYTES:
+            output = output[: DevLoopConstants.MAX_OUTPUT_BYTES] + "\n[truncated]"
+
+        return (output, exit_code, timed_out)
+
+    @staticmethod
+    def _build_ssh_execute_cmd(
+        config,
+        env,
+        remote_path: str,
+        source=None,
+    ) -> Tuple[List[str], str]:
+        """Build SSH command list and display path for remote execution.
+
+        Shared by _run_remote_command (interactive) and _run_dev_loop_monitor
+        (capture mode) to avoid duplicating upload_run_command handling and
+        executable path resolution.
+
+        Args:
+            config: SSH connection configuration.
+            env: PlatformIO environment (read upload_run_command option).
+            remote_path: Remote path to executable or directory.
+            source: Optional source file list (for extracting program name).
+
+        Returns:
+            Tuple of (cmd: list[str], display_path: str).
+        """
+        # Lazy import to avoid breaking platform loading
+        from ssh_utils import SSHCommandBuilder
+
+        run_command = env.GetProjectOption("upload_run_command", None)
+        if run_command:
+            # SECURITY: upload_run_command is treated as trusted user input from platformio.ini.
+            # Arbitrary shell metacharacters are intentionally permitted. See docs/SECURITY.md.
+            remote_command = run_command
+            display_path = run_command
+        else:
+            if source and remote_path.endswith("/"):
+                program_name = os.path.basename(str(source[0]).replace("\\", "/"))
+                executable_path = posixpath.join(remote_path, program_name)
+            else:
+                executable_path = remote_path
+            remote_command = shlex.quote(executable_path)
+            display_path = executable_path
+
+        builder = SSHCommandBuilder(config)
+        cmd = builder.build_ssh_command(remote_command)
+        return cmd, display_path
+
+    @staticmethod
+    def _scrub_error_message(msg: str) -> str:
+        """Replace absolute paths with a placeholder before persisting error messages.
+
+        Prevents SSH key paths, usernames, and connection details from leaking
+        into the persisted dev-loop-result.json file.
+        """
+        return re.sub(
+            r"([A-Za-z]:\\\S+|\\\\[^\s]+|/\S+|\S+@\S+|\b\S*\.ssh\S*|\bkeys/\S+)",
+            "[redacted]",
+            msg,
+        )
+
+    @staticmethod
+    def _iso_timestamp() -> str:
+        """Return current time as ISO 8601 string with timezone."""
+        return datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat()
+
+    def _emit_dev_loop_result(self, result: Dict, env) -> None:
+        """
+        Emit dev-loop result as delimited JSON to stdout and write to file.
+
+        Args:
+            result: Result dictionary matching the dev-loop JSON schema.
+            env: PlatformIO environment object (for BUILD_DIR path).
+        """
+        # Lazy import to avoid breaking platform loading
+        if _PLATFORM_DIR not in sys.path:
+            sys.path.insert(0, _PLATFORM_DIR)
+        from platform_constants import DevLoopConstants, UIConstants
+
+        json_output = json.dumps(result, indent=2)
+
+        # Print delimited JSON to stdout
+        separator = UIConstants.SEPARATOR_CHAR * UIConstants.SEPARATOR_WIDTH
+        print("\n" + separator)
+        print(DevLoopConstants.OUTPUT_DELIMITER)
+        print(json_output)
+        print(DevLoopConstants.OUTPUT_DELIMITER)
+        print(separator + "\n")
+
+        # Write to file in build directory
+        try:
+            build_dir = env.subst("$BUILD_DIR")
+            os.makedirs(build_dir, exist_ok=True)
+            result_path = os.path.join(build_dir, DevLoopConstants.RESULT_FILENAME)
+            with open(result_path, "w", encoding="utf-8") as f:
+                f.write(json_output)
+            print(f"Result written to: {result_path}")
+        except OSError as e:
+            scrubbed = Linux_armPlatform._scrub_error_message(str(e))
+            print(f"Warning: Could not write result file: {scrubbed}")
 
     def _determine_gdb_executable(self, target_arch: str) -> str:
         """

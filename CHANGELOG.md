@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `dev-loop` composite target: `pio run --target dev-loop` chains build → upload → monitor with structured JSON output for AI agent integration (closes #112)
+
 ## [2.0.0] - 2026-04-16
 
 ### Breaking Changes

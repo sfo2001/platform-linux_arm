@@ -35,6 +35,9 @@ docs/_build/
 !examples/**/.vscode/
 .idea/
 
+# Claude Code local session data (settings, locks — not for version control)
+.claude/
+
 # OS artifacts
 .DS_Store
 Thumbs.db

@@ -34,4 +34,9 @@ disable =
     C0413,
 
     # Singleton initializer uses 'global' statement — valid pattern, one instance.
-    W0603
+    W0603,
+
+    # on_dev_loop orchestrates build→upload→monitor as a single state machine;
+    # splitting into sub-functions would require passing mutable result dict as
+    # a parameter across every branch, harming readability more than it helps.
+    R0915

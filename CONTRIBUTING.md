@@ -535,6 +535,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 - `ci`: CI/CD configuration
 - `config`: Platform configuration file support
 - `debug`: GDB/SSH remote debugging
+- `dev-loop`: Dev-loop composite build/upload/monitor target and result schema
 - `docs`: Documentation
 - `frameworks`: Framework support (lgpio, libgpiod, pigpio, wiringpi)
 - `lgpio`: lgpio-specific changes
@@ -542,6 +543,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 - `onboarding`: First-run welcome and setup
 - `pigpio`: pigpio-specific changes
 - `platform`: Platform core changes
+- `pwm-hal`: PWM HAL (`framework-lgpio/pwm-hal.c`) changes
 - `scripts`: Build and setup scripts
 - `security`: Security policy and hardening (host key verification, injection prevention)
 - `test`: Remote test execution

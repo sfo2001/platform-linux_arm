@@ -24,7 +24,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import platform_constants
+import platform_constants  # noqa: E402
 
 
 class TestToolchainPrefixPosix:
@@ -136,3 +136,22 @@ class TestStaticConstants:
         for attr in ["UPLOAD", "UPLOAD_RUN", "TEST_UPLOAD", "TEST_EXECUTION", "CHMOD"]:
             value = getattr(platform_constants.Timeouts, attr)
             assert isinstance(value, int) and value > 0, f"Timeouts.{attr} = {value}"
+
+
+class TestDevLoopConstants:
+    """Test dev-loop constant values that agents parse — silent drift is a real risk."""
+
+    def test_schema_version(self):
+        assert platform_constants.DevLoopConstants.SCHEMA_VERSION == "1"
+
+    def test_output_delimiter(self):
+        assert platform_constants.DevLoopConstants.OUTPUT_DELIMITER == "--- DEV_LOOP_RESULT ---"
+
+    def test_result_filename(self):
+        assert platform_constants.DevLoopConstants.RESULT_FILENAME == "dev-loop-result.json"
+
+    def test_max_output_bytes(self):
+        assert platform_constants.DevLoopConstants.MAX_OUTPUT_BYTES == 64 * 1024
+
+    def test_monitor_timeout(self):
+        assert platform_constants.DevLoopConstants.MONITOR_TIMEOUT == 30

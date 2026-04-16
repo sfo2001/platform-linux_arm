@@ -230,6 +230,16 @@ pio run --target upload
 
 Requires `upload_protocol` configuration - see [docs/UPLOAD.md](docs/UPLOAD.md).
 
+### Build, Upload, and Monitor (Dev Loop)
+
+```bash
+pio run --target dev-loop
+```
+
+Runs a composite build → upload → monitor workflow and emits structured JSON output
+for AI agent integration. See [AGENTS.md](AGENTS.md) for the full result
+schema reference.
+
 ### Run Tests on Hardware
 
 ```bash

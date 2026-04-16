@@ -94,6 +94,25 @@ class Timeouts:
     CHMOD: Final[int] = 30
 
 
+class DevLoopConstants:
+    """Constants for the dev-loop composite target."""
+
+    # Default timeout for monitoring remote program (seconds)
+    MONITOR_TIMEOUT: Final[int] = 30
+
+    # Delimiter for structured JSON output (agents extract JSON between these)
+    OUTPUT_DELIMITER: Final[str] = "--- DEV_LOOP_RESULT ---"
+
+    # Result filename written to build directory
+    RESULT_FILENAME: Final[str] = "dev-loop-result.json"
+
+    # JSON schema version
+    SCHEMA_VERSION: Final[str] = "1"
+
+    # Maximum bytes of monitor output to include in JSON result
+    MAX_OUTPUT_BYTES: Final[int] = 64 * 1024
+
+
 class TestConstants:
     """Constants for test execution and output parsing."""
 
