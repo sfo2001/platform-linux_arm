@@ -24,8 +24,8 @@
  *
  * @file pwm-hal.h
  * @author PlatformIO Linux ARM Platform
- * @version 1.0.0
- * @date 2025-11-12
+ * @version 2.0.0
+ * @date 2026-04-16
  */
 
 #ifndef PWM_HAL_H
@@ -76,6 +76,9 @@ typedef struct {
     uint64_t period_ns;        /**< Period in nanoseconds */
     uint64_t duty_cycle_ns;    /**< Duty cycle in nanoseconds */
 } pwm_status_t;
+
+/** @brief Alias for pwm_status_t — preferred name for use with pwm_get_state() */
+typedef pwm_status_t pwm_state_t;
 
 /**
  * @brief Hardware limits for PWM operation
@@ -185,7 +188,7 @@ int pwm_set_frequency(int pin, uint32_t freq_hz);
 int pwm_set_polarity(int pin, pwm_polarity_t polarity);
 
 /**
- * @brief Query current PWM status and configuration
+ * @brief Query current PWM configuration (write-shadow cache)
  *
  * Retrieves detailed information about the PWM channel including frequency,
  * duty cycle, polarity, and enable state. Useful for debugging and monitoring.
@@ -196,10 +199,37 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity);
  *
  * @note status parameter must not be NULL
  * @note Returns cached (write-shadow) state — values reflect the last written
- *       configuration, not live hardware registers. Live readback is tracked
- *       in issue #124.
+ *       configuration, not live hardware registers. Use pwm_sample_hardware()
+ *       to read live sysfs state directly.
  */
-int pwm_get_status(int pin, pwm_status_t *status);
+int pwm_get_state(int pin, pwm_state_t *status);
+
+/**
+ * @brief Read live hardware state directly from sysfs
+ *
+ * Reads the current PWM hardware registers via sysfs, bypassing the
+ * write-shadow cache. Use when you need to verify actual hardware state,
+ * e.g., after a suspected hardware reset or for diagnostic tooling.
+ *
+ * More expensive than pwm_get_state() — performs 4 sysfs reads (period,
+ * duty_cycle, enable, polarity).
+ *
+ * @param pin GPIO pin number (BCM numbering)
+ * @param status Pointer to pwm_status_t structure to fill
+ * @return PWM_SUCCESS on success, error code on failure
+ *
+ * @note pin must be initialized with pwm_init() first
+ * @note status parameter must not be NULL
+ * @note The 4 sysfs reads are not atomic.  If another process modifies PWM
+ *       hardware state between reads, the returned struct may represent an
+ *       inconsistent snapshot (e.g., period from before a frequency change,
+ *       duty_cycle from after).  Suitable for diagnostics; do not use for
+ *       real-time synchronisation.
+ * @note status->frequency_hz is derived via integer division (1 GHz /
+ *       period_ns) and may differ slightly from the value originally passed
+ *       to pwm_init() or pwm_set_frequency() due to rounding.
+ */
+int pwm_sample_hardware(int pin, pwm_state_t *status);
 
 /**
  * @brief Check if PWM channel is enabled

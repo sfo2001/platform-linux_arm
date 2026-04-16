@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 /* ============================================================================
  * Internal Data Structures and Constants
@@ -548,10 +549,7 @@ int pwm_set_polarity(int pin, pwm_polarity_t polarity) {
     return PWM_SUCCESS;
 }
 
-/* TODO(#124): returns write-shadow state (last values set via this API), NOT live
- * hardware state.  pwm_sysfs_read is available but unwired — see issue for design
- * options (always-read-back, cache-invalidation, or document-as-mirror). */
-int pwm_get_status(int pin, pwm_status_t *status) {
+int pwm_get_state(int pin, pwm_state_t *status) {
     if (!status) {
         return PWM_ERROR_INVALID_PARAM;
     }
@@ -573,6 +571,94 @@ int pwm_get_status(int pin, pwm_status_t *status) {
     status->polarity = state->polarity;
     status->period_ns = 1000000000ULL / state->frequency_hz;
     status->duty_cycle_ns = (uint64_t)((double)status->period_ns * ((double)state->duty_cycle_percent / 100.0));
+
+    return PWM_SUCCESS;
+}
+
+int pwm_sample_hardware(int pin, pwm_state_t *status) {
+    char path[MAX_PATH_LEN];
+    char buf[MAX_VALUE_LEN];
+    int result;
+
+    if (!status) {
+        return PWM_ERROR_INVALID_PARAM;
+    }
+
+    pwm_channel_state_t* state = pwm_find_state(pin);
+    if (!state) {
+        return PWM_ERROR_NOT_EXPORTED;
+    }
+
+    snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/period",
+             PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
+    result = pwm_sysfs_read(path, buf, sizeof(buf));
+    if (result != PWM_SUCCESS) {
+        return result;
+    }
+    char *end_ptr;
+    uint64_t period_ns = strtoull(buf, &end_ptr, 10);
+    if (end_ptr == buf || (*end_ptr != '\0' && *end_ptr != '\n') || period_ns == 0) {
+        return PWM_ERROR_IO;
+    }
+
+    snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/duty_cycle",
+             PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
+    result = pwm_sysfs_read(path, buf, sizeof(buf));
+    if (result != PWM_SUCCESS) {
+        return result;
+    }
+    uint64_t duty_cycle_ns = strtoull(buf, &end_ptr, 10);
+    if (end_ptr == buf || (*end_ptr != '\0' && *end_ptr != '\n')) {
+        return PWM_ERROR_IO;
+    }
+
+    snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/enable",
+             PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
+    result = pwm_sysfs_read(path, buf, sizeof(buf));
+    if (result != PWM_SUCCESS) {
+        return result;
+    }
+    int enable_val = 0;
+    if (sscanf(buf, "%d", &enable_val) != 1) {
+        return PWM_ERROR_IO;
+    }
+
+    snprintf(path, sizeof(path), "%s/pwmchip%d/pwm%d/polarity",
+             PWM_SYSFS_BASE, state->pwm_chip, state->pwm_channel);
+    result = pwm_sysfs_read(path, buf, sizeof(buf));
+    if (result != PWM_SUCCESS) {
+        return result;
+    }
+    /* kernel sysfs uses "inversed" (not "inverted") — see Documentation/driver-api/pwm.rst.
+     * Relies on pwm_sysfs_read() stripping the trailing '\n'; the production
+     * implementation (pwm-hal-sysfs.c) does this unconditionally. */
+    pwm_polarity_t polarity;
+    if (strcmp(buf, "normal") == 0) {
+        polarity = PWM_POLARITY_NORMAL;
+    } else if (strcmp(buf, "inversed") == 0) {
+        polarity = PWM_POLARITY_INVERTED;
+    } else {
+        return PWM_ERROR_IO;
+    }
+
+    /* Clamp raw duty_cycle_ns so the caller also sees a bounded nanosecond
+     * value, not just a bounded percentage.  A sysfs race could deliver a
+     * duty_cycle > period snapshot; cap it before storing. */
+    if (duty_cycle_ns > period_ns) duty_cycle_ns = period_ns;
+
+    status->gpio_pin          = state->gpio_pin;
+    status->pwm_chip          = state->pwm_chip;
+    status->pwm_channel       = state->pwm_channel;
+    status->is_exported       = state->is_exported;
+    status->period_ns         = period_ns;
+    status->duty_cycle_ns     = duty_cycle_ns;
+    status->is_enabled        = (enable_val != 0);
+    status->polarity          = polarity;
+    status->frequency_hz      = (uint32_t)(1000000000ULL / period_ns);
+    status->duty_cycle_percent = (float)((double)duty_cycle_ns / (double)period_ns * 100.0);
+    if (status->duty_cycle_percent > 100.0f) status->duty_cycle_percent = 100.0f;
+    /* defensive: duty_cycle_ns is uint64_t, cannot be negative */
+    if (status->duty_cycle_percent < 0.0f)   status->duty_cycle_percent = 0.0f;
 
     return PWM_SUCCESS;
 }

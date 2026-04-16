@@ -349,7 +349,7 @@ Our GitHub Actions CI automatically tests:
 - Cross-compilation on Ubuntu (Linux x86_64)
 - `baremetal-hello` example for multiple boards
 - `lgpio-blink` example for multiple boards (32-bit and 64-bit)
-- PWM HAL C unit tests (50 test functions via CMake/ctest)
+- PWM HAL C unit tests (61 test functions via CMake/ctest)
 
 Make sure your changes pass CI before submitting a PR.
 

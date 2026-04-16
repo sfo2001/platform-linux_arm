@@ -311,7 +311,7 @@ int main(int argc, char *argv[]) {
 
     // Get PWM status
     pwm_status_t status;
-    if (pwm_get_status(gpio_pin, &status) == PWM_SUCCESS) {
+    if (pwm_get_state(gpio_pin, &status) == PWM_SUCCESS) {
         printf("\nPWM Status:\n");
         printf("  Chip: %d, Channel: %d\n", status.pwm_chip, status.pwm_channel);
         printf("  Frequency: %u Hz\n", status.frequency_hz);

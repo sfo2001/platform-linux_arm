@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **BREAKING** `pwm_get_status()` renamed to `pwm_get_state()` — formalises write-shadow as
+  the documented contract; name matches kernel/libgpiod convention (`state` = last-configured).
+  The `pwm_status_t` struct type is unchanged; only the function name differs.
+
+  **Migration guide**: replace every `pwm_get_status(pin, &s)` call with
+  `pwm_get_state(pin, &s)`. The `pwm_state_t` typedef (an alias for `pwm_status_t`) is
+  available as the preferred variable type when using `pwm_get_state()`, but `pwm_status_t`
+  remains valid. No struct members changed.
+
+  This is a **semver MAJOR** bump — downstream binaries linked against the old symbol will
+  not link; a source-level rename and recompile is required.
+
+### Changed
+
+### Added
+- `pwm_sample_hardware()` — reads live hardware registers via sysfs (4 reads: period,
+  duty_cycle, enable, polarity). Use when you need hardware truth rather than write-shadow.
+  Resolves #124.
+
 ### Fixed
 - lgpio framework: `BuildSources` was passed a file path instead of a directory, causing
   `undefined reference to 'pwm_write'` at link time (closes #118, reported and diagnosed
@@ -22,9 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   testing without Raspberry Pi hardware
 - lgpio PWM HAL: `tests/stubs/pwm-hal-sysfs-stub.c` — link-seam stub that replaces the
   production sysfs implementation in test builds; tracks export state in-memory
-- lgpio PWM HAL: `tests/test_pwm_hal.c` — 50 C unit tests covering init/deinit, conflict
-  detection, pin validation, frequency/polarity setters, status query, boundary values,
-  and export timeout simulation
+- lgpio PWM HAL: `tests/test_pwm_hal.c` — 50 C unit tests at seam extraction (T1–T50);
+  11 additional tests added in this release for `pwm_sample_hardware` (T51–T61, 61 total)
 - CI: `cpp-tests` job in `examples.yml` builds and runs the PWM HAL C test suite on
   ubuntu-latest via CMake + ctest
 - `.pylintrc` — project-specific pylint configuration enforced in CI lint job
@@ -231,7 +251,7 @@ Scope:
 - Hardware PWM support via Linux PWM subsystem (sysfs) for lgpio framework (#34)
   - Complete PWM HAL library (`framework-lgpio/pwm-hal.c`, `framework-lgpio/pwm-hal.h`)
   - Core API: `pwm_init()`, `pwm_write()`, `pwm_deinit()`
-  - Extended API: `pwm_set_frequency()`, `pwm_set_polarity()`, `pwm_get_status()`
+  - Extended API: `pwm_set_frequency()`, `pwm_set_polarity()`, `pwm_get_status()` (renamed `pwm_get_state()` in Unreleased)
   - Automatic Raspberry Pi model detection (Pi 1-4 vs Pi 5)
   - PWM permission setup scripts and systemd service
   - Comprehensive PWM setup guide (`docs/PWM_SETUP.md`)

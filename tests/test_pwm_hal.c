@@ -208,7 +208,7 @@ static void test_set_frequency_valid(void) {
     int result = pwm_set_frequency(18, 2000);
     assert(result == PWM_SUCCESS);
     pwm_status_t status;
-    assert(pwm_get_status(18, &status) == PWM_SUCCESS);
+    assert(pwm_get_state(18, &status) == PWM_SUCCESS);
     assert(status.frequency_hz == 2000);
 }
 
@@ -236,20 +236,20 @@ static void test_set_polarity_inverted(void) {
     int result = pwm_set_polarity(18, PWM_POLARITY_INVERTED);
     assert(result == PWM_SUCCESS);
     pwm_status_t status;
-    assert(pwm_get_status(18, &status) == PWM_SUCCESS);
+    assert(pwm_get_state(18, &status) == PWM_SUCCESS);
     assert(status.polarity == PWM_POLARITY_INVERTED);
 }
 
 /**
- * T17: pwm_get_status(18, &status) after init reflects the expected state.
+ * T17: pwm_get_state(18, &status) after init reflects the expected state.
  */
-static void test_get_status_after_init(void) {
+static void test_get_state_after_init(void) {
     stub_reset();
     pwm_reset_state_for_testing();
 
     assert(pwm_init(18, 1000) == PWM_SUCCESS);
     pwm_status_t status;
-    int result = pwm_get_status(18, &status);
+    int result = pwm_get_state(18, &status);
     assert(result == PWM_SUCCESS);
     assert(status.gpio_pin == 18);
     assert(status.pwm_chip == 0);
@@ -259,6 +259,8 @@ static void test_get_status_after_init(void) {
     assert(status.frequency_hz == 1000);
     assert(status.duty_cycle_percent == 0.0f);
     assert(status.polarity == PWM_POLARITY_NORMAL);
+    assert(status.period_ns == 1000000ULL);
+    assert(status.duty_cycle_ns == 0ULL);
 }
 
 /**
@@ -364,15 +366,15 @@ static void test_deinit_before_init_succeeds(void) {
 }
 
 /**
- * T26: pwm_get_status(18, NULL) returns PWM_ERROR_INVALID_PARAM.
+ * T26: pwm_get_state(18, NULL) returns PWM_ERROR_INVALID_PARAM.
  * NULL status pointer is rejected before state lookup.
  */
-static void test_get_status_null_ptr_fails(void) {
+static void test_get_state_null_ptr_fails(void) {
     stub_reset();
     pwm_reset_state_for_testing();
 
     assert(pwm_init(18, 1000) == PWM_SUCCESS);
-    int result = pwm_get_status(18, NULL);
+    int result = pwm_get_state(18, NULL);
     assert(result == PWM_ERROR_INVALID_PARAM);
 }
 
@@ -577,15 +579,15 @@ static void test_init_freq_too_high(void) {
 }
 
 /**
- * T40: pwm_get_status(18, &status) before any init returns PWM_ERROR_NOT_EXPORTED.
+ * T40: pwm_get_state(18, &status) before any init returns PWM_ERROR_NOT_EXPORTED.
  * pwm_find_state() returns NULL → NOT_EXPORTED.
  */
-static void test_get_status_before_init_fails(void) {
+static void test_get_state_before_init_fails(void) {
     stub_reset();
     pwm_reset_state_for_testing();
 
     pwm_status_t status;
-    int result = pwm_get_status(18, &status);
+    int result = pwm_get_state(18, &status);
     assert(result == PWM_ERROR_NOT_EXPORTED);
 }
 
@@ -632,7 +634,7 @@ static void test_init_max_freq_succeeds(void) {
     assert(result == PWM_SUCCESS);
 
     pwm_status_t status;
-    assert(pwm_get_status(18, &status) == PWM_SUCCESS);
+    assert(pwm_get_state(18, &status) == PWM_SUCCESS);
     assert(status.period_ns == 10);
     assert(status.frequency_hz == PWM_MAX_FREQUENCY_HZ);
 }
@@ -766,6 +768,227 @@ static void test_init_fails_when_all_slots_full(void) {
 }
 
 /* ============================================================
+ * T51-T55: pwm_sample_hardware tests
+ * ============================================================ */
+
+/**
+ * T51: pwm_sample_hardware(18, &status) after init with stub values set
+ * returns PWM_SUCCESS and correctly parsed hardware fields.
+ * - period = 1000000 ns → 1 kHz
+ * - duty_cycle = 500000 ns → 50%
+ * - enable = 1 → is_enabled = true
+ * - polarity = "normal" → PWM_POLARITY_NORMAL
+ */
+static void test_sample_hardware_after_init(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+
+    stub_set_read_value("/period",     "1000000");
+    stub_set_read_value("/duty_cycle", "500000");
+    stub_set_read_value("/enable",     "1");
+    stub_set_read_value("/polarity",   "normal");
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_SUCCESS);
+    assert(status.frequency_hz == 1000);
+    assert(status.duty_cycle_percent == 50.0f);
+    assert(status.is_enabled == true);
+    assert(status.polarity == PWM_POLARITY_NORMAL);
+    assert(status.period_ns == 1000000ULL);
+    assert(status.duty_cycle_ns == 500000ULL);
+    assert(status.gpio_pin == 18);
+    assert(status.pwm_chip == 0);
+    assert(status.pwm_channel == 0);
+    assert(status.is_exported == true);
+}
+
+/**
+ * T52: pwm_sample_hardware(18, NULL) returns PWM_ERROR_INVALID_PARAM.
+ * NULL status pointer is rejected before state lookup.
+ */
+static void test_sample_hardware_null_ptr_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    int result = pwm_sample_hardware(18, NULL);
+    assert(result == PWM_ERROR_INVALID_PARAM);
+}
+
+/**
+ * T53: pwm_sample_hardware(18, &status) before any init returns
+ * PWM_ERROR_NOT_EXPORTED.  pwm_find_state() returns NULL.
+ */
+static void test_sample_hardware_before_init_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_NOT_EXPORTED);
+}
+
+/**
+ * T54: pwm_sample_hardware(18, &status) returns PWM_ERROR_IO when the
+ * period sysfs read fails.  Uses one-shot read failure injection on "/period".
+ */
+static void test_sample_hardware_period_read_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_fail_on("/period", PWM_ERROR_IO);
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T55: pwm_sample_hardware(18, &status) returns PWM_ERROR_IO when period_ns
+ * is zero.  A zero period is invalid (would cause division by zero in
+ * frequency_hz computation).
+ */
+static void test_sample_hardware_zero_period_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period", "0");
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_IO);
+}
+
+/* ============================================================
+ * T56-T59: pwm_sample_hardware read-failure and inverted polarity tests
+ * ============================================================ */
+
+/**
+ * T56: pwm_sample_hardware(18, &status) returns PWM_ERROR_IO when the
+ * duty_cycle sysfs read fails.  Period succeeds; duty_cycle is the second
+ * read in pwm_sample_hardware so the one-shot fires there.
+ */
+static void test_sample_hardware_duty_read_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period",     "1000000");
+    stub_set_read_fail_on("/duty_cycle", PWM_ERROR_IO);
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T57: pwm_sample_hardware(18, &status) returns PWM_ERROR_IO when the
+ * enable sysfs read fails.  Period and duty_cycle succeed; enable is the
+ * third read so the one-shot fires there.
+ */
+static void test_sample_hardware_enable_read_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period",     "1000000");
+    stub_set_read_value("/duty_cycle", "500000");
+    stub_set_read_fail_on("/enable", PWM_ERROR_IO);
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T58: pwm_sample_hardware(18, &status) returns PWM_ERROR_IO when the
+ * polarity sysfs read fails.  The three preceding reads succeed; polarity
+ * is the fourth read so the one-shot fires there.
+ */
+static void test_sample_hardware_polarity_read_fails(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period",     "1000000");
+    stub_set_read_value("/duty_cycle", "500000");
+    stub_set_read_value("/enable",     "1");
+    stub_set_read_fail_on("/polarity", PWM_ERROR_IO);
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_IO);
+}
+
+/**
+ * T59: pwm_sample_hardware(18, &status) returns PWM_SUCCESS and sets
+ * status.polarity == PWM_POLARITY_INVERTED when the polarity sysfs file
+ * contains "inversed" (the kernel spelling per Documentation/driver-api/pwm.rst).
+ */
+static void test_sample_hardware_inverted_polarity(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period",     "1000000");
+    stub_set_read_value("/duty_cycle", "500000");
+    stub_set_read_value("/enable",     "1");
+    stub_set_read_value("/polarity",   "inversed");
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_SUCCESS);
+    assert(status.polarity == PWM_POLARITY_INVERTED);
+}
+
+/**
+ * T60: pwm_sample_hardware(18, &status) returns PWM_SUCCESS and
+ * duty_cycle_percent == 100.0f when duty_cycle_ns > period_ns (sysfs race).
+ * The raw duty_cycle_ns in the returned struct must also be clamped to period_ns.
+ */
+static void test_sample_hardware_duty_exceeds_period(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period",     "1000");
+    stub_set_read_value("/duty_cycle", "2000");
+    stub_set_read_value("/enable",     "1");
+    stub_set_read_value("/polarity",   "normal");
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_SUCCESS);
+    assert(status.duty_cycle_percent == 100.0f);
+    assert(status.duty_cycle_ns == 1000ULL); /* clamped to period_ns */
+}
+
+/**
+ * T61: pwm_sample_hardware(18, &status) returns PWM_ERROR_IO when the
+ * polarity sysfs file contains an unrecognised string (not "normal" or
+ * "inversed").
+ */
+static void test_sample_hardware_unknown_polarity(void) {
+    stub_reset();
+    pwm_reset_state_for_testing();
+
+    assert(pwm_init(18, 1000) == PWM_SUCCESS);
+    stub_set_read_value("/period",     "1000000");
+    stub_set_read_value("/duty_cycle", "500000");
+    stub_set_read_value("/enable",     "1");
+    stub_set_read_value("/polarity",   "bogus");
+
+    pwm_status_t status;
+    int result = pwm_sample_hardware(18, &status);
+    assert(result == PWM_ERROR_IO);
+}
+
+/* ============================================================
  * Main
  * ============================================================ */
 
@@ -786,7 +1009,7 @@ int main(void) {
     RUN(test_set_frequency_valid);
     RUN(test_set_polarity_normal);
     RUN(test_set_polarity_inverted);
-    RUN(test_get_status_after_init);
+    RUN(test_get_state_after_init);
     RUN(test_is_enabled_after_init);
     RUN(test_is_enabled_before_init);
     RUN(test_export_timeout);
@@ -795,7 +1018,7 @@ int main(void) {
     RUN(test_set_polarity_before_init_fails);
     RUN(test_set_polarity_invalid_value);
     RUN(test_deinit_before_init_succeeds);
-    RUN(test_get_status_null_ptr_fails);
+    RUN(test_get_state_null_ptr_fails);
     RUN(test_get_chip_channel_null_fails);
     RUN(test_write_boundary_zero);
     RUN(test_write_boundary_full);
@@ -809,7 +1032,7 @@ int main(void) {
     RUN(test_pin_is_valid_all_pi14_pins);
     RUN(test_pin_is_valid_pi5_pins);
     RUN(test_init_freq_too_high);
-    RUN(test_get_status_before_init_fails);
+    RUN(test_get_state_before_init_fails);
     RUN(test_write_fails_on_sysfs_io);
     RUN(test_set_frequency_fails_on_duty_write);
     RUN(test_init_max_freq_succeeds);
@@ -820,6 +1043,17 @@ int main(void) {
     RUN(test_deinit_unexport_fail_propagates);
     RUN(test_init_fails_on_export_write);
     RUN(test_init_fails_when_all_slots_full);
+    RUN(test_sample_hardware_after_init);
+    RUN(test_sample_hardware_null_ptr_fails);
+    RUN(test_sample_hardware_before_init_fails);
+    RUN(test_sample_hardware_period_read_fails);
+    RUN(test_sample_hardware_zero_period_fails);
+    RUN(test_sample_hardware_duty_read_fails);
+    RUN(test_sample_hardware_enable_read_fails);
+    RUN(test_sample_hardware_polarity_read_fails);
+    RUN(test_sample_hardware_inverted_polarity);
+    RUN(test_sample_hardware_duty_exceeds_period);
+    RUN(test_sample_hardware_unknown_polarity);
 
     printf("\nAll %d tests passed.\n", g_tests_run);
     return 0;

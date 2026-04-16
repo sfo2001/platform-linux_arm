@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 
     // Get initial status
     pwm_status_t status;
-    if (pwm_get_status(gpio_pin, &status) == PWM_SUCCESS) {
+    if (pwm_get_state(gpio_pin, &status) == PWM_SUCCESS) {
         printf("PWM Status:\n");
         printf("  Chip: %d, Channel: %d\n", status.pwm_chip, status.pwm_channel);
         printf("  Enabled: %s\n", status.is_enabled ? "yes" : "no");

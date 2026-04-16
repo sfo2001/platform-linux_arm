@@ -57,4 +57,26 @@ void stub_set_write_fail_on(const char *path_suffix, int error_code);
 void stub_set_write_fail_after(const char *path_suffix, int error_code,
                                int n_successes_before_fail);
 
+/**
+ * Override the value returned by pwm_sysfs_read() for paths ending with
+ * path_suffix.  The override persists until stub_reset() is called.
+ *
+ * Use to simulate specific sysfs attribute values for pwm_sample_hardware().
+ * Example: stub_set_read_value("/period", "1000000") → 1 kHz period.
+ *
+ * @param path_suffix  Suffix to match (e.g. "/period", "/polarity")
+ * @param value        Value string to return (NUL-terminated)
+ */
+void stub_set_read_value(const char *path_suffix, const char *value);
+
+/**
+ * Inject a one-shot read failure for paths ending with path_suffix.
+ * The next matching pwm_sysfs_read() call returns error_code and the
+ * trigger is consumed.
+ *
+ * @param path_suffix  Suffix to match (e.g. "/period")
+ * @param error_code   Error to return (e.g. PWM_ERROR_IO)
+ */
+void stub_set_read_fail_on(const char *path_suffix, int error_code);
+
 #endif /* PWM_HAL_SYSFS_STUB_H */

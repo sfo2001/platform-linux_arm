@@ -12,11 +12,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 
 /* Tracks which chip+channel pairs have been exported. */
 /* Chips 0..7, channels 0..1 — matches MAX_PWM_CHANNELS and HAL limits. */
 #define STUB_MAX_CHIPS    8
 #define STUB_MAX_CHANNELS 2
+#define STUB_MAX_READ_OVERRIDES 8
 
 static bool s_use_pi5;
 static bool s_exported[STUB_MAX_CHIPS][STUB_MAX_CHANNELS];
@@ -27,6 +29,21 @@ static int         s_write_fail_error;
 static const char *s_write_fail_after_suffix;
 static int         s_write_fail_after_error;
 static int         s_write_fail_after_count;
+
+/* Per-path read value overrides */
+typedef struct {
+    const char *suffix;
+    const char *value;
+} stub_read_value_t;
+
+/* Per-path one-shot read failure injection */
+typedef struct {
+    const char *suffix;
+    int         error_code;
+} stub_read_fail_t;
+
+static stub_read_value_t s_read_values[STUB_MAX_READ_OVERRIDES];
+static stub_read_fail_t  s_read_fails[STUB_MAX_READ_OVERRIDES];
 
 /* ---- Stub control ---- */
 
@@ -43,6 +60,12 @@ void stub_reset(void) {
         for (int ch = 0; ch < STUB_MAX_CHANNELS; ch++) {
             s_exported[c][ch] = false;
         }
+    }
+    for (int i = 0; i < STUB_MAX_READ_OVERRIDES; i++) {
+        s_read_values[i].suffix = NULL;
+        s_read_values[i].value  = NULL;
+        s_read_fails[i].suffix     = NULL;
+        s_read_fails[i].error_code = 0;
     }
 }
 
@@ -64,6 +87,41 @@ void stub_set_write_fail_after(const char *path_suffix, int error_code,
     s_write_fail_after_suffix = path_suffix;
     s_write_fail_after_error  = error_code;
     s_write_fail_after_count  = n_successes_before_fail;
+}
+
+void stub_set_read_value(const char *path_suffix, const char *value) {
+    for (int i = 0; i < STUB_MAX_READ_OVERRIDES; i++) {
+        /* Update existing entry for this suffix if present */
+        if (s_read_values[i].suffix != NULL &&
+            strcmp(s_read_values[i].suffix, path_suffix) == 0) {
+            s_read_values[i].value = value;
+            return;
+        }
+    }
+    /* Otherwise find a free slot */
+    for (int i = 0; i < STUB_MAX_READ_OVERRIDES; i++) {
+        if (s_read_values[i].suffix == NULL) {
+            s_read_values[i].suffix = path_suffix;
+            s_read_values[i].value  = value;
+            return;
+        }
+    }
+    /* No free slot found — table is full */
+    fprintf(stderr, "stub_set_read_value: overflow — increase STUB_MAX_READ_OVERRIDES\n");
+    assert(0 && "stub_set_read_value: table full");
+}
+
+void stub_set_read_fail_on(const char *path_suffix, int error_code) {
+    for (int i = 0; i < STUB_MAX_READ_OVERRIDES; i++) {
+        if (s_read_fails[i].suffix == NULL) {
+            s_read_fails[i].suffix     = path_suffix;
+            s_read_fails[i].error_code = error_code;
+            return;
+        }
+    }
+    /* No free slot found — table is full */
+    fprintf(stderr, "stub_set_read_fail_on: overflow — increase STUB_MAX_READ_OVERRIDES\n");
+    assert(0 && "stub_set_read_fail_on: table full");
 }
 
 /* ---- Seam function implementations ---- */
@@ -153,9 +211,33 @@ int pwm_sysfs_write(const char *path, const char *value) {
 }
 
 int pwm_sysfs_read(const char *path, char *value, size_t max_len) {
-    (void)path;
-    /* Return a safe default — tests that need specific read values should
-     * extend the stub with a per-path override table. */
+    size_t plen = strlen(path);
+
+    /* Check one-shot read failure table first */
+    for (int i = 0; i < STUB_MAX_READ_OVERRIDES; i++) {
+        if (s_read_fails[i].suffix == NULL) continue;
+        size_t slen = strlen(s_read_fails[i].suffix);
+        if (plen >= slen &&
+            strcmp(path + plen - slen, s_read_fails[i].suffix) == 0) {
+            int err = s_read_fails[i].error_code;
+            s_read_fails[i].suffix = NULL; /* consume — one-shot */
+            return err;
+        }
+    }
+
+    /* Check per-path value override table */
+    for (int i = 0; i < STUB_MAX_READ_OVERRIDES; i++) {
+        if (s_read_values[i].suffix == NULL) continue;
+        size_t slen = strlen(s_read_values[i].suffix);
+        if (plen >= slen &&
+            strcmp(path + plen - slen, s_read_values[i].suffix) == 0) {
+            if (max_len > 0) {
+                snprintf(value, max_len, "%s", s_read_values[i].value);
+            }
+            return PWM_SUCCESS;
+        }
+    }
+
     if (max_len > 0) {
         strncpy(value, "0", max_len);
         value[max_len - 1] = '\0';
