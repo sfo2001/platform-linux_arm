@@ -89,6 +89,38 @@ repos:
         args: ['--convention=google', '--add-ignore=D100,D104,D105,D107,D212']
         files: ^(builder/|platform\.py)
 
+  # Type checking — mirrors CI exactly (same 4-file scope as tests.yml lint job)
+  - repo: local
+    hooks:
+      - id: mypy
+        name: Type check with mypy
+        entry: mypy
+        args:
+          - platform_constants.py
+          - platform.py
+          - platform_config.py
+          - platform_test_uploader.py
+        language: system
+        pass_filenames: false
+        files: \.py$
+
+  # Pylint — mirrors CI exactly (same *.py scope as tests.yml lint job)
+  - repo: local
+    hooks:
+      - id: pylint
+        name: Lint with pylint
+        entry: pylint
+        args:
+          - --rcfile=.pylintrc
+          - platform.py
+          - platform_config.py
+          - platform_constants.py
+          - platform_test_uploader.py
+          - ssh_utils.py
+        language: system
+        pass_filenames: false
+        files: \.py$
+
 # Configuration
 ci:
   autofix_commit_msg: 'style: auto-fix pre-commit hooks'
